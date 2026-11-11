@@ -75,7 +75,7 @@ input[type=range]{flex:1;accent-color:var(--ac);height:20px}
 .tlwrap{display:flex;flex-direction:column;min-height:0;background:var(--p1);border-top:1px solid var(--bd)}
 .tl{position:relative;flex:1;min-height:0;overflow:hidden auto;padding:6px 14px 10px 0;cursor:pointer;user-select:none}
 .tl:empty{display:grid;place-items:center;color:var(--mut);font-size:12px;cursor:default}
-.tl:empty::before{content:"③에서 AI 답변을 적용하면 타임라인이 나타나요"}
+.tl:empty::before{content:"적용 탭에서 AI 답변을 적용하면 타임라인이 나타나요"}
 .tl .r{display:flex;margin:4px 0;height:34px}
 .tl .r>span{width:var(--lw);flex:none;padding-left:14px;font-size:11px;color:var(--mut);line-height:34px;font-weight:700}
 .lane{position:relative;flex:1;height:34px;background:var(--p2);border-radius:5px;overflow:hidden}
@@ -84,7 +84,7 @@ input[type=range]{flex:1;accent-color:var(--ac);height:20px}
 .tl .rr{height:20px;margin:0 0 2px}.tl .rr>span{line-height:20px}
 .rl{position:relative;flex:1;height:20px;border-bottom:1px solid var(--bd);overflow:hidden}
 .rl b{position:absolute;top:0;bottom:0;border-left:1px solid var(--bd);padding-left:4px;font:10px/20px ui-monospace,Menlo,monospace;color:var(--mut);font-weight:400}
-#ph{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--red);pointer-events:none;z-index:3}
+#ph{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--red);pointer-events:none;z-index:5}
 #ph::before{content:"";position:absolute;top:0;left:-5px;border:6px solid transparent;border-top:9px solid var(--red);border-bottom:0}
 
 #msg{white-space:pre-line}
@@ -121,7 +121,6 @@ button:active:not(:disabled){transform:scale(.97)}
 #exp svg,.tabs svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 
 .ph2{background:var(--p1)}
-.ph2::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--ac);margin-right:8px;box-shadow:0 0 8px var(--ac)}
 .tabs button{flex-direction:column;gap:3px;min-height:58px;font-size:11px;letter-spacing:.02em}
 .tabs svg{width:21px;height:21px}
 .tabs button:hover{color:var(--fg);background:var(--p2)}
@@ -158,12 +157,92 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border:0;border-radiu
 .tl .r>span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;background:#4f86ee}
 .tl .r.t>span::before{background:#9a6bff}.tl .r.s>span::before{background:#f29145}.tl .r.a>span::before{background:#2fbf85}.tl .rr>span::before{display:none}
 .rl b{border-left-color:#3a3a45}
-#ph{box-shadow:0 0 8px rgba(255,68,102,.6)}
+#ph{}
 /* 화면 비율에 맞춰 미리보기 크기 조절 */
 .stage{container-type:size;background:none;box-shadow:none;border-radius:0}
 canvas{--ar:720/1280;--arn:.5625;width:min(100cqw,calc(100cqh*var(--arn)));height:auto;aspect-ratio:var(--ar);border-radius:6px;background:#000;box-shadow:0 0 0 1px var(--bd),0 14px 40px rgba(0,0,0,.55)}
-.r.c .lane i{background:linear-gradient(#ff7ab0,#d23f82)}
-.tl .r.c>span::before{background:#ff7ab0}
+/* ===== UI 고도화 2 (CSS만, 기능 변경 없음) ===== */
+:root{--bg:#07070a;--p1:#111116;--p2:#18181f;--p3:#22222b;--bd:#26262f;--bd2:#363642;--ac:#35e6d4;--ac2:#6d8dff;--vio:#a77bff;--glow:rgba(53,230,212,.28)}
+::selection{background:rgba(53,230,212,.3)}
+body{background:radial-gradient(1200px 600px at 50% -10%,#15151e 0,var(--bg) 60%)}
+.app{grid-template-rows:56px minmax(0,1fr) 256px}
+.main{grid-template-columns:340px minmax(0,1fr) 300px}
+
+/* 상단바 */
+.top{height:56px;padding:0 18px;gap:10px;background:rgba(17,17,22,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 8px 30px rgba(0,0,0,.35)}
+.logo{gap:10px;letter-spacing:-.01em}
+.logo b{width:28px;height:28px;border-radius:9px;font-size:11px;background:linear-gradient(135deg,var(--ac),var(--ac2) 60%,var(--vio));box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),0 6px 18px var(--glow)}
+.logo span{background:linear-gradient(90deg,#fff,#b9c4ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+#qual,#fps{background:var(--p2);border:1px solid var(--bd);border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;color:var(--fg)}
+#qual:hover,#fps:hover{border-color:var(--bd2)}
+#exp{min-height:38px;border-radius:10px;font-weight:800;box-shadow:0 6px 20px var(--glow),inset 0 1px 0 rgba(255,255,255,.35)}
+#exp:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.08)}
+#exp:disabled{box-shadow:none}
+
+/* 좌측 패널 */
+.panel{background:linear-gradient(180deg,var(--p1),#0d0d11)}
+.tabs{padding:8px 8px 0;gap:4px}
+.tabs button{position:relative;border-radius:10px 10px 0 0;min-height:60px;font-weight:700}
+.tabs button.on{background:var(--p2);box-shadow:inset 0 -2px 0 var(--ac)}
+.pane{padding:18px 16px}
+.pane h2{font-size:15px;letter-spacing:-.01em;margin-bottom:2px}
+.hint{font-size:12.5px;line-height:1.55;margin-bottom:14px}
+textarea,select{background:#0c0c10;border:1px solid var(--bd);border-radius:12px;padding:12px 14px;line-height:1.6;font-size:13.5px}
+textarea:hover,select:hover{border-color:var(--bd2)}
+textarea{min-height:190px}
+textarea::placeholder{color:#5d5d6c}
+.g{border-radius:10px}
+#copy,#apply{min-height:44px;border-radius:12px;font-weight:800;background:linear-gradient(135deg,var(--ac),var(--ac2));box-shadow:0 6px 18px var(--glow),inset 0 1px 0 rgba(255,255,255,.35)}
+#copy:hover:not(:disabled),#apply:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.08)}
+#sample{min-height:44px}
+.links a{border-radius:10px;padding:9px 0;font-weight:700;transition:.15s}
+.links a:hover{border-color:var(--ac);color:var(--ac);background:rgba(53,230,212,.07)}
+.drop{border:1.5px dashed var(--bd2);border-radius:16px;min-height:104px;background:radial-gradient(circle at 50% 0,rgba(53,230,212,.09),transparent 70%),var(--p2)}
+.drop span{font-size:15px;font-weight:800}
+.drop:hover{border-color:var(--ac);box-shadow:0 0 0 4px rgba(53,230,212,.08)}
+.as{border-radius:14px;padding:10px;background:var(--p2)}
+.as:hover{border-color:var(--bd2);transform:translateY(-1px)}
+.th{width:52px;height:52px;border-radius:10px;background:linear-gradient(135deg,#1d1d26,#14141a);box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}
+.as input{background:#0c0c10;border-radius:8px}
+.x{border-radius:50%;width:28px;min-height:28px;font-size:12px;color:var(--mut)}
+.x.g:hover:not(:disabled){background:#3a1d26;color:#ff7a90}
+.status{background:rgba(24,24,31,.9);padding:10px 16px;font-size:12.5px;line-height:1.55}
+#msg:not(:empty){padding-left:10px;border-left:2px solid var(--ac);color:var(--fg)}
+#msg.err:not(:empty){border-left-color:#ff5a72;color:#ff8c9c}
+
+/* 미리보기 */
+.pv{background:radial-gradient(620px 380px at 50% 45%,rgba(77,106,255,.11),transparent 70%),var(--bg);padding:16px 20px 14px}
+canvas{border-radius:10px;box-shadow:0 0 0 1px rgba(255,255,255,.07),0 24px 60px rgba(0,0,0,.6),0 0 80px rgba(53,230,212,.07)}
+#hint{top:0;bottom:0;display:grid;place-content:center;justify-items:center;gap:12px;color:#9a9aae;font-size:13px}
+#hint::before{content:"▶";display:grid;place-items:center;width:56px;height:56px;border-radius:18px;color:var(--ac);font-size:20px;background:linear-gradient(135deg,rgba(53,230,212,.18),rgba(109,141,255,.18));box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+.ctrl{gap:12px;padding:8px 14px;background:rgba(24,24,31,.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+#pp{width:42px;min-height:42px;background:linear-gradient(135deg,#fff,#d8e4ff);box-shadow:0 4px 14px rgba(255,255,255,.18)}
+.m{color:#fff;font-weight:600;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+input[type=range]::-webkit-slider-thumb{width:16px;height:16px;margin-top:-5.5px;box-shadow:0 0 0 4px rgba(53,230,212,.3),0 2px 8px rgba(0,0,0,.5)}
+
+/* 우측 패널 */
+.ph2{font-weight:800;letter-spacing:.06em}
+.empty{margin:16px;padding:32px 16px;border:1.5px dashed var(--bd2);border-radius:16px;line-height:1.7}
+.empty::before{content:"🖼";display:block;font-size:28px;margin-bottom:8px;opacity:.8}
+.ai{border-radius:14px;padding:8px 10px}
+.ai.g:hover:not(:disabled){border-color:var(--ac);background:var(--p3)}
+
+/* 타임라인 */
+.tlwrap{background:linear-gradient(180deg,#0e0e12,#0a0a0d);box-shadow:0 -12px 30px rgba(0,0,0,.4)}
+.lane{border-radius:8px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)}
+.lane i{box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),inset 3px 0 0 rgba(255,255,255,.4),inset -3px 0 0 rgba(255,255,255,.4),0 2px 6px rgba(0,0,0,.35);transition:filter .15s}
+.lane i:hover{filter:brightness(1.12)}
+.tl:empty{margin:10px 14px;border:1.5px dashed var(--bd);border-radius:12px}
+#ph{background:linear-gradient(var(--red),#ff7a90)}
+
+.tl{overflow:auto}
+.tl .r{width:calc(var(--lw) + (100% - var(--lw)) * var(--z,1))}
+.tl .r>span{position:sticky;left:0;z-index:4;background:#0c0c10}
+.zm{display:flex;align-items:center;gap:8px;margin-left:auto;letter-spacing:0}
+.zm button{min-height:26px;width:28px;padding:0;font-size:15px;line-height:1;border-radius:8px}
+.zm input{flex:none;width:110px}
+#zv{min-width:34px;font:600 11px/1 ui-monospace,Menlo,monospace;color:var(--mut)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style></head>
 <body><div class="app">
 
@@ -213,7 +292,7 @@ canvas{--ar:720/1280;--arn:.5625;width:min(100cqw,calc(100cqh*var(--arn)));heigh
   <section class="pv">
     <div class="stage">
       <canvas id="cv" width="720" height="1280"></canvas>
-      <p id="hint">③을 적용하면 여기서 재생돼요</p>
+      <p id="hint">적용 탭에서 AI 답변을 적용하면 여기서 재생돼요</p>
     </div>
     <div class="ctrl">
       <button id="pp" disabled>▶</button>
@@ -233,7 +312,7 @@ canvas{--ar:720/1280;--arn:.5625;width:min(100cqw,calc(100cqh*var(--arn)));heigh
 
 <!-- 하단: 타임라인 -->
 <section class="tlwrap">
-  <div class="ph2">타임라인</div>
+  <div class="ph2">타임라인<div class="zm" title="Ctrl + 마우스 휠로도 확대·축소할 수 있어요"><button id="zout" class="g" aria-label="축소">−</button><input id="zs" type="range" min="0" max="100" value="0" aria-label="타임라인 확대"><button id="zin" class="g" aria-label="확대">＋</button><span id="zv">1×</span></div></div>
   <div class="tl" id="tl"></div>
 </section>
 
@@ -2153,8 +2232,9 @@ const HINT={"Noto Sans KR":"깔끔한 기본","Black Han Sans":"굵고 강한 �
 const FILTERS={none:"none",grayscale:"grayscale(1)",sepia:"sepia(.8)",blur:"blur(4px)",bright:"brightness(1.25)",contrast:"contrast(1.3) saturate(1.2)",warm:"sepia(.3) saturate(1.3)",cool:"hue-rotate(20deg) saturate(1.1)",vivid:"saturate(1.6)",invert:"invert(1)",noir:"grayscale(1) contrast(1.4)",vintage:"sepia(.5) contrast(.9) saturate(.8)",dream:"brightness(1.1) saturate(1.4) blur(1px)",dark:"brightness(.6)"};
 const RATIOS={"9:16":[720,1280],"16:9":[1280,720],"1:1":[720,720]};
 const FENCE="\x60\x60\x60";
+let TZ=1,LWd=300,rtPlan=null;const MAXZ=20;
 const LW=72; /* 타임라인 라벨 열 너비(px) — CSS --lw 와 같아야 해요 */
-let exportSafe=false,Q=1,codeErrs=[],aiImgs=[],assets=[],cnt={v:0,i:0,a:0},plan=null,playing=false,exporting=false,t0=0,tNow=0,total=0,actx,adest,rec;
+let exportSafe=false,Q=1,aiImgs=[],assets=[],cnt={v:0,i:0,a:0},plan=null,playing=false,exporting=false,t0=0,tNow=0,total=0,actx,adest,rec;
 const cv=$("#cv"),ctx=cv.getContext("2d");
 const ease=x=>1-Math.pow(1-x,3),back=x=>{const c=2.70158;return 1+c*Math.pow(x-1,3)+1.70158*Math.pow(x-1,2)};
 const say=(s,err)=>{$("#msg").textContent=s;$("#msg").className=err?"err":""};
@@ -2189,6 +2269,7 @@ function buildPrompt(){
   const list=assets.length?assets.map(a=>`- ${a.id}: ${a.kind=="v"?"영상":a.kind=="i"?"이미지":"오디오"} "${a.name}"${a.dur?` (길이 ${a.dur}초)`:""}${a.w?` ${a.w}x${a.h}`:""}${a.memo.trim()?` — 설명: ${a.memo.trim()}`:""}${a.bpm?` — 분석: 약 ${a.bpm}BPM, 첫 타격 ${a.off}초, 강한 비트 시점(초): ${a.on.join(", ")}`:""}${a.col?` — 분석: 주요색 ${a.col}, 밝기 ${a.lum}`:""}`).join("\n"):"(업로드된 소스 없음 — color 클립과 자막만으로 구성)";
   return `너는 센스 있는 영상 편집자야. 아래 [요청]에 맞는 편집 계획을 JSON 하나로 만들어줘.
 설명 없이 ${FENCE}json 코드블록 하나만 출력해. JSON에 주석은 쓰지 마.
+이 JSON은 웹 편집기가 읽어서 그대로 영상으로 렌더링해. 규격에 없는 필드나 값은 무시되고, 문법이 틀리면 전체가 실패해. 너는 영상 내용을 볼 수 없으니 [소스 파일]의 길이와 설명만 믿고 계획해.
 
 [캔버스] ${w}x${h}px (${r}). 글자 크기(size)는 이 픽셀 기준이야.
 
@@ -2198,53 +2279,34 @@ ${list}
 [요청]
 ${$("#req").value.trim()||"(자유롭게 재미있게)"}
 
-[JSON 규격] 시간은 전부 초 단위
-{
- "title":"제목",
- "bg":"#000000",
- "clips":[ 화면에 깔리는 층. 배열 뒤쪽이 위에 그려짐. 시간을 겹치면 크로스페이드가 됨
-  {"asset":"v1" 또는 "color":"#ff6b6b" 또는 "color":["#ff6b6b","#4d79ff"] (위→아래 그라데이션) 또는 "img":"https://….jpg" (웹에서 찾은 이미지의 직접 링크),"label":"이미지 설명 한두 단어",
-   "start":0,"dur":3,"in":0 (영상 원본에서 시작할 지점),"speed":1,"fit":"cover 또는 contain",
-   "zoom":[1,1.2] (시작→끝 배율),"flip":false,
-   "filter":"none|grayscale|sepia|blur|bright|contrast|warm|cool|vivid|invert|noir|vintage|dream|dark 또는 CSS filter 문자열(예: hue-rotate(90deg) saturate(2))",
-   "fade":0.3 (페이드 인/아웃 길이),"vol":1 (영상 소리 0~1),
-   "transition":"none|fade|slide|slideUp|wipe|zoom|glitch|flash" (이 클립이 시작할 때 이전 클립 위로 들어오는 방식. 앞 클립과 시간이 겹쳐야 보임),"transDur":0.5, + 모션 공통항목}
- ],
- "shapes":[ 도형(스티커, 밑줄, 글자 뒤 박스, 장식). clips 위, texts 아래에 그려짐
-  {"type":"rect|circle|ring|triangle|polygon|star|heart|line|path","x":0.5,"y":0.5 (중심, 화면 비율),"w":0.3,"h":0.1 (화면 비율, h 생략하면 정사각),
-   "color":"#ffffff" 또는 "gradient":["#ff6b6b","#4d79ff"],"angle":90 (그라데이션 방향 각도),
-   "radius":20 (rect 모서리),"sides":6 (polygon),"points":5,"inner":0.45 (star),"thickness":0.25 (ring),
-   "x1":0.1,"y1":0.5,"x2":0.9,"y2":0.5 (line은 x,y,w,h 대신 두 점을 쓰고 strokeW가 굵기, "dash":[12,10] 가능),
-   "d":"M10 10 L90 50 L10 90 Z" (path는 100x100 칸 기준 SVG 경로),
-   "opacity":1,"stroke":"#000000","strokeW":0,"glow":"#ff00aa","shadow":"#000000","start":0,"dur":2, + 모션 공통항목}
- ],
- "audio":[{"asset":"a1","start":0,"dur":10,"in":0,"vol":0.6}],
- "texts":[
-  {"text":"내용 (\\n으로 줄바꿈)","start":0,"dur":2,"font":"글꼴","size":64,"weight":700,"italic":false,
-   "color":"#ffffff" 또는 "gradient":["#ffe66d","#ff4d6d"],"stroke":"#000000","strokeW":6,
-   "glow":"#ff00aa" (발광),"shadow":"#000000" (그림자),"spacing":0 (자간 px),"lineHeight":1.3,
-   "bg":"rgba(0,0,0,0.5)" (글자 뒤 박스, 생략 가능),"x":0.5,"y":0.8 (중심 기준 화면 비율),"align":"center","rot":0 (기본 회전 각도), + 모션 공통항목}
- ]
-}
+[JSON 규격] 최상위는 title, bg(배경색), clips, shapes, audio, texts. 시간은 전부 초 단위. 표시한 필수 항목 말고는 모두 생략해도 돼.
 
-[모션 공통항목] clips, shapes, texts 전부 사용 가능
-- "anim":"none|fade|slideUp|slideDown|slideLeft|slideRight|pop|bounce|zoomIn|spin" 등장·퇴장 효과 (texts는 typewriter도 가능), "animDur":0.4 (등장·퇴장 길이)
-- "loop":"none|shake|pulse|float|wiggle|spin|blink" 계속 반복되는 움직임
-- "kf":[{"t":0,"x":0,"y":0,"s":1,"r":0,"o":1,"b":0,"e":"easeOut"},{"t":1,"x":0.2,"y":-0.1,"s":1.5,"r":30,"o":0.8,"b":4}]
-  키프레임. t=0~1 (항목 길이 대비 비율), x·y=원래 위치에서의 이동량(화면 비율), s=배율, r=회전(도), o=투명도, b=블러(px),
-  e=직전 키프레임에서 이 키프레임까지의 가속(linear|easeIn|easeOut|easeInOut|back|bounce|elastic).
-  일부 속성만 써도 되고 키프레임 개수 제한은 없어. anim, loop, kf를 섞어서 원하는 움직임을 자유롭게 설계해.
-
-- "blend":"source-over|lighter|multiply|screen|overlay|darken|lighten|difference|exclusion|color-dodge|soft-light|hard-light|hue|color|luminosity" 합성 방식 (빛 번짐은 lighter/screen, 그림자는 multiply)
-
-[코드 레이어 "code"] 위 항목으로 부족한 연출(파티클, 파동, 비·눈, 그래프, 글리치, 배경 패턴, 이퀄라이저 등)은 JS로 직접 그려. 가능한 건 전부 만들 수 있어.
-"code":[{"start":0,"dur":4,"z":"mid","opacity":1,"blend":"source-over","label":"설명 한두 단어","js":"함수 본문"}]
-- z: "bottom"(영상 클립 아래) | "mid"(기본, 클립 위·도형 아래) | "top"(자막 위)
-- js는 함수 본문이고 JSON 문자열이야. 줄바꿈은 \\n 으로 쓰고, 코드 안 문자열은 큰따옴표 대신 작은따옴표를 써.
-- 쓸 수 있는 변수: ctx(Canvas 2D), t(이 레이어 시작 후 초), p(0~1 진행도), W, H(캔버스 px), u(도우미)
-- 매 프레임 처음부터 다시 그리는 함수야. 모양은 t로만 결정돼야 해. 전역 변수 누적, Math.random, Date는 쓰지 마(저장할 때 프레임이 어긋나). 난수는 u.rand(시드).
-- u 도우미: u.clamp(v,a,b) u.lerp(a,b,k) u.map(v,a,b,c,d) u.rand(seed) u.noise(x,y) u.hsl(h,s,l,a) u.TAU u.ease.easeOut(k) (linear|easeIn|easeOut|easeInOut|back|bounce|elastic) u.image('i1') (업로드한 이미지 요소, 없으면 null)
-- 예(떨어지는 반짝임): "for(let i=0;i<40;i++){const x=u.rand(i)*W,y=(u.rand(i+99)*H+t*H*0.3*(0.5+u.rand(i+7)))%H;ctx.fillStyle='rgba(255,255,255,'+(0.3+0.7*u.rand(i+3))+')';ctx.beginPath();ctx.arc(x,y,2+u.rand(i+5)*3,0,u.TAU);ctx.fill()}"
+■ clips — 화면에 깔리는 층. 배열 뒤쪽이 위에 그려지고, 시간이 겹치면 크로스페이드가 돼.
+ - 소스(셋 중 하나, 필수): asset(소스 id) / color(색 하나, 또는 [위색,아래색] 그라데이션) / img(웹에서 찾은 이미지의 직접 링크, label에 설명 한두 단어)
+ - start, dur (필수)
+ - in(영상 원본에서 시작할 지점), speed, fit(cover|contain), zoom([시작배율,끝배율]), flip(true|false)
+ - filter: none|grayscale|sepia|blur|bright|contrast|warm|cool|vivid|invert|noir|vintage|dream|dark, 또는 CSS filter 문자열(예: hue-rotate(90deg) saturate(2))
+ - fade(페이드 인/아웃 길이), vol(영상 소리 0~1)
+ - transition: none|fade|slide|slideUp|wipe|zoom|glitch|flash — 이 클립이 시작할 때 이전 클립 위로 들어오는 방식. 앞 클립과 시간이 겹쳐야 보여. transDur(길이)
+■ shapes — 도형(스티커, 밑줄, 글자 뒤 박스, 장식, 아이콘). clips 위, texts 아래에 그려져. 배열 뒤쪽이 위에 그려져.
+ - type 종류: rect(radius로 둥근 모서리) | pill(알약) | circle(w와 h가 다르면 타원) | ring(고리, thick 0.05~0.9 두께 비율) | triangle | rtriangle(직각삼각형) | diamond | pentagon | hexagon | octagon | polygon(points=변 개수) | star(points=꼭짓점 수, inner=안쪽 비율 0.2~0.9) | burst(뾰족한 폭발 모양, points) | sparkle(반짝이) | heart | cross(thick) | arrow(오른쪽 화살표, rot으로 방향 변경) | chevron | parallelogram | trapezoid | semicircle | moon(초승달) | gear(points=톱니 수) | cloud | bolt(번개) | drop(물방울) | bubble(말풍선) | check(체크) | line(선) | wave(물결선) | svg(직접 만든 SVG)
+ - 공통: x, y(중심, 화면 비율 0~1), w, h(화면 비율, h 생략하면 정사각), color(색 하나, 또는 [위색,아래색] 그라데이션, "none"이면 채우지 않음), opacity, stroke(테두리색), strokeW(테두리 굵기 px), glow(발광색), shadow(그림자색), flip(true면 좌우반전), start, dur
+ - line과 wave는 선으로만 그려져. 색은 stroke(없으면 color), 굵기는 strokeW(기본 6). w가 선 길이, wave는 points가 물결 수(기본 4), h가 물결 높이(생략하면 w의 12%)야. 밑줄이나 구분선에 좋아.
+ - type이 svg면 직접 만든 SVG 코드를 svg 필드에 문자열로 넣어. 정해진 도형으로 안 되는 아이콘, 로고풍 마크, 일러스트, 이모티콘 같은 것은 직접 그려서 넣어. 예: {"type":"svg","svg":"<svg viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='#ff4d6d'/><path d='M30 55 Q50 80 70 55' stroke='#fff' stroke-width='6' fill='none'/></svg>","x":0.5,"y":0.4,"w":0.3,"start":0,"dur":3,"anim":"pop"}
+   · JSON 문자열이 깨지지 않게 SVG 속성에는 작은따옴표를 쓰고, 줄바꿈 없이 한 줄로 써.
+   · 반드시 viewBox를 넣고 색은 fill, stroke로 직접 지정해. 루트 svg에 fill을 안 쓰면 color 값이 기본 채움색이고 currentColor도 color 값이 돼.
+   · path, circle, rect, ellipse, line, polyline, polygon, g, defs, linearGradient, radialGradient, clipPath, mask, transform 사용 가능. script, foreignObject, image, 외부 링크, 글꼴(text 태그)은 안 돼. 글자는 texts로 넣어.
+   · w로 가로 크기를 정하고 h는 생략하면 SVG 비율대로 맞춰져. 한 개당 2000자 안쪽으로 간결하게.
+   · path 하나만 쓸 때는 svg 대신 d(경로 문자열)와 viewBox(기본 "0 0 24 24")를 써도 돼. 예: {"type":"svg","d":"M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z","viewBox":"0 0 24 24","color":"#ffe66d","x":0.8,"y":0.2,"w":0.15}
+■ audio — asset, start, dur, in, vol(0~1)
+■ texts — 자막
+ - text(\\n으로 줄바꿈), start, dur (필수)
+ - font, size(px), weight, italic, color 또는 gradient([색,색]), stroke, strokeW, glow(발광색), shadow(그림자색), spacing(자간 px), lineHeight
+ - bg(글자 뒤 박스색), x, y(중심 기준 화면 비율), align(left|center|right), rot(기본 회전 각도)
+■ 모션 공통 — clips, shapes, texts 전부 사용 가능
+ - anim: none|fade|slideUp|slideDown|slideLeft|slideRight|pop|bounce|zoomIn|spin (등장·퇴장 효과, texts는 typewriter도 가능), animDur(길이)
+ - loop: none|shake|pulse|float|wiggle|spin|blink (계속 반복되는 움직임)
+ - kf: 키프레임 배열. 항목은 {t, x, y, s, r, o, b, e} — t=0~1(항목 길이 대비 비율), x·y=원래 위치에서의 이동량(화면 비율), s=배율, r=회전(도), o=투명도, b=블러(px), e=직전 키프레임에서 이 키프레임까지의 가속(linear|easeIn|easeOut|easeInOut|back|bounce|elastic). 일부 속성만 써도 되고 개수 제한은 없어. anim, loop, kf를 섞어서 자유롭게 설계해.
 
 [사용 가능한 글꼴 — 목록에서만, 분위기에 맞게 골라줘]
 ${FONTS.map(f=>f+(HINT[f]?`(${HINT[f]})`:"")).join(", ")}
@@ -2255,15 +2317,25 @@ ${FONTS.map(f=>f+(HINT[f]?`(${HINT[f]})`:"")).join(", ")}
 - 인터넷 검색이 가능하면 필요한 이미지를 찾아 img에 jpg/png/webp 직접 링크를 넣어도 돼. 실제로 확인한 링크만 쓰고, 검색이 안 되면 img는 쓰지 마.
 - 연출은 제약 없이 자유롭게. 키프레임, 도형, 반복 모션을 적극 활용해서 평범하지 않게 만들어줘.
 
+[모션 레시피 — 그대로 쓰거나 응용해]
+- 천천히 줌인(켄 번즈): 클립에 "zoom":[1,1.15]
+- 쿵 하고 나오는 큰 자막: "anim":"pop" 또는 "kf":[{"t":0,"s":2.2,"o":0},{"t":0.15,"s":1,"o":1,"e":"back"}]
+- 아래에서 떠오르는 자막: "anim":"slideUp" 또는 "kf":[{"t":0,"y":0.08,"o":0},{"t":0.3,"y":0,"o":1,"e":"easeOut"}]
+- 비트에 맞춘 강조: 그 시점에 시작하는 짧은 자막·도형에 "kf":[{"t":0,"s":1.3},{"t":1,"s":1,"e":"easeOut"}]
+- 충격 효과: 짧은 구간(dur 0.3~0.6)의 항목에만 "loop":"shake"
+- 스윽 지나가는 강조선: 얇은 rect 도형에 "kf":[{"t":0,"x":-0.6},{"t":1,"x":0.6,"e":"easeInOut"}]
+- 깜빡이는 포인트: "loop":"blink"
+
 [연출 가이드]
 - 첫 1초 안에 눈길을 끄는 장면이나 큰 자막(훅)으로 시작해.
 - 한 컷은 보통 1.5~3초. 컷이 바뀔 때 transition을 넣고(앞 클립과 0.3~0.5초 겹치기), 같은 전환을 3번 연속 쓰지 마.
 - 자막은 화면 안쪽(x 0.1~0.9)에 한 번에 2줄 이하, 글꼴은 최대 3종만 써.
+- 도형을 적극 활용해: 강조 박스, 밑줄(wave, line), 말풍선(bubble, burst), 장식(star, sparkle, heart), 필요한 아이콘이나 일러스트는 svg로 직접 그려서 넣어. 도형에도 anim, loop, kf를 줘서 움직이게 해.
 - 소스 설명에 BPM·비트 시점이 있으면 컷 전환과 강조 모션을 그 시점에 맞춰. 음악을 start 0, in 0으로 쓰면 비트 시점이 타임라인 시간과 같아.
-- 소스 설명에 주요색이 있으면 자막색·배경색을 그와 어울리게 골라.
+- 소스 설명에 주요색이 있으면 자막색·배경색을 그와 어울리게 골라.${r=="9:16"?"\n- 세로 영상이야. 앱 UI에 가려지니까 위쪽 10%와 아래쪽 20%는 비우고, 자막 y는 0.12~0.75 안에 둬.":""}
 
 [출력 예시 — 형식 참고용. 내용은 요청에 맞게 새로 만들어]
-{"title":"예시","bg":"#000000","clips":[{"color":["#1f1c2c","#928dab"],"start":0,"dur":3,"zoom":[1,1.15]},{"color":["#ff6b6b","#4d79ff"],"start":2.6,"dur":2.8,"transition":"wipe","transDur":0.4}],"texts":[{"text":"첫 1초에 눈길","start":0.2,"dur":2.2,"font":"Black Han Sans","size":84,"color":"#ffffff","stroke":"#000000","strokeW":8,"y":0.45,"anim":"pop"},{"text":"짧게 끊어서","start":2.8,"dur":2.4,"font":"Jua","size":64,"gradient":["#ffe66d","#ff4d6d"],"y":0.5,"anim":"slideUp"}]}`}
+{"title":"예시","bg":"#000000","clips":[{"color":["#1f1c2c","#928dab"],"start":0,"dur":3,"zoom":[1,1.15]},{"color":["#ff6b6b","#4d79ff"],"start":2.6,"dur":2.8,"transition":"wipe","transDur":0.4}],"shapes":[{"type":"star","x":0.82,"y":0.2,"w":0.12,"color":"#ffe66d","start":0.3,"dur":2.5,"loop":"spin"},{"type":"wave","x":0.5,"y":0.53,"w":0.5,"strokeW":8,"color":"#ffe66d","start":2.8,"dur":2.4,"anim":"fade"}],"texts":[{"text":"첫 1초에 눈길","start":0.2,"dur":2.2,"font":"Black Han Sans","size":84,"color":"#ffffff","stroke":"#000000","strokeW":8,"y":0.45,"anim":"pop"},{"text":"짧게 끊어서","start":2.8,"dur":2.4,"font":"Jua","size":64,"gradient":["#ffe66d","#ff4d6d"],"y":0.5,"anim":"slideUp"}]}`}
 $("#copy").onclick=async()=>{
   const p=buildPrompt();$("#links").hidden=false;
   try{await navigator.clipboard.writeText(p);say("프롬프트가 복사됐어요. AI에 붙여넣어 보내고, 받은 답은 '적용' 탭에 붙여넣으세요.")}
@@ -2295,6 +2367,7 @@ async function analyzeAudio(a){try{
 let lastIssues=[];
 function fix(p){
   const m=new Set(),W=RATIOS[$("#ratio").value][0],H=RATIOS[$("#ratio").value][1],TR=["none","fade","slide","slideUp","wipe","zoom","glitch","flash"];
+  for(const s of p.shapes)if(!shapeType(s))m.add(`없는 도형 "${s.type}"을 사각형으로 바꿈`);
   for(const c of p.clips)if(c.transition&&!TR.includes(c.transition)){m.add(`없는 전환 "${c.transition}"을 뺌`);c.transition="none"}
   for(const c of [...p.clips,...p.audio]){
     const a=c.a;if(!a||a.kind=="i"||!a.dur)continue;const sp=+c.speed||1;
@@ -2312,7 +2385,7 @@ function fix(p){
       if(hx<.5){const cx=Math.min(1-hx,Math.max(hx,ox));if(Math.abs(cx-ox)>.005){x.x=+cx.toFixed(3);m.add("화면 밖 자막을 안쪽으로 옮김")}}
       if(hy<.5){const cy=Math.min(1-hy,Math.max(hy,oy));if(Math.abs(cy-oy)>.005){x.y=+cy.toFixed(3);m.add("화면 밖 자막을 안쪽으로 옮김")}}}}
   ctx.letterSpacing="0px";
-  return{msgs:[...m],total:Math.max(0,...[...p.clips,...p.texts,...p.shapes,...p.code,...p.audio].map(x=>x.start+x.dur))}}
+  return{msgs:[...m],total:Math.max(0,...[...p.clips,...p.texts,...p.shapes,...p.audio].map(x=>x.start+x.dur))}}
 $("#fixask").onclick=async()=>{
   const t=`아래 편집 JSON에 문제가 있어. 문제만 고쳐서 ${FENCE}json 코드블록 하나로 전체를 다시 줘. 설명은 쓰지 마.\n\n[문제]\n${lastIssues.map(s=>"- "+s).join("\n")}\n\n[현재 JSON]\n${$("#out").value.trim()}`;
   try{await navigator.clipboard.writeText(t);say("수정 요청 문구를 복사했어요. AI에 붙여넣어 보내고, 받은 답을 '적용' 탭에 다시 붙여넣으세요.")}catch(e){say("복사가 막혔어요.",1)}};
@@ -2327,22 +2400,108 @@ function ready(on){["pp","sl","exp","big"].forEach(i=>$("#"+i).disabled=!on)}
 $("#apply").onclick=async()=>{
   stop();let p;
   try{p=parse($("#out").value)}catch(e){say(e.message+" — 답변의 코드블록 전체를 붙여넣었는지 확인해 주세요.",1);return}
-  p.clips=Array.isArray(p.clips)?p.clips:[];p.texts=Array.isArray(p.texts)?p.texts:[];p.audio=Array.isArray(p.audio)?p.audio:[];p.shapes=Array.isArray(p.shapes)?p.shapes:[];p.code=Array.isArray(p.code)?p.code:[];
+  p.clips=Array.isArray(p.clips)?p.clips:[];p.texts=Array.isArray(p.texts)?p.texts:[];p.audio=Array.isArray(p.audio)?p.audio:[];p.shapes=Array.isArray(p.shapes)?p.shapes:[];
   aiImgs=[];const um={};
   for(const c of p.clips)if(c.img&&!c.asset&&!c.color&&/^https?:\/\//.test(c.img)){let a=um[c.img];if(!a){a=um[c.img]={id:"g"+(aiImgs.length+1),kind:"i",url:c.img,label:c.label||"",el:new Image(),ok:false,dur:0};aiImgs.push(a)}c.a=a}
   const warn=[],issues=[];
   for(const c of [...p.clips,...p.audio]){c.start=+c.start||0;c.dur=+c.dur||3;if(c.asset){c.a=assets.find(a=>a.id==c.asset);if(!c.a){warn.push(c.asset+" 없음");issues.push(`소스 "${c.asset}"가 없음 (사용 가능: ${assets.map(a=>a.id).join(", ")||"없음 — color 클립과 자막만 사용"})`)}}}
-  for(const x of [...p.texts,...p.shapes,...p.code]){x.start=+x.start||0;x.dur=+x.dur||2}
-  codeErrs=[];p.code.forEach((c,i)=>{c.js=String(c.js??c.code??"");c.dead=false;c.rt=false;try{c.fn=compileCode(c.js)}catch(e){c.dead=true;issues.push(`code[${i}] 문법 오류: ${e.message}`);warn.push(`code[${i}] 문법 오류`)}});
+  for(const x of [...p.texts,...p.shapes]){x.start=+x.start||0;x.dur=+x.dur||2}
   for(const x of [...p.clips,...p.texts,...p.shapes])if(Array.isArray(x.kf))x.kf.sort((a,b)=>(+a.t||0)-(+b.t||0));
-  const tt=Math.max(0,...[...p.clips,...p.texts,...p.shapes,...p.code,...p.audio].map(x=>x.start+x.dur));
+  const tt=Math.max(0,...[...p.clips,...p.texts,...p.shapes,...p.audio].map(x=>x.start+x.dur));
   if(!tt){say("편집 내용이 비어 있어요.",1);return}
   await Promise.all([...new Set(p.texts.map(x=>(x.weight||700)+"|"+x.font))].map(k=>{const [w,f]=k.split("|");return FONTS.includes(f)?document.fonts.load(`${w} 32px "${f}"`):0}));
   await Promise.all(aiImgs.map(a=>setAI(a,a.url)));
+  p.shapes.forEach((s,i)=>{if(!shapeType(s))issues.push(`shapes[${i}]의 type "${s.type}"은 없는 도형이야 (사용 가능: ${SL.join(", ")})`)});
+  const svgBad=await loadShapes(p.shapes);
+  if(svgBad.length){warn.push(`SVG 도형 ${svgBad.length}개 읽기 실패`);svgBad.forEach(i=>issues.push(`shapes[${i}]의 SVG를 읽을 수 없어. 올바른 SVG 코드(viewBox 포함, 속성은 작은따옴표, 태그를 모두 닫기)로 다시 써줘`))}
   const bad=aiImgs.filter(a=>!a.ok).length;if(bad)warn.push(bad+"개 이미지 불러오기 실패 (오른쪽 속성에서 교체)");
   const fx=fix(p);plan=p;total=fx.total||tt;tNow=0;$("#sl").max=Math.round(total*100);ready(true);renderTL();$("#hint").hidden=true;sync(0,false);draw(0);ui(0);
   lastIssues=issues.concat(aiImgs.filter(a=>!a.ok).map(a=>`img 링크가 열리지 않음: ${a.url} (다른 링크를 쓰거나 img를 빼줘)`));$("#fixask").hidden=!lastIssues.length;
-  say(`적용 완료 (${total.toFixed(1)}초)`+(fx.msgs.length?` · 자동 보정 ${fx.msgs.length}건`:"")+(warn.length?" · "+warn.join(", "):"")+(fx.msgs.length?"\n"+fx.msgs.slice(0,4).join(" / "):""),warn.length>0)};
+  say(`적용 완료 · 영상 길이 ${total.toFixed(1)}초`+(fx.msgs.length?` · 자동 보정 ${fx.msgs.length}건`:"")+(warn.length?" · "+warn.join(", "):"")+(fx.msgs.length?"\n"+fx.msgs.slice(0,4).join(" / "):""),warn.length>0)};
+
+
+/* 도형 */
+const SD={
+ heart:["M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z",2,3,22,21.35],
+ cloud:["M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z",0,4,24,20],
+ bolt:["M7 2v11h3v9l7-12h-4l4-8z",7,2,17,22],
+ check:["M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z",3.41,5.59,21,19],
+ drop:["M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8z",4,2,20,22],
+ bubble:["M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z",2,2,22,22]};
+const SL=["rect","pill","circle","ring","triangle","rtriangle","diamond","pentagon","hexagon","octagon","polygon","star","burst","sparkle","heart","cross","arrow","chevron","parallelogram","trapezoid","semicircle","moon","gear","cloud","bolt","drop","bubble","check","line","wave","svg"];
+const SA={square:"rect",rectangle:"rect",roundrect:"rect",roundedrect:"rect",oval:"circle",ellipse:"circle",donut:"ring",righttriangle:"rtriangle",rhombus:"diamond",hex:"hexagon",star5:"star",starburst:"burst",sparkles:"sparkle",plus:"cross",arrowright:"arrow",lightning:"bolt",flash:"bolt",tick:"check",teardrop:"drop",speech:"bubble",chat:"bubble",crescent:"moon",cog:"gear",underline:"line",squiggle:"wave",zigzag:"wave",path:"svg",custom:"svg"};
+function shapeType(s){let t=String(s.type||"").toLowerCase().replace(/[\s_-]/g,"");if(!t)return s.svg||s.d?"svg":"rect";t=SA[t]||t;return SL.includes(t)?t:null}
+const clampN=(v,a,b,d)=>{v=+v;return Math.min(b,Math.max(a,isFinite(v)&&v?v:d))};
+function ngon(n,rot){return Array.from({length:n},(_,i)=>{const a=-Math.PI/2+rot+i*2*Math.PI/n;return[Math.cos(a),Math.sin(a)]})}
+function starPts(n,k){const o=[];for(let i=0;i<n*2;i++){const a=-Math.PI/2+i*Math.PI/n,r=i%2?k:1;o.push([Math.cos(a)*r,Math.sin(a)*r])}return o}
+/* mode 0: 박스에 꽉 채움 / 1: 비율 유지하며 가운데 / 2: 이미 -0.5~0.5 좌표 */
+function poly(pts,mode){
+  const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys),sx=x1-x0||1,sy=y1-y0||1,k=Math.max(sx,sy),p=new Path2D();
+  pts.forEach(([x,y],i)=>{const u=mode==2?x:mode==1?(x-(x0+x1)/2)/k:(x-x0)/sx-.5,v=mode==2?y:mode==1?(y-(y0+y1)/2)/k:(y-y0)/sy-.5;i?p.lineTo(u,v):p.moveTo(u,v)});
+  p.closePath();return p}
+function shapeP(s,ty,w,h){
+  const PI=Math.PI,p=new Path2D(),P=u=>{const q=new Path2D();q.addPath(u,new DOMMatrix([w,0,0,h,0,0]));return q};
+  switch(ty){
+   case"rect":p.roundRect(-w/2,-h/2,w,h,Math.max(0,+s.radius||0));return{p};
+   case"pill":p.roundRect(-w/2,-h/2,w,h,Math.min(w,h)/2);return{p};
+   case"circle":p.ellipse(0,0,w/2,h/2,0,0,PI*2);return{p};
+   case"ring":{const t=clampN(s.thick,.05,.9,.25);p.ellipse(0,0,w/2,h/2,0,0,PI*2);p.moveTo(w/2*(1-t),0);p.ellipse(0,0,w/2*(1-t),h/2*(1-t),0,0,PI*2);return{p}}
+   case"semicircle":p.ellipse(0,h/2,w/2,h,0,PI,PI*2);p.closePath();return{p};
+   case"line":p.moveTo(-w/2,0);p.lineTo(w/2,0);return{p,line:1};
+   case"wave":{const n=clampN(s.points,1,24,4),hh=s.h?h:w*.12,N=Math.max(24,n*16);for(let i=0;i<=N;i++){const x=-w/2+w*i/N,y=Math.sin(i/N*n*PI*2)*hh/2;i?p.lineTo(x,y):p.moveTo(x,y)}return{p,line:1}}
+   case"triangle":return{p:P(poly([[0,-1],[1,1],[-1,1]],0))};
+   case"rtriangle":return{p:P(poly([[0,0],[0,1],[1,1]],0))};
+   case"diamond":return{p:P(poly([[0,-1],[1,0],[0,1],[-1,0]],0))};
+   case"pentagon":return{p:P(poly(ngon(5,0),1))};
+   case"hexagon":return{p:P(poly(ngon(6,0),1))};
+   case"octagon":return{p:P(poly(ngon(8,PI/8),1))};
+   case"polygon":return{p:P(poly(ngon(Math.round(clampN(s.points,3,24,6)),0),1))};
+   case"star":return{p:P(poly(starPts(Math.round(clampN(s.points,3,24,5)),clampN(s.inner,.1,.95,.42)),1))};
+   case"burst":return{p:P(poly(starPts(Math.round(clampN(s.points,6,40,16)),clampN(s.inner,.1,.95,.78)),1))};
+   case"sparkle":{const u=new Path2D();u.moveTo(0,-.5);u.quadraticCurveTo(.06,-.06,.5,0);u.quadraticCurveTo(.06,.06,0,.5);u.quadraticCurveTo(-.06,.06,-.5,0);u.quadraticCurveTo(-.06,-.06,0,-.5);u.closePath();return{p:P(u)}}
+   case"cross":{const a=clampN(s.thick,.1,.9,.34)/2;return{p:P(poly([[-a,-.5],[a,-.5],[a,-a],[.5,-a],[.5,a],[a,a],[a,.5],[-a,.5],[-a,a],[-.5,a],[-.5,-a],[-a,-a]],2))}}
+   case"arrow":return{p:P(poly([[-.5,-.18],[.08,-.18],[.08,-.5],[.5,0],[.08,.5],[.08,.18],[-.5,.18]],2))};
+   case"chevron":return{p:P(poly([[-.5,-.5],[.15,-.5],[.5,0],[.15,.5],[-.5,.5],[-.15,0]],2))};
+   case"parallelogram":return{p:P(poly([[-.5,.5],[-.2,-.5],[.5,-.5],[.2,.5]],2))};
+   case"trapezoid":return{p:P(poly([[-.5,.5],[-.3,-.5],[.3,-.5],[.5,.5]],2))};
+   case"moon":{const u=new Path2D(),R=.5,r=.44,d=.2,ox=.13,x=(d*d+R*R-r*r)/(2*d),y=Math.sqrt(R*R-x*x);u.arc(ox,0,R,Math.atan2(-y,x),Math.atan2(y,x),true);u.arc(ox+d,0,r,Math.atan2(y,x-d),Math.atan2(-y,x-d),false);u.closePath();return{p:P(u)}}
+   case"gear":{const n=Math.round(clampN(s.points,5,24,8)),o=[],d=PI*2/n;for(let i=0;i<n;i++)[[-.45,.72],[-.2,1],[.2,1],[.45,.72]].forEach(([k,r])=>{const a=-PI/2+(i+k)*d;o.push([Math.cos(a)*r,Math.sin(a)*r])});const u=poly(o,1);u.moveTo(.17,0);u.arc(0,0,.17,0,PI*2);return{p:P(u)}}
+   default:{const e=SD[ty];if(e){const[d,x0,y0,x1,y1]=e,sx=w/(x1-x0),sy=h/(y1-y0);p.addPath(new Path2D(d),new DOMMatrix([sx,0,0,sy,-(x0+x1)/2*sx,-(y0+y1)/2*sy]));return{p}}p.roundRect(-w/2,-h/2,w,h,+s.radius||0);return{p}}}}
+
+/* AI가 만든 SVG 코드 → 안전하게 정리해서 이미지로 */
+const svgCache={};
+function svgPrep(s){
+  let m=String(s.svg||"");
+  const col=String(Array.isArray(s.color)?s.color[0]:s.color||"#ffffff").replace(/[^#\w\s(),.%-]/g,"")||"#ffffff";
+  if(!m.trim()&&s.d){
+    const sw=+s.strokeW||0,st=sw?String(s.stroke||"#000").replace(/[^#\w\s(),.%-]/g,""):"none";
+    m=`<svg viewBox="${esc(s.viewBox||"0 0 24 24")}" stroke="${st}" stroke-width="${sw}" stroke-linejoin="round"><path d="${esc(s.d)}"/></svg>`}
+  if(!m.trim()||m.length>300000)return null;
+  m=m.replace(/<\?xml[\s\S]*?\?>|<!DOCTYPE[\s\S]*?>|<!--[\s\S]*?-->/gi,"")
+   .replace(/<(script|foreignObject|iframe|object|embed|audio|video|image|a)\b[\s\S]*?(<\/\1\s*>|\/>)/gi,"")
+   .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*')/gi,"")
+   .replace(/(xlink:)?href\s*=\s*("(?!#)[^"]*"|'(?!#)[^']*')/gi,"")
+   .replace(/@import[^;]*;?/gi,"")
+   .replace(/url\(\s*(?!["']?#)[^)]*\)/gi,"none");
+  const r=m.match(/<svg\b([^>]*?)(\/?)>/i);if(!r)return null;
+  let at=r[1];
+  const vbm=at.match(/viewBox\s*=\s*["']([^"']+)["']/i);
+  let [x,y,vw,vh]=(vbm?vbm[1]:"").trim().split(/[\s,]+/).map(Number);
+  if(!(vw>0&&vh>0)){
+    const gw=parseFloat((at.match(/\swidth\s*=\s*["']?([\d.]+)/i)||[])[1]),gh=parseFloat((at.match(/\sheight\s*=\s*["']?([\d.]+)/i)||[])[1]);
+    x=y=0;if(gw>0&&gh>0){vw=gw;vh=gh}else vw=vh=100}
+  at=at.replace(/\s(width|height)\s*=\s*("[^"]*"|'[^']*')/gi,"").replace(/\sviewBox\s*=\s*("[^"]*"|'[^']*')/i,"").replace(/\sxmlns(:xlink)?\s*=\s*("[^"]*"|'[^']*')/gi,"");
+  const asp=vw/vh,iw=asp>=1?1024:Math.max(16,Math.round(1024*asp)),ih=asp>=1?Math.max(16,Math.round(1024/asp)):1024,hasFill=/\sfill\s*=/i.test(at);
+  const root=`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${iw}" height="${ih}" viewBox="${x} ${y} ${vw} ${vh}"${hasFill?"":` fill="${col}"`} color="${col}"${at}${r[2]}>`;
+  m=m.replace(r[0],()=>root);
+  return{src:"data:image/svg+xml;charset=utf-8,"+encodeURIComponent(m),asp}}
+async function loadShapes(list){
+  const bad=[];
+  for(let i=0;i<list.length;i++){const s=list[i];if(shapeType(s)!="svg")continue;
+    const r=svgPrep(s);let im=null;
+    if(r){im=svgCache[r.src];if(!im){im=await loadImg(r.src,false);if(im)svgCache[r.src]=im}}
+    if(im){s.im=im;s.asp=r.asp}else bad.push(i)}
+  return bad}
 
 /* AI 이미지 */
 function loadImg(src,cors){return new Promise(r=>{const im=new Image();if(cors)im.crossOrigin="anonymous";im.onload=()=>r(im);im.onerror=()=>r(null);setTimeout(()=>r(null),8000);im.src=src})}
@@ -2398,62 +2557,15 @@ function mo(it,loc,du){
   if(kf){m.dx+=kfv(kf,p,"x",0);m.dy+=kfv(kf,p,"y",0);m.s*=kfv(kf,p,"s",1);m.r+=kfv(kf,p,"r",0);m.o*=kfv(kf,p,"o",1);m.b=kfv(kf,p,"b",0)}
   return m}
 function tf(m,cx,cy,W,H){ctx.translate(cx+m.dx*W,cy+m.dy*H);ctx.rotate(m.r*Math.PI/180);ctx.scale(m.s,m.s)}
-const BLENDS=["source-over","lighter","multiply","screen","overlay","darken","lighten","color-dodge","color-burn","hard-light","soft-light","difference","exclusion","hue","saturation","color","luminosity"],BL=b=>BLENDS.includes(b)?b:"source-over";
-const hash2=(x,y)=>{const v=Math.sin(x*127.1+y*311.7)*43758.5453;return v-Math.floor(v)};
-const U={TAU:Math.PI*2,clamp:(v,a=0,b=1)=>Math.min(b,Math.max(a,v)),lerp:(a,b,k)=>a+(b-a)*k,map:(v,a,b,c,d)=>c+(d-c)*((v-a)/(b-a||1)),
-  rand:sd=>hash2(+sd||0,.5),
-  noise:(x,y=0)=>{const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,sx=xf*xf*(3-2*xf),sy=yf*yf*(3-2*yf),a=hash2(xi,yi),b=hash2(xi+1,yi),c=hash2(xi,yi+1),d=hash2(xi+1,yi+1);return a+(b-a)*sx+(c-a)*sy+(a-b-c+d)*sx*sy},
-  hsl:(h,s=100,l=50,a=1)=>`hsla(${h},${s}%,${l}%,${a})`,ease:EASE,image:id=>{const a=assets.find(x=>x.id==id&&x.kind=="i")||aiImgs.find(x=>x.id==id);return a&&a.el&&(a.el.naturalWidth||a.el.width)?a.el:null}};
-const GUARD=["window","document","fetch","XMLHttpRequest","WebSocket","localStorage","sessionStorage","indexedDB","navigator","globalThis","self","top","parent","location","Worker"];
-const compileCode=js=>new Function("ctx","t","p","W","H","u",...GUARD,'"use strict";\n'+js);
-const fxCv=document.createElement("canvas");
-function codeZ(t,z){
-  if(!plan||!plan.code||!plan.code.length)return;
-  plan.code.forEach((c,i)=>{
-    if(c.dead||!c.fn||(c.z||"mid")!=z||t<c.start||t>=c.start+c.dur)return;
-    fxCv.width=cv.width;fxCv.height=cv.height;
-    const g=fxCv.getContext("2d"),[W,H]=RATIOS[$("#ratio").value],lt=t-c.start;g.setTransform(Q,0,0,Q,0,0);
-    try{c.fn(g,lt,lt/c.dur,W,H,U)}
-    catch(e){c.dead=true;c.rt=true;const m=`code[${i}] 실행 오류 (t=${lt.toFixed(2)}s): ${e&&e.message||e}`;codeErrs.push(m);lastIssues.push(m);queueMicrotask(()=>{$("#fixask").hidden=false;say("코드 레이어 오류, 해당 레이어는 꺼짐: "+m,1)});return}
-    ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=Math.max(0,Math.min(1,+(c.opacity??1)));ctx.globalCompositeOperation=BL(c.blend);ctx.drawImage(fxCv,0,0);ctx.restore()})}
-function pathOf(s,w,h){
-  const P=new Path2D(),T=s.type||"rect";
-  if(T=="circle"||T=="ellipse")P.ellipse(0,0,w/2,h/2,0,0,7);
-  else if(T=="ring"){const th=Math.max(.02,Math.min(.95,+s.thickness||.25))*Math.min(w,h)/2,rx=Math.max(1,w/2-th),ry=Math.max(1,h/2-th);P.ellipse(0,0,w/2,h/2,0,0,7);P.moveTo(rx,0);P.ellipse(0,0,rx,ry,0,0,7,true)}
-  else if(T=="star"){const n=Math.max(3,Math.round(+s.points||5)),k=+s.inner||.45;for(let i=0;i<n*2;i++){const a=-Math.PI/2+i*Math.PI/n,r=i%2?k:1,x=Math.cos(a)*r*w/2,y=Math.sin(a)*r*h/2;i?P.lineTo(x,y):P.moveTo(x,y)}P.closePath()}
-  else if(T=="polygon"||T=="triangle"){const n=T=="triangle"?3:Math.max(3,Math.round(+s.sides||5));for(let i=0;i<n;i++){const a=-Math.PI/2+i*2*Math.PI/n,x=Math.cos(a)*w/2,y=Math.sin(a)*h/2;i?P.lineTo(x,y):P.moveTo(x,y)}P.closePath()}
-  else if(T=="heart"){const k=w/2,l=h/2;P.moveTo(0,l*.9);P.bezierCurveTo(-k*1.3,l*.2,-k*.9,-l*.9,0,-l*.35);P.bezierCurveTo(k*.9,-l*.9,k*1.3,l*.2,0,l*.9);P.closePath()}
-  else if(T=="path"&&s.d){try{P.addPath(new Path2D(String(s.d)),new DOMMatrix().translate(-w/2,-h/2).scale(w/100,h/100))}catch(e){}}
-  else P.roundRect(-w/2,-h/2,w,h,+s.radius||0);
-  return P}
-function drawShape(s,t,W,H){
-  const m=mo(s,t-s.start,s.dur),T=s.type||"rect",w=(+s.w||.3)*W,h=(+s.h||+s.w||.3)*(s.h?H:W);
-  ctx.save();ctx.globalCompositeOperation=BL(s.blend);ctx.globalAlpha=Math.max(0,Math.min(1,m.o*(s.opacity??1)));if(m.b)ctx.filter=`blur(${m.b*Q}px)`;
-  if(T=="line"){
-    const x1=(s.x1??.1)*W,y1=(s.y1??.5)*H,x2=(s.x2??.9)*W,y2=(s.y2??.5)*H,cx=(x1+x2)/2,cy=(y1+y2)/2;
-    tf(m,cx,cy,W,H);ctx.lineCap="round";ctx.lineWidth=+s.strokeW||6;ctx.strokeStyle=s.color||"#fff";
-    if(Array.isArray(s.dash))ctx.setLineDash(s.dash.map(v=>+v||0));
-    if(s.glow){ctx.shadowColor=s.glow;ctx.shadowBlur=30*Q}
-    ctx.beginPath();ctx.moveTo(x1-cx,y1-cy);ctx.lineTo(x2-cx,y2-cy);ctx.stroke()
-  }else{
-    tf(m,(s.x??.5)*W,(s.y??.5)*H,W,H);
-    const P=pathOf(s,w,h);let fs=s.color||"#fff";
-    if(Array.isArray(s.gradient)&&s.gradient.length){const a=(s.angle??90)*Math.PI/180,dx=Math.cos(a)*w/2,dy=Math.sin(a)*h/2,g=ctx.createLinearGradient(-dx,-dy,dx,dy);s.gradient.forEach((q,i)=>g.addColorStop(i/Math.max(1,s.gradient.length-1),q));fs=g}
-    if(s.glow){ctx.shadowColor=s.glow;ctx.shadowBlur=(+s.glowSize||40)*Q}else if(s.shadow){ctx.shadowColor=s.shadow;ctx.shadowBlur=24*Q;ctx.shadowOffsetY=8*Q}
-    ctx.fillStyle=fs;ctx.fill(P);
-    if(+s.strokeW){ctx.shadowColor="transparent";ctx.lineWidth=+s.strokeW;ctx.lineJoin="round";ctx.strokeStyle=s.stroke||"#000";ctx.stroke(P)}
-  }
-  ctx.restore()}
 function draw(t){
   const [W,H]=RATIOS[$("#ratio").value];
   ctx.setTransform(Q,0,0,Q,0,0);ctx.filter="none";ctx.globalAlpha=1;ctx.fillStyle=plan?.bg||"#000";ctx.fillRect(0,0,W,H);
   if(!plan)return;
   const on=x=>t>=x.start&&t<x.start+x.dur,cl=v=>Math.max(0,Math.min(1,v));
-  codeZ(t,"bottom");
   for(const c of plan.clips){
     if(!on(c))continue;
     const loc=t-c.start,f=+c.fade||0,m=mo(c,loc,c.dur),tr=c.transition||"none",k=tr=="none"?1:Math.min(1,loc/(+c.transDur||.5)),ke=ease(k);
-    ctx.save();ctx.globalCompositeOperation=BL(c.blend);if(tr=="wipe"&&k<1){ctx.beginPath();ctx.rect(0,0,W*ke,H);ctx.clip()}ctx.globalAlpha=cl(m.o*(f?Math.min(1,loc/f,(c.dur-loc)/f):1)*(["fade","zoom","glitch"].includes(tr)?k:1));
+    ctx.save();if(tr=="wipe"&&k<1){ctx.beginPath();ctx.rect(0,0,W*ke,H);ctx.clip()}ctx.globalAlpha=cl(m.o*(f?Math.min(1,loc/f,(c.dur-loc)/f):1)*(["fade","zoom","glitch"].includes(tr)?k:1));
     if(tr=="slide")m.dx+=1-ke;if(tr=="slideUp")m.dy+=1-ke;if(tr=="zoom")m.s*=1.4-.4*ke;if(tr=="glitch"&&k<1)m.dx+=Math.sin(loc*120)*.05*(1-k);
     tf(m,W/2,H/2,W,H);if(c.flip)ctx.scale(-1,1);
     let fl=(FILTERS[c.filter]||(String(c.filter||"").includes("(")?c.filter:""));if(fl=="none")fl="";fl+=(m.b?` blur(${m.b}px)`:"")+(tr=="glitch"&&k<1?` hue-rotate(${(Math.sin(loc*80)*70*(1-k)).toFixed(1)}deg) saturate(${(2-k).toFixed(2)})`:"");
@@ -2462,14 +2574,30 @@ function draw(t){
     else if(exportSafe&&c.a?.tainted){ctx.fillStyle="#2a2a30";ctx.fillRect(-W/2,-H/2,W,H)}else{const e=c.a?.el;if(e&&c.a.kind!="a"){const sw=e.videoWidth||e.naturalWidth,sh=e.videoHeight||e.naturalHeight;
       if(sw){const z=Array.isArray(c.zoom)?c.zoom[0]+(c.zoom[1]-c.zoom[0])*loc/c.dur:1,s=(c.fit=="contain"?Math.min(W/sw,H/sh):Math.max(W/sw,H/sh))*z;ctx.drawImage(e,-sw*s/2,-sh*s/2,sw*s,sh*s)}}}
     ctx.restore();if(tr=="flash"&&k<1){ctx.save();ctx.globalAlpha=(1-k)*.9;ctx.fillStyle="#fff";ctx.fillRect(0,0,W,H);ctx.restore()}}
-  codeZ(t,"mid");
-  for(const s of plan.shapes){if(on(s))drawShape(s,t,W,H)}
+  for(const s of plan.shapes){
+    if(!on(s))continue;
+    const m=mo(s,t-s.start,s.dur),ty=shapeType(s)||"rect";let w=(+s.w||.3)*W,h=(+s.h||+s.w||.3)*(s.h?H:W);
+    ctx.save();ctx.globalAlpha=cl(m.o*(s.opacity??1));if(m.b)ctx.filter=`blur(${m.b*Q}px)`;
+    tf(m,(s.x??.5)*W,(s.y??.5)*H,W,H);if(s.flip)ctx.scale(-1,1);
+    const bl=Math.min(60,Math.max(12,Math.min(w,h)*.25))*Q;
+    if(s.glow){ctx.shadowColor=s.glow;ctx.shadowBlur=bl}else if(s.shadow){ctx.shadowColor=s.shadow;ctx.shadowBlur=bl*.5;ctx.shadowOffsetX=ctx.shadowOffsetY=bl*.25}
+    if(ty=="svg"){
+      if(s.im&&s.asp){if(!s.h)h=w/s.asp;const dw=Math.min(w,h*s.asp),dh=dw/s.asp;ctx.drawImage(s.im,-dw/2,-dh/2,dw,dh)}
+      ctx.restore();continue}
+    const g=shapeP(s,ty,w,h);let fs=s.color||"#fff";
+    if(Array.isArray(fs)){try{const gr=ctx.createLinearGradient(0,-h/2,0,h/2);fs.forEach((q,i)=>gr.addColorStop(i/Math.max(1,fs.length-1),q));fs=gr}catch(e){fs="#fff"}}
+    ctx.lineJoin=ctx.lineCap="round";
+    if(g.line){ctx.lineWidth=+s.strokeW||6;ctx.strokeStyle=s.stroke||fs;ctx.stroke(g.p)}
+    else{
+      if(s.fill!==false&&fs!="none"&&fs!="transparent"){ctx.fillStyle=fs;ctx.fill(g.p,"evenodd")}
+      if(+s.strokeW){ctx.lineWidth=+s.strokeW;ctx.strokeStyle=s.stroke||"#000";ctx.stroke(g.p)}}
+    ctx.restore()}
   for(const x of plan.texts){
     if(!on(x))continue;
     const loc=t-x.start,m=mo(x,loc,x.dur);let txt=String(x.text??"");
     if(x.anim=="typewriter")txt=txt.slice(0,Math.ceil(txt.length*Math.min(1,loc/Math.min(x.dur*.7,txt.length*.08||1))));
     const size=+x.size||56,font=FONTS.includes(x.font)?x.font:FONTS[0],al=x.align||"center";
-    ctx.save();ctx.globalCompositeOperation=BL(x.blend);ctx.globalAlpha=cl(m.o);if(m.b)ctx.filter=`blur(${m.b*Q}px)`;
+    ctx.save();ctx.globalAlpha=cl(m.o);if(m.b)ctx.filter=`blur(${m.b*Q}px)`;
     ctx.font=`${x.italic?"italic ":""}${x.weight||700} ${size}px "${font}",sans-serif`;ctx.textAlign=al;ctx.textBaseline="middle";ctx.letterSpacing=(+x.spacing||0)+"px";
     const lines=wrap(txt,W*.9),lh=size*(+x.lineHeight||1.3),tot=lines.length*lh,top=-tot/2;
     tf(m,(x.x??.5)*W,(x.y??.8)*H,W,H);
@@ -2481,16 +2609,33 @@ function draw(t){
     ctx.fillStyle=fs;
     lines.forEach((l,i)=>{const y=top+lh*i+lh/2;if(ctx.lineWidth)ctx.strokeText(l,0,y);ctx.fillText(l,0,y)});
     ctx.restore()}
-  codeZ(t,"top");ctx.globalAlpha=1}
+  ctx.globalAlpha=1}
 
 /* 재생 */
-function ui(t){const q=total?t/total:0;$("#sl").value=Math.round(t*100);$("#tm").textContent=t.toFixed(1)+" / "+total.toFixed(1)+"초";$("#prog").style.width=(exporting?q*100:0)+"%";const h=$("#ph");if(h)h.style.left=`calc(${LW}px + (100% - ${LW+14}px) * ${q})`}
+function ui(t){const q=total?t/total:0;$("#sl").value=Math.round(t*100);$("#tm").textContent=t.toFixed(1)+" / "+total.toFixed(1)+"초";$("#prog").style.width=(exporting?q*100:0)+"%";const h=$("#ph");if(h){const x=LW+LWd*q*TZ;h.style.left=x+"px";if(TZ>1&&(playing||document.activeElement===$("#sl"))){const tl=$("#tl");if(x>tl.scrollLeft+tl.clientWidth-30||x<tl.scrollLeft+LW)tl.scrollLeft=Math.max(0,x-LW-24)}phVis()}}
+const TSTEP=[.1,.2,.5,1,2,5,10,15,30,60,120,300];
+function calcLW(){LWd=Math.max(50,$("#tl").clientWidth-LW-14)}
 function renderTL(){
-  const R=[["영상","v",plan.clips,c=>c.asset||c.label||(c.img?"이미지":Array.isArray(c.color)?"그라데이션":c.color)],["자막","t",plan.texts,x=>x.text],["도형","s",plan.shapes,s=>s.type||"rect"],["소리","a",plan.audio,c=>c.asset],["코드","c",plan.code,c=>c.label||"코드"]];
-  const step=total>40?10:total>15?5:total>6?2:1;let ticks="";
-  for(let s=0;s<=total;s+=step)ticks+=`<b style="left:${s/total*100}%">${s}s</b>`;
+  if(rtPlan!==plan){rtPlan=plan;TZ=1;$("#zs").value=0;$("#zv").textContent="1×";$("#tl").scrollLeft=0}
+  calcLW();$("#tl").style.setProperty("--z",TZ);
+  const R=[["영상","v",plan.clips,c=>c.asset||c.label||(c.img?"이미지":Array.isArray(c.color)?"그라데이션":c.color)],["자막","t",plan.texts,x=>x.text],["도형","s",plan.shapes,s=>s.type||"rect"],["소리","a",plan.audio,c=>c.asset]];
+  const step=TSTEP.find(v=>v*LWd*TZ/total>=70)||300;let ticks="";
+  for(let i=0;i*step<=total+1e-6;i++){const v=Math.round(i*step*10)/10;ticks+=`<b style="left:${v/total*100}%">${step<1?v.toFixed(1):v}s</b>`}
   $("#tl").innerHTML=`<div class="r rr"><span></span><div class="rl">${ticks}</div></div>`+R.filter(r=>r[2].length).map(([n,k,l,f])=>`<div class="r ${k}"><span>${n}</span><div class="lane">${l.map(c=>`<i style="left:${c.start/total*100}%;width:${c.dur/total*100}%">${esc(String(f(c)).slice(0,14))}</i>`).join("")}</div></div>`).join("")+'<div id="ph"></div>'}
-$("#tl").onclick=e=>{if(!plan)return;const r=$("#tl").getBoundingClientRect(),q=Math.min(1,Math.max(0,(e.clientX-r.left-LW)/(r.width-LW-14)));stop();tNow=q*total;sync(tNow,false);draw(tNow);ui(tNow)};
+function setZoom(z,ax){
+  const tl=$("#tl");z=Math.min(MAXZ,Math.max(1,z));
+  $("#zs").value=Math.round(Math.log(z)/Math.log(MAXZ)*100);$("#zv").textContent=(z<10?+z.toFixed(1):Math.round(z))+"×";
+  if(!plan||!total){TZ=z;return}
+  calcLW();if(ax==null)ax=Math.min(Math.max(LW+LWd*(tNow/total)*TZ-tl.scrollLeft,LW+10),tl.clientWidth-20);
+  const fr=(tl.scrollLeft+ax-LW)/(LWd*TZ);TZ=z;renderTL();
+  tl.scrollLeft=Math.max(0,LW+fr*LWd*TZ-ax);ui(tNow)}
+$("#zs").oninput=e=>setZoom(Math.pow(MAXZ,e.target.value/100));
+$("#zin").onclick=()=>setZoom(TZ*1.5);$("#zout").onclick=()=>setZoom(TZ/1.5);
+$("#tl").addEventListener("wheel",e=>{if(!(e.ctrlKey||e.metaKey)||!plan)return;e.preventDefault();setZoom(TZ*(e.deltaY<0?1.15:1/1.15),e.clientX-$("#tl").getBoundingClientRect().left)},{passive:false});
+window.addEventListener("resize",()=>{if(plan){renderTL();ui(tNow)}});
+function phVis(){const h=$("#ph");if(h)h.style.visibility=parseFloat(h.style.left)<$("#tl").scrollLeft+LW?"hidden":"visible"}
+$("#tl").addEventListener("scroll",phVis);
+$("#tl").onclick=e=>{if(!plan)return;const tl=$("#tl"),px=e.clientX-tl.getBoundingClientRect().left;if(px<LW)return;const q=Math.min(1,Math.max(0,(px+tl.scrollLeft-LW)/(LWd*TZ)));stop();tNow=q*total;sync(tNow,false);draw(tNow);ui(tNow)};
 function tick(now){
   if(!playing)return;
   tNow=(now-t0)/1000;
@@ -2555,7 +2700,7 @@ async function exportMp4(){
   if(saving||!plan)return;
   const [LW0,LH0]=RATIOS[$("#ratio").value],Qv=(+$("#qual").value)/Math.min(LW0,LH0),FPS=+$("#fps").value||30,SR=48000;
   const W=Math.round(LW0*Qv/2)*2,H=Math.round(LH0*Qv/2)*2;
-  stop();saving=true;$("#exp").disabled=true;plan.code.forEach(c=>{if(c.rt){c.dead=false;c.rt=false}});codeErrs=[];
+  stop();saving=true;$("#exp").disabled=true;
   exportSafe=aiImgs.some(a=>a.tainted&&plan.clips.some(c=>c.a===a));
   let warn="";
   try{
@@ -2581,7 +2726,7 @@ async function exportMp4(){
     if(!buf)throw lastErr||Error(`이 브라우저가 ${W}x${H} H.264 인코딩을 지원하지 않아요. 화질을 낮춰보세요.`);
     exStep="저장";
     const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([buf],{type:"video/mp4"}));a.download=(plan.title||"edit")+".mp4";document.body.append(a);a.click();a.remove();
-    say(`저장 완료 (MP4 ${W}x${H} ${FPS}fps)`+(exportSafe?" · 막힌 이미지는 회색 화면으로 대체했어요":"")+warn+(codeErrs.length?` · 코드 레이어 오류 ${codeErrs.length}건 (${codeErrs[0]})`:""));
+    say(`저장 완료 (MP4 ${W}x${H} ${FPS}fps)`+(exportSafe?" · 막힌 이미지는 회색 화면으로 대체했어요":"")+warn);
   }catch(e){console.error(e);say(`저장 실패 [${exStep}] ${e&&e.name?e.name+": ":""}${(e&&e.message)||e}`,1)}
   finally{Q=1;exportSafe=false;saving=false;[cv.width,cv.height]=RATIOS[$("#ratio").value];tNow=0;if(plan){draw(0);ui(0)}$("#prog").style.width="0";$("#exp").disabled=false}}
 $("#exp").onclick=exportMp4;
@@ -2591,33 +2736,5 @@ try{["req","out"].forEach(i=>$("#"+i).value=localStorage.getItem("ave_"+i)||"")}
 ["req","out"].forEach(i=>$("#"+i).addEventListener("input",()=>{try{localStorage.setItem("ave_"+i,$("#"+i).value)}catch(e){}}));
 $("#big").onclick=()=>{const b=$(".pv").classList.toggle("big");$("#big").textContent=b?"작게 보기":"크게 보기";document.body.style.overflow=b?"hidden":""};
 document.addEventListener("keydown",e=>{if(e.key=="Escape"&&$(".pv").classList.contains("big"))$("#big").click()});
-/* 에이전트 API: 코드 실행이 되는 AI가 편집기를 직접 조작하고 결과를 눈으로 확인한다 */
-const seekClips=t=>Promise.all(plan.clips.filter(c=>c.a&&c.a.kind=="v"&&t>=c.start&&t<c.start+c.dur).map(c=>seekTo(c.a.el,(+c.in||0)+(t-c.start)*(+c.speed||1))));
-window.AVE={
-  version:2,
-  info(){return{ratio:$("#ratio").value,canvas:[cv.width,cv.height],total,applied:!!plan,
-    assets:assets.map(a=>({id:a.id,kind:a.kind,name:a.name,dur:a.dur,w:a.w,h:a.h,bpm:a.bpm,beats:a.on,mainColor:a.col,brightness:a.lum})),
-    webImages:aiImgs.map(a=>({id:a.id,ok:a.ok,tainted:!!a.tainted,url:a.url})),
-    issues:lastIssues,codeErrors:codeErrs,message:$("#msg").textContent}},
-  async apply(txt){stop();$("#out").value=typeof txt=="string"?txt:JSON.stringify(txt);await $("#apply").onclick();return this.info()},
-  setRatio(r){$("#ratio").value=r;$("#ratio").onchange({target:$("#ratio")})},
-  async frame(t){if(!plan)throw Error("먼저 apply 하세요");stop();t=Math.min(Math.max(0,t),Math.max(0,total-.001));await seekClips(t);draw(t);return cv.toDataURL("image/jpeg",.88)},
-  async sheet(times,cols=3,w=480){
-    if(!plan)throw Error("먼저 apply 하세요");stop();
-    const ts=times&&times.length?times:[0,.25,.5,.75,.98].map(q=>q*total),h=Math.round(w*cv.height/cv.width),rows=Math.ceil(ts.length/cols);
-    const sc=document.createElement("canvas");sc.width=Math.min(cols,ts.length)*w;sc.height=rows*(h+22);
-    const x=sc.getContext("2d");x.fillStyle="#111";x.fillRect(0,0,sc.width,sc.height);x.font="16px sans-serif";x.fillStyle="#fff";
-    for(let i=0;i<ts.length;i++){const t=Math.min(Math.max(0,ts[i]),Math.max(0,total-.001));await seekClips(t);draw(t);const cx=(i%cols)*w,cy=Math.floor(i/cols)*(h+22);x.drawImage(cv,cx,cy+22,w,h);x.fillText(t.toFixed(2)+"s",cx+6,cy+16)}
-    draw(tNow);return sc.toDataURL("image/jpeg",.88)},
-  async assetSheet(id,n=6,cols=3,w=480){
-    const a=assets.find(x=>x.id==id);if(!a)throw Error("소스 없음: "+id);
-    if(a.kind=="a")throw Error("오디오는 그림이 없어요. info()의 bpm/beats를 참고하세요");
-    const el=a.el,sw=el.videoWidth||el.naturalWidth,sh=el.videoHeight||el.naturalHeight;if(!sw)throw Error("아직 로딩 중이에요");
-    const h=Math.round(w*sh/sw),ts=a.kind=="v"?Array.from({length:n},(_,i)=>+(a.dur*(i+.5)/n).toFixed(2)):[0],rows=Math.ceil(ts.length/cols);
-    const sc=document.createElement("canvas");sc.width=Math.min(cols,ts.length)*w;sc.height=rows*(h+22);
-    const x=sc.getContext("2d");x.fillStyle="#111";x.fillRect(0,0,sc.width,sc.height);x.font="16px sans-serif";x.fillStyle="#fff";
-    for(let i=0;i<ts.length;i++){if(a.kind=="v")await seekTo(el,ts[i]);const cx=(i%cols)*w,cy=Math.floor(i/cols)*(h+22);x.drawImage(el,cx,cy+22,w,h);x.fillText(id+" "+ts[i]+"s",cx+6,cy+16)}
-    return sc.toDataURL("image/jpeg",.88)}
-};
 draw(0);
 </script></body></html>
