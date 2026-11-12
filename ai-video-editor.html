@@ -243,6 +243,27 @@ input[type=range]::-webkit-slider-thumb{width:16px;height:16px;margin-top:-5.5px
 .zm input{flex:none;width:110px}
 #zv{min-width:34px;font:600 11px/1 ui-monospace,Menlo,monospace;color:var(--mut)}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+/* 요소 편집 (타임라인에서 자막/도형 클릭) */
+.ed{padding:14px;overflow:auto;flex:1 1 auto;min-height:0}
+#edBox:not([hidden])~.empty{display:none!important}
+.eh{display:flex;align-items:center;gap:6px;margin-bottom:14px}
+.eh b{flex:1;font-size:13px}
+.eh .x{min-height:28px;width:28px;font-size:12px}
+.ef{margin-bottom:14px}
+.ef>label{display:block;font-size:11px;font-weight:700;color:var(--mut);margin-bottom:6px;letter-spacing:.03em}
+.ef>label.ck{display:flex;color:var(--fg);font-weight:400;font-size:12px;margin-bottom:8px}
+.er{display:flex;gap:8px;align-items:center}
+.er span{font-size:11px;color:var(--mut);width:16px;flex:none}
+.ed input[type=number]{width:62px;flex:none;background:var(--p2);color:var(--fg);border:1px solid var(--bd);border-radius:8px;padding:6px;font:inherit;font-size:12px}
+.ed input[type=number]:focus{outline:0;border-color:var(--ac)}
+.ed input[type=color]{width:40px;height:32px;padding:0;border:1px solid var(--bd);border-radius:8px;background:none;cursor:pointer;flex:none}
+.ed input[type=color]:disabled{opacity:.35;cursor:default}
+.ed .ck{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--fg);cursor:pointer}
+.ed textarea{min-height:84px;font-size:13px;padding:10px}
+#edSvg{font:12px/1.5 ui-monospace,Menlo,monospace;min-height:240px;white-space:pre;overflow:auto;tab-size:2}
+.ed small{display:block;color:var(--mut);font-size:11px;line-height:1.5;margin-top:6px}
+.ed small.err{color:#ff6b6b}
+.lane i.sel{filter:brightness(1.25);box-shadow:inset 0 0 0 2px #fff!important;z-index:2}
 </style></head>
 <body><div class="app">
 
@@ -305,6 +326,7 @@ input[type=range]::-webkit-slider-thumb{width:16px;height:16px;margin-top:-5.5px
   <!-- 우: 속성 -->
   <aside class="panel r">
     <div class="ph2">속성 · AI 이미지</div>
+    <div id="edBox" class="ed" hidden></div>
     <div id="aiBox" hidden><p class="hint">누르면 내 사진으로 바꿀 수 있어요. 링크 이미지는 인터넷에서 불러와요.</p><div id="aiList"></div></div>
     <div class="empty">AI가 웹 이미지를 넣으면<br>여기에 나타나요</div>
   </aside>
@@ -2232,7 +2254,7 @@ const HINT={"Noto Sans KR":"깔끔한 기본","Black Han Sans":"굵고 강한 �
 const FILTERS={none:"none",grayscale:"grayscale(1)",sepia:"sepia(.8)",blur:"blur(4px)",bright:"brightness(1.25)",contrast:"contrast(1.3) saturate(1.2)",warm:"sepia(.3) saturate(1.3)",cool:"hue-rotate(20deg) saturate(1.1)",vivid:"saturate(1.6)",invert:"invert(1)",noir:"grayscale(1) contrast(1.4)",vintage:"sepia(.5) contrast(.9) saturate(.8)",dream:"brightness(1.1) saturate(1.4) blur(1px)",dark:"brightness(.6)"};
 const RATIOS={"9:16":[720,1280],"16:9":[1280,720],"1:1":[720,720]};
 const FENCE="\x60\x60\x60";
-let TZ=1,LWd=300,rtPlan=null;const MAXZ=20;
+let TZ=1,LWd=300,rtPlan=null,SEL=null;const MAXZ=20;
 const LW=72; /* 타임라인 라벨 열 너비(px) — CSS --lw 와 같아야 해요 */
 let exportSafe=false,Q=1,aiImgs=[],assets=[],cnt={v:0,i:0,a:0},plan=null,playing=false,exporting=false,t0=0,tNow=0,total=0,actx,adest,rec;
 const cv=$("#cv"),ctx=cv.getContext("2d");
@@ -2415,7 +2437,7 @@ $("#apply").onclick=async()=>{
   const svgBad=await loadShapes(p.shapes);
   if(svgBad.length){warn.push(`SVG 도형 ${svgBad.length}개 읽기 실패`);svgBad.forEach(i=>issues.push(`shapes[${i}]의 SVG를 읽을 수 없어. 올바른 SVG 코드(viewBox 포함, 속성은 작은따옴표, 태그를 모두 닫기)로 다시 써줘`))}
   const bad=aiImgs.filter(a=>!a.ok).length;if(bad)warn.push(bad+"개 이미지 불러오기 실패 (오른쪽 속성에서 교체)");
-  const fx=fix(p);plan=p;total=fx.total||tt;tNow=0;$("#sl").max=Math.round(total*100);ready(true);renderTL();$("#hint").hidden=true;sync(0,false);draw(0);ui(0);
+  const fx=fix(p);plan=p;SEL=null;edRender();total=fx.total||tt;tNow=0;$("#sl").max=Math.round(total*100);ready(true);renderTL();$("#hint").hidden=true;sync(0,false);draw(0);ui(0);
   lastIssues=issues.concat(aiImgs.filter(a=>!a.ok).map(a=>`img 링크가 열리지 않음: ${a.url} (다른 링크를 쓰거나 img를 빼줘)`));$("#fixask").hidden=!lastIssues.length;
   say(`적용 완료 · 영상 길이 ${total.toFixed(1)}초`+(fx.msgs.length?` · 자동 보정 ${fx.msgs.length}건`:"")+(warn.length?" · "+warn.join(", "):"")+(fx.msgs.length?"\n"+fx.msgs.slice(0,4).join(" / "):""),warn.length>0)};
 
@@ -2621,7 +2643,7 @@ function renderTL(){
   const R=[["영상","v",plan.clips,c=>c.asset||c.label||(c.img?"이미지":Array.isArray(c.color)?"그라데이션":c.color)],["자막","t",plan.texts,x=>x.text],["도형","s",plan.shapes,s=>s.type||"rect"],["소리","a",plan.audio,c=>c.asset]];
   const step=TSTEP.find(v=>v*LWd*TZ/total>=70)||300;let ticks="";
   for(let i=0;i*step<=total+1e-6;i++){const v=Math.round(i*step*10)/10;ticks+=`<b style="left:${v/total*100}%">${step<1?v.toFixed(1):v}s</b>`}
-  $("#tl").innerHTML=`<div class="r rr"><span></span><div class="rl">${ticks}</div></div>`+R.filter(r=>r[2].length).map(([n,k,l,f])=>`<div class="r ${k}"><span>${n}</span><div class="lane">${l.map(c=>`<i style="left:${c.start/total*100}%;width:${c.dur/total*100}%">${esc(String(f(c)).slice(0,14))}</i>`).join("")}</div></div>`).join("")+'<div id="ph"></div>'}
+  $("#tl").innerHTML=`<div class="r rr"><span></span><div class="rl">${ticks}</div></div>`+R.filter(r=>r[2].length).map(([n,k,l,f])=>`<div class="r ${k}"><span>${n}</span><div class="lane">${l.map((c,n)=>`<i data-k="${k}" data-i="${n}"${SEL&&SEL.k==k&&SEL.i==n?' class="sel"':""} style="left:${c.start/total*100}%;width:${c.dur/total*100}%">${esc(String(f(c)).slice(0,14))}</i>`).join("")}</div></div>`).join("")+'<div id="ph"></div>'}
 function setZoom(z,ax){
   const tl=$("#tl");z=Math.min(MAXZ,Math.max(1,z));
   $("#zs").value=Math.round(Math.log(z)/Math.log(MAXZ)*100);$("#zv").textContent=(z<10?+z.toFixed(1):Math.round(z))+"×";
@@ -2635,7 +2657,85 @@ $("#tl").addEventListener("wheel",e=>{if(!(e.ctrlKey||e.metaKey)||!plan)return;e
 window.addEventListener("resize",()=>{if(plan){renderTL();ui(tNow)}});
 function phVis(){const h=$("#ph");if(h)h.style.visibility=parseFloat(h.style.left)<$("#tl").scrollLeft+LW?"hidden":"visible"}
 $("#tl").addEventListener("scroll",phVis);
-$("#tl").onclick=e=>{if(!plan)return;const tl=$("#tl"),px=e.clientX-tl.getBoundingClientRect().left;if(px<LW)return;const q=Math.min(1,Math.max(0,(px+tl.scrollLeft-LW)/(LWd*TZ)));stop();tNow=q*total;sync(tNow,false);draw(tNow);ui(tNow)};
+$("#tl").onclick=e=>{if(!plan)return;const tl=$("#tl"),px=e.clientX-tl.getBoundingClientRect().left;if(px<LW)return;const q=Math.min(1,Math.max(0,(px+tl.scrollLeft-LW)/(LWd*TZ)));stop();tNow=q*total;sync(tNow,false);draw(tNow);ui(tNow);
+  const b=e.target.closest&&e.target.closest("i[data-k]");if(b&&(b.dataset.k=="t"||b.dataset.k=="s"))pick(b.dataset.k,+b.dataset.i)};
+
+/* ===== 요소 편집: 자막(내용·글꼴·크기·색 등) / 도형(색·크기·위치) / SVG(코드 원본) ===== */
+const edItem=()=>SEL&&plan?({t:plan.texts,s:plan.shapes}[SEL.k]||[])[SEL.i]:null;
+const er=s=>`<div class="er">${s}</div>`,fld=(l,s)=>`<div class="ef"><label>${l}</label>${s}</div>`;
+const rng=(f,v,a,b,st,u)=>`<input type="range" data-f="${f}" min="${a}" max="${b}" step="${st}" value="${v}"><input type="number" data-f="${f}" min="${a}" max="${b}" step="${st}" value="${v}"><span>${u||""}</span>`;
+const edPair=(f,v)=>$("#edBox").querySelectorAll(`[data-f="${f}"]`).forEach(n=>{if(n.type=="range"||n.type=="number")n.value=v});
+const toHex=(c,d)=>{if(Array.isArray(c))c=c[0];if(c==null||c==="")return d;try{const g=document.createElement("canvas").getContext("2d");g.fillStyle="#000000";g.fillStyle=String(c);const v=g.fillStyle;if(/^#[0-9a-f]{6}$/i.test(v))return v;const m=v.match(/rgba?\(([^)]+)\)/);if(m)return"#"+m[1].split(",").slice(0,3).map(n=>Math.round(+n).toString(16).padStart(2,"0")).join("")}catch(e){}return d};
+const withAlpha=(hex,old)=>{const m=String(old||"").match(/^rgba\(([^)]*),\s*([\d.]+)\s*\)$/i),a=m?+m[2]:1;if(!(a<1))return hex;const n=parseInt(hex.slice(1),16);return`rgba(${n>>16&255},${n>>8&255},${n&255},${a})`};
+function svgSrc(s){let m=String(s.svg||"");if(!m.trim()&&s.d){const sw=+s.strokeW||0,st=sw?String(s.stroke||"#000").replace(/[^#\w\s(),.%-]/g,""):"none";m=`<svg viewBox="${esc(s.viewBox||"0 0 24 24")}" stroke="${st}" stroke-width="${sw}" stroke-linejoin="round"><path d="${esc(s.d)}"/></svg>`}return m}
+function edRender(){
+  const box=$("#edBox"),it=edItem();
+  if(!it){box.hidden=true;box.innerHTML="";return}
+  const [W,H]=RATIOS[$("#ratio").value],isT=SEL.k=="t",ty=isT?"":shapeType(it)||"rect",isS=ty=="svg",P=v=>+(v*100).toFixed(1);
+  let h=`<div class="eh"><b>${isT?"자막 편집":isS?"SVG 편집":"도형 편집"}</b><button class="g x" id="edGo" title="이 요소가 보이는 시간으로 이동" aria-label="이 요소가 보이는 시간으로 이동">⏱</button><button class="g x" id="edClose" aria-label="닫기">✕</button></div>`;
+  if(isT){
+    const fo=FONTS.includes(it.font)?it.font:FONTS[0],hasG=Array.isArray(it.gradient);
+    h+=fld("내용",`<textarea data-f="text" rows="3">${esc(it.text??"")}</textarea>`)
+     +fld("글꼴",`<select data-f="font">${FONTS.map(f=>`<option value="${esc(f)}"${f==fo?" selected":""} style="font-family:'${f}'">${f} · ${HINT[f]||""}</option>`).join("")}</select>`)
+     +fld("크기",er(rng("size",+it.size||56,16,240,1,"px")))
+     +fld("색상",er(`<input type="color" data-f="color" value="${toHex(hasG?it.gradient:it.color,"#ffffff")}"><label class="ck"><input type="checkbox" data-f="bold"${(+it.weight||700)>=600?" checked":""}>굵게</label><label class="ck"><input type="checkbox" data-f="italic"${it.italic?" checked":""}>기울임</label>`)+(hasG?"<small>지금은 그라데이션이에요. 색을 고르면 단색으로 바뀌어요.</small>":""))
+     +fld("정렬",`<select data-f="align">${[["left","왼쪽"],["center","가운데"],["right","오른쪽"]].map(([v,n])=>`<option value="${v}"${(it.align||"center")==v?" selected":""}>${n}</option>`).join("")}</select>`)
+     +fld("외곽선",er(`<input type="color" data-f="stroke" value="${toHex(it.stroke,"#000000")}">`+rng("strokeW",+it.strokeW||0,0,20,1,"px")))
+     +fld("배경 상자",er(`<label class="ck"><input type="checkbox" data-f="bgOn"${it.bg?" checked":""}>사용</label><input type="color" data-f="bg" value="${toHex(it.bg,"#000000")}"${it.bg?"":" disabled"}>`))
+     +fld("가로 위치",er(rng("x",P(it.x??.5),0,100,.5,"%")))
+     +fld("세로 위치",er(rng("y",P(it.y??.8),0,100,.5,"%")))
+  }else{
+    if(isS)h+=fld("SVG 코드 (원본)",`<textarea id="edSvg" data-f="svg" wrap="off" spellcheck="false">${esc(svgSrc(it))}</textarea><small id="edSvgMsg">고치면 바로 반영돼요.</small>`);
+    else h+=fld("색상",er(`<input type="color" data-f="color" value="${toHex(it.color,"#ffffff")}">`)+(Array.isArray(it.color)?"<small>지금은 그라데이션이에요. 색을 고르면 단색으로 바뀌어요.</small>":""));
+    const w0=(+it.w||.3)*W,sz=isS&&it.h&&it.asp?Math.min(w0,it.h*H*it.asp):w0;
+    h+=fld(isS?"크기":"가로 크기",er(rng("w",P(sz/W),1,150,1,"%")));
+    if(!isS&&ty!="line")h+=`<div class="ef"><label class="ck"><input type="checkbox" data-f="hOn"${it.h?" checked":""}>세로 크기 따로 조절</label>${it.h?er(rng("h",P(it.h),1,150,1,"%")):""}</div>`;
+    h+=fld("가로 위치",er(rng("x",P(it.x??.5),0,100,.5,"%")))+fld("세로 위치",er(rng("y",P(it.y??.5),0,100,.5,"%")))}
+  box.innerHTML=h;box.hidden=false}
+function edFont(it){
+  draw(tNow);const f=`${it.italic?"italic ":""}${+it.weight||700} 32px "${it.font}"`;
+  Promise.resolve(document.fonts.load(f,String(it.text??"")||" ")).catch(()=>{}).then(()=>{if(plan)draw(tNow)})}
+let svgT=0,svgPend=null;
+function flushSvg(){if(svgPend){clearTimeout(svgT);const p=svgPend;svgPend=null;edSvg(p.it,p.code)}}
+async function edSvg(it,code){
+  const tok=it._st=(it._st||0)+1,msg=(t,bad)=>{const m=$("#edSvgMsg");if(m&&edItem()===it){m.textContent=t;m.className=bad?"err":""}};
+  if(!code.trim()){msg("SVG 코드가 비어 있어요. 이전 모양을 유지해요.",1);return}
+  const r=svgPrep({svg:code,color:it.color}),im=r?await loadImg(r.src,false):null;
+  if(tok!=it._st)return;
+  if(!im){msg("SVG를 읽을 수 없어요. 태그를 모두 닫았는지, viewBox가 있는지 확인해 주세요. 이전 모양을 유지해요.",1);return}
+  it.svg=code;delete it.d;it.im=im;it.asp=r.asp;msg("반영됐어요.");draw(tNow)}
+function pick(k,i){
+  flushSvg();SEL={k,i};
+  document.querySelectorAll("#tl i.sel").forEach(n=>n.classList.remove("sel"));
+  const n=$(`#tl .r.${k} i[data-i="${i}"]`);if(n)n.classList.add("sel");
+  edRender();if(matchMedia("(max-width:900px)").matches)$("#edBox").scrollIntoView({block:"nearest",behavior:"smooth"})}
+$("#edBox").addEventListener("click",e=>{
+  if(e.target.closest("#edClose")){flushSvg();SEL=null;document.querySelectorAll("#tl i.sel").forEach(n=>n.classList.remove("sel"));edRender()}
+  else if(e.target.closest("#edGo")){const it=edItem();if(it){stop();tNow=Math.min(total,it.start+Math.min(it.dur*.5,1));sync(tNow,false);draw(tNow);ui(tNow)}}});
+$("#edBox").addEventListener("input",e=>{
+  const el=e.target,f=el.dataset.f,it=edItem();if(!f||!it)return;
+  const [W,H]=RATIOS[$("#ratio").value];let v=el.type=="checkbox"?el.checked:el.value;
+  if(el.type=="range"||el.type=="number"){v=parseFloat(v);if(!isFinite(v))return;edPair(f,v)}
+  if(f=="svg"){clearTimeout(svgT);svgPend={it,code:v};svgT=setTimeout(()=>{const p=svgPend;svgPend=null;if(p)edSvg(p.it,p.code)},350);return}
+  const isT=SEL.k=="t",fr=x=>+(x/100).toFixed(4);
+  switch(f){
+   case"text":it.text=v;{const i=$(`#tl .r.t i[data-i="${SEL.i}"]`);if(i)i.textContent=String(v).slice(0,14)}edFont(it);return;
+   case"font":it.font=v;edFont(it);return;
+   case"bold":it.weight=v?700:400;edFont(it);return;
+   case"italic":it.italic=v;edFont(it);return;
+   case"size":it.size=v;break;
+   case"align":it.align=v;break;
+   case"color":it.color=v;if(isT)delete it.gradient;else if(["line","wave"].includes(shapeType(it))||it.fill===false)it.stroke=v;break;
+   case"stroke":it.stroke=v;if(!+it.strokeW){it.strokeW=4;edPair("strokeW",4)}break;
+   case"strokeW":it.strokeW=v;break;
+   case"bgOn":if(v)it.bg="rgba(0,0,0,.6)";else delete it.bg;draw(tNow);edRender();return;
+   case"bg":it.bg=withAlpha(v,it.bg);break;
+   case"x":it.x=fr(v);break;
+   case"y":it.y=fr(v);break;
+   case"w":it.w=fr(v);if(shapeType(it)=="svg")delete it.h;break;
+   case"hOn":if(v)it.h=+((+it.w||.3)*W/H).toFixed(4);else delete it.h;draw(tNow);edRender();return;
+   case"h":it.h=fr(v);break}
+  draw(tNow)});
 function tick(now){
   if(!playing)return;
   tNow=(now-t0)/1000;
