@@ -2320,7 +2320,14 @@ ${$("#req").value.trim()||"(자유롭게 재미있게)"}
    · path, circle, rect, ellipse, line, polyline, polygon, g, defs, linearGradient, radialGradient, clipPath, mask, transform 사용 가능. script, foreignObject, image, 외부 링크, 글꼴(text 태그)은 안 돼. 글자는 texts로 넣어.
    · w로 가로 크기를 정하고 h는 생략하면 SVG 비율대로 맞춰져. 한 개당 2000자 안쪽으로 간결하게.
    · path 하나만 쓸 때는 svg 대신 d(경로 문자열)와 viewBox(기본 "0 0 24 24")를 써도 돼. 예: {"type":"svg","d":"M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z","viewBox":"0 0 24 24","color":"#ffe66d","x":0.8,"y":0.2,"w":0.15}
-■ audio — asset, start, dur, in, vol(0~1)
+■ audio — 배경음악·효과음. 소리를 얼마나, 어디서, 어느 크기로 쓸지 직접 정해.
+ - asset(소리 소스 id, 필수)
+ - start: 영상 타임라인에서 소리가 시작되는 시각(초)
+ - dur(재생 길이) 또는 end(소리가 끝나는 시각). 둘 중 하나만 써도 되고, 둘 다 있으면 dur를 써.
+ - in: 원본 소리의 몇 초 지점부터 재생할지(기본 0). 음악의 후렴만 쓰고 싶으면 in으로 골라.
+ - vol: 소리 크기 0~1(기본 1). 배경음악은 자막·영상 소리를 가리지 않게 0.3~0.5, 효과음은 0.6~1.0 정도로 정해.
+ - 예: {"asset":"a1","start":0,"end":12,"in":15,"vol":0.4} → 원본 15초 지점부터 12초 동안, 40% 크기로 재생
+ - 같은 소리 소스를 여러 번 써도 돼. 효과음은 짧게 dur를 주고 장면 전환·강조 시점에 start를 맞춰.
 ■ texts — 자막
  - text(\\n으로 줄바꿈), start, dur (필수)
  - font, size(px), weight, italic, color 또는 gradient([색,색]), stroke, strokeW, glow(발광색), shadow(그림자색), spacing(자간 px), lineHeight
@@ -2333,7 +2340,7 @@ ${$("#req").value.trim()||"(자유롭게 재미있게)"}
 [사용 가능한 글꼴 — 목록에서만, 분위기에 맞게 골라줘]
 ${FONTS.map(f=>f+(HINT[f]?`(${HINT[f]})`:"")).join(", ")}
 [규칙]
-- asset은 위 소스 목록의 id만 사용. 영상은 in + dur×speed 가 원본 길이를 넘지 않게.
+- asset은 위 소스 목록의 id만 사용. 영상은 in + dur×speed 가 원본 길이를 넘지 않게. 소리도 in + dur(또는 end-start)가 원본 길이를 넘지 않게, 영상 전체 길이를 넘기지 않게 끝 시각을 정해.
 - 글꼴, 크기, 색, 애니메이션, 필터를 요청 분위기에 맞게 다양하게 골라서 재밌게 만들어줘.
 - 자막은 화면 밖으로 나가지 않게 짧게 끊어서.
 - 인터넷 검색이 가능하면 필요한 이미지를 찾아 img에 jpg/png/webp 직접 링크를 넣어도 돼. 실제로 확인한 링크만 쓰고, 검색이 안 되면 img는 쓰지 마.
@@ -2426,7 +2433,7 @@ $("#apply").onclick=async()=>{
   aiImgs=[];const um={};
   for(const c of p.clips)if(c.img&&!c.asset&&!c.color&&/^https?:\/\//.test(c.img)){let a=um[c.img];if(!a){a=um[c.img]={id:"g"+(aiImgs.length+1),kind:"i",url:c.img,label:c.label||"",el:new Image(),ok:false,dur:0};aiImgs.push(a)}c.a=a}
   const warn=[],issues=[];
-  for(const c of [...p.clips,...p.audio]){c.start=+c.start||0;c.dur=+c.dur||3;if(c.asset){c.a=assets.find(a=>a.id==c.asset);if(!c.a){warn.push(c.asset+" 없음");issues.push(`소스 "${c.asset}"가 없음 (사용 가능: ${assets.map(a=>a.id).join(", ")||"없음 — color 클립과 자막만 사용"})`)}}}
+  for(const c of [...p.clips,...p.audio]){c.start=+c.start||0;if(c.dur==null&&isFinite(+c.end)&&+c.end>c.start)c.dur=+c.end-c.start;c.dur=+c.dur||3;if(c.asset){c.a=assets.find(a=>a.id==c.asset);if(!c.a){warn.push(c.asset+" 없음");issues.push(`소스 "${c.asset}"가 없음 (사용 가능: ${assets.map(a=>a.id).join(", ")||"없음 — color 클립과 자막만 사용"})`)}}}
   for(const x of [...p.texts,...p.shapes]){x.start=+x.start||0;x.dur=+x.dur||2}
   for(const x of [...p.clips,...p.texts,...p.shapes])if(Array.isArray(x.kf))x.kf.sort((a,b)=>(+a.t||0)-(+b.t||0));
   const tt=Math.max(0,...[...p.clips,...p.texts,...p.shapes,...p.audio].map(x=>x.start+x.dur));
@@ -2658,19 +2665,20 @@ window.addEventListener("resize",()=>{if(plan){renderTL();ui(tNow)}});
 function phVis(){const h=$("#ph");if(h)h.style.visibility=parseFloat(h.style.left)<$("#tl").scrollLeft+LW?"hidden":"visible"}
 $("#tl").addEventListener("scroll",phVis);
 $("#tl").onclick=e=>{if(!plan)return;const tl=$("#tl"),px=e.clientX-tl.getBoundingClientRect().left;if(px<LW)return;const q=Math.min(1,Math.max(0,(px+tl.scrollLeft-LW)/(LWd*TZ)));stop();tNow=q*total;sync(tNow,false);draw(tNow);ui(tNow);
-  const b=e.target.closest&&e.target.closest("i[data-k]");if(b&&(b.dataset.k=="t"||b.dataset.k=="s"))pick(b.dataset.k,+b.dataset.i)};
+  const b=e.target.closest&&e.target.closest("i[data-k]");if(b&&/^[tsa]$/.test(b.dataset.k))pick(b.dataset.k,+b.dataset.i)};
 
 /* ===== 요소 편집: 자막(내용·글꼴·크기·색 등) / 도형(색·크기·위치) / SVG(코드 원본) ===== */
-const edItem=()=>SEL&&plan?({t:plan.texts,s:plan.shapes}[SEL.k]||[])[SEL.i]:null;
+const edItem=()=>SEL&&plan?({t:plan.texts,s:plan.shapes,a:plan.audio}[SEL.k]||[])[SEL.i]:null;
 const er=s=>`<div class="er">${s}</div>`,fld=(l,s)=>`<div class="ef"><label>${l}</label>${s}</div>`;
 const rng=(f,v,a,b,st,u)=>`<input type="range" data-f="${f}" min="${a}" max="${b}" step="${st}" value="${v}"><input type="number" data-f="${f}" min="${a}" max="${b}" step="${st}" value="${v}"><span>${u||""}</span>`;
-const edPair=(f,v)=>$("#edBox").querySelectorAll(`[data-f="${f}"]`).forEach(n=>{if(n.type=="range"||n.type=="number")n.value=v});
+const edPair=(f,v,skip)=>$("#edBox").querySelectorAll(`[data-f="${f}"]`).forEach(n=>{if(n!==skip&&(n.type=="range"||n.type=="number"))n.value=v});
 const toHex=(c,d)=>{if(Array.isArray(c))c=c[0];if(c==null||c==="")return d;try{const g=document.createElement("canvas").getContext("2d");g.fillStyle="#000000";g.fillStyle=String(c);const v=g.fillStyle;if(/^#[0-9a-f]{6}$/i.test(v))return v;const m=v.match(/rgba?\(([^)]+)\)/);if(m)return"#"+m[1].split(",").slice(0,3).map(n=>Math.round(+n).toString(16).padStart(2,"0")).join("")}catch(e){}return d};
 const withAlpha=(hex,old)=>{const m=String(old||"").match(/^rgba\(([^)]*),\s*([\d.]+)\s*\)$/i),a=m?+m[2]:1;if(!(a<1))return hex;const n=parseInt(hex.slice(1),16);return`rgba(${n>>16&255},${n>>8&255},${n&255},${a})`};
 function svgSrc(s){let m=String(s.svg||"");if(!m.trim()&&s.d){const sw=+s.strokeW||0,st=sw?String(s.stroke||"#000").replace(/[^#\w\s(),.%-]/g,""):"none";m=`<svg viewBox="${esc(s.viewBox||"0 0 24 24")}" stroke="${st}" stroke-width="${sw}" stroke-linejoin="round"><path d="${esc(s.d)}"/></svg>`}return m}
 function edRender(){
   const box=$("#edBox"),it=edItem();
   if(!it){box.hidden=true;box.innerHTML="";return}
+  if(SEL.k=="a"){box.innerHTML=audHtml(it);box.hidden=false;return}
   const [W,H]=RATIOS[$("#ratio").value],isT=SEL.k=="t",ty=isT?"":shapeType(it)||"rect",isS=ty=="svg",P=v=>+(v*100).toFixed(1);
   let h=`<div class="eh"><b>${isT?"자막 편집":isS?"SVG 편집":"도형 편집"}</b><button class="g x" id="edGo" title="이 요소가 보이는 시간으로 이동" aria-label="이 요소가 보이는 시간으로 이동">⏱</button><button class="g x" id="edClose" aria-label="닫기">✕</button></div>`;
   if(isT){
@@ -2692,6 +2700,33 @@ function edRender(){
     if(!isS&&ty!="line")h+=`<div class="ef"><label class="ck"><input type="checkbox" data-f="hOn"${it.h?" checked":""}>세로 크기 따로 조절</label>${it.h?er(rng("h",P(it.h),1,150,1,"%")):""}</div>`;
     h+=fld("가로 위치",er(rng("x",P(it.x??.5),0,100,.5,"%")))+fld("세로 위치",er(rng("y",P(it.y??.5),0,100,.5,"%")))}
   box.innerHTML=h;box.hidden=false}
+/* 소리: 시작/끝 시각, 원본 시작 지점, 크기 */
+const r2=x=>+(+x).toFixed(2);
+function audHtml(it){
+  const a=it.a,st=+it.start||0,en=st+(+it.dur||3),src=a&&a.dur?a.dur:0,mx=Math.max(1,Math.ceil(Math.max(total,en)*10)/10);
+  return `<div class="eh"><b>소리 편집</b><button class="g x" id="edGo" title="이 소리가 나오는 시간으로 이동" aria-label="이 소리가 나오는 시간으로 이동">⏱</button><button class="g x" id="edClose" aria-label="닫기">✕</button></div>`
+   +`<p class="hint" style="margin-bottom:14px">${esc(a?a.id+" · "+a.name:it.asset||"소리")}${src?` · 원본 ${src}초`:""}</p>`
+   +fld("시작 시각 (영상에서 소리가 시작되는 때)",er(rng("a_start",r2(st),0,mx,.1,"초")))
+   +fld("끝 시각 (소리가 끝나는 때)",er(rng("a_end",r2(en),0,mx,.1,"초")))
+   +fld("원본에서 시작할 지점",er(rng("a_in",r2(+it.in||0),0,src||mx,.1,"초")))
+   +fld("소리 크기",er(rng("a_vol",Math.round((it.vol??1)*100),0,100,1,"%")))
+   +`<small id="edAudMsg">소리는 재생(▶)할 때만 들려요.</small>`}
+function recalcTotal(){
+  total=Math.max(.1,...[...plan.clips,...plan.texts,...plan.shapes,...plan.audio].map(x=>x.start+x.dur));
+  $("#sl").max=Math.round(total*100);if(tNow>total)tNow=total;renderTL();sync(tNow,playing);draw(tNow);ui(tNow)}
+function audSet(it,f,v,el){
+  const a=it.a,sp=+it.speed||1,srcDur=a&&a.dur?a.dur:Infinity;let st=+it.start||0,en=st+(+it.dur||3),inn=+it.in||0,note="";
+  if(f=="a_vol")it.vol=Math.min(1,Math.max(0,v/100));
+  else{
+    if(f=="a_start")st=Math.min(Math.max(0,v),en-.1);
+    if(f=="a_end")en=Math.max(v,st+.1);
+    if(f=="a_in")inn=Math.min(Math.max(0,v),Math.max(0,srcDur-.1));
+    const maxEn=st+(srcDur-inn)/sp;
+    if(en>maxEn+1e-6){en=Math.max(st+.1,maxEn);note=`원본 소리 길이 때문에 끝 시각이 ${r2(en)}초로 맞춰졌어요.`}
+    it.start=r2(st);it.dur=r2(en-st);it.in=r2(inn);recalcTotal()}
+  const box=$("#edBox"),mx=Math.max(1,Math.ceil(Math.max(total,en)*10)/10),val={a_start:r2(st),a_end:r2(en),a_in:r2(inn),a_vol:Math.round((it.vol??1)*100)};
+  box.querySelectorAll("[data-f]").forEach(n=>{const c=val[n.dataset.f];if(c==null)return;if(n.dataset.f=="a_start"||n.dataset.f=="a_end")n.max=mx;if(n!==el||Math.abs(parseFloat(n.value)-c)>1e-6)n.value=c});
+  const m=$("#edAudMsg");if(m){m.textContent=note||"소리는 재생(▶)할 때만 들려요.";m.className=note?"err":""}}
 function edFont(it){
   draw(tNow);const f=`${it.italic?"italic ":""}${+it.weight||700} 32px "${it.font}"`;
   Promise.resolve(document.fonts.load(f,String(it.text??"")||" ")).catch(()=>{}).then(()=>{if(plan)draw(tNow)})}
@@ -2715,7 +2750,8 @@ $("#edBox").addEventListener("click",e=>{
 $("#edBox").addEventListener("input",e=>{
   const el=e.target,f=el.dataset.f,it=edItem();if(!f||!it)return;
   const [W,H]=RATIOS[$("#ratio").value];let v=el.type=="checkbox"?el.checked:el.value;
-  if(el.type=="range"||el.type=="number"){v=parseFloat(v);if(!isFinite(v))return;edPair(f,v)}
+  if(el.type=="range"||el.type=="number"){v=parseFloat(v);if(!isFinite(v))return;if(SEL.k!="a")edPair(f,v,el)}
+  if(SEL.k=="a"){audSet(it,f,v,el);return}
   if(f=="svg"){clearTimeout(svgT);svgPend={it,code:v};svgT=setTimeout(()=>{const p=svgPend;svgPend=null;if(p)edSvg(p.it,p.code)},350);return}
   const isT=SEL.k=="t",fr=x=>+(x/100).toFixed(4);
   switch(f){
