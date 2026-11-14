@@ -118,18 +118,22 @@ body.work #roll{opacity:.45;pointer-events:none}
 .tc button[data-m].on,.tc button[data-m].on:hover:not(:disabled){background:var(--err);border-color:var(--err);color:#fff}
 .tc button[data-s].on,.tc button[data-s].on:hover:not(:disabled){background:var(--warn);border-color:var(--warn);color:#2a2000}
 
-/* AI 수정 바 */
-.ai{position:relative;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 18px 16px;background:linear-gradient(180deg,#111116,#0d0d11);border-top:1px solid var(--bd);box-shadow:0 -12px 30px rgba(0,0,0,.35)}
-.ai::before{content:"";position:absolute;left:0;right:0;top:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--ac),var(--ac2),transparent);opacity:.5;pointer-events:none}
-.chip{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--bd2);background:var(--p2);color:var(--mut);font-size:12px;font-weight:700;white-space:nowrap}
+/* AI 수정 바: 떠 있는 프롬프트 카드 (위: 입력 / 아래: 범위 칩 + 버튼) */
+.ai{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto auto;grid-template-areas:"inp inp inp inp inp" "chip cl . ud eb";align-items:center;gap:10px 8px;margin:12px 18px 18px;padding:12px 14px;background:var(--p2);border:1px solid var(--bd2);border-radius:18px;box-shadow:0 14px 40px rgba(0,0,0,.5);transition:border-color .15s,box-shadow .15s}
+.ai:focus-within{border-color:rgba(53,230,212,.5);box-shadow:0 0 0 3px rgba(53,230,212,.12),0 14px 40px rgba(0,0,0,.5)}
+.ai input{grid-area:inp;width:100%;height:40px;padding:0 4px;border:0;border-radius:0;background:transparent;box-shadow:none;font-size:15px}
+.ai input:hover,.ai input:focus{border:0;box-shadow:none;background:transparent}
+.ai input::placeholder{color:#6a6a79}
+.chip{grid-area:chip;display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 12px;border-radius:999px;border:1px solid var(--bd2);background:var(--p1);color:var(--mut);font-size:12px;font-weight:700;white-space:nowrap}
 .chip::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--mut)}
 .chip.on{border-color:rgba(53,230,212,.5);color:var(--ac);background:rgba(53,230,212,.08)}
 .chip.on::before{background:var(--ac);box-shadow:0 0 8px var(--ac)}
-#cl{min-height:36px;padding:0 12px;font-size:12px;color:var(--mut)}
-.ai input{flex:1 1 260px;width:auto;min-width:0;height:40px;padding:0 16px;border-radius:12px;font-size:13.5px}
-#eb{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 20px}
+#cl{grid-area:cl;min-height:30px;padding:0 10px;border-radius:999px;font-size:12px;color:var(--mut);background:transparent;border-color:transparent}
+#ud{grid-area:ud;min-height:36px;padding:0 16px;border-radius:999px;background:transparent;border-color:var(--bd2);color:var(--mut)}
+#ud:hover:not(:disabled){color:var(--fg)}
+#eb{grid-area:eb;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 20px;border-radius:999px}
 #eb::before{content:"✦";font-size:13px}
-#ud{min-height:40px;padding:0 16px}
+@media(max-width:560px){.ai{margin:10px 12px 14px;grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"inp inp inp" "chip chip chip" "cl ud eb"}}
 
 /* 상단 트랜스포트 */
 .tf{gap:5px;color:var(--mut);font-size:12px;font-weight:700}
@@ -143,13 +147,17 @@ body.work #roll{opacity:.45;pointer-events:none}
 #lib .mr:hover{border-color:var(--bd2)}
 #lib .mr span{flex:1;white-space:normal}
 
-/* 상태 알림 */
-#st{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);max-width:min(92vw,560px);background:rgba(34,34,43,.92);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid var(--bd2);color:var(--fg);padding:10px 16px;border-radius:14px;font-size:13px;z-index:9;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+/* 상태 알림: 상단바 아래 가운데 토스트. 상태 색은 은은한 틴트 + 앞쪽 점으로 표현 */
+#st{--t:53,230,212;position:fixed;top:68px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;max-width:min(92vw,560px);padding:11px 18px 11px 16px;background:linear-gradient(90deg,rgba(var(--t),.13),transparent 60%),rgba(24,24,31,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(var(--t),.3);border-radius:999px;color:var(--fg);font-size:13px;font-weight:600;line-height:1.5;z-index:30;pointer-events:none;box-shadow:0 14px 44px rgba(0,0,0,.55)}
 #st:empty{display:none}
-#st.err{background:var(--err);border-color:var(--err);color:#fff}
-#st.busy::before{content:"";display:inline-block;width:12px;height:12px;margin-right:8px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:sp .8s linear infinite;vertical-align:-1px}
+#st:not(:empty){animation:toastIn .22s ease-out}
+#st::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:rgb(var(--t));box-shadow:0 0 10px rgb(var(--t))}
+#st.err{--t:255,68,102;color:#ffd7df}
+#st.busy{--t:109,141,255}
+#st.busy::before{width:13px;height:13px;background:none;box-shadow:none;border:2px solid rgb(var(--t));border-top-color:transparent;animation:sp .8s linear infinite}
 @keyframes sp{to{transform:rotate(360deg)}}
-@media(prefers-reduced-motion:reduce){#st.busy::before,body.work .empty::before{animation:none}*{transition:none!important}}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,-10px)}to{opacity:1;transform:translate(-50%,0)}}
+@media(prefers-reduced-motion:reduce){#st,#st.busy::before,body.work .empty::before{animation:none}*{transition:none!important}}
 
 @media(max-width:1100px){
 .top{grid-template-columns:auto minmax(0,1fr)}
@@ -165,6 +173,7 @@ div.main{display:block}
 .empty{display:none}
 #daw{--hw:132px;overflow:visible}
 .corner,#ruler{top:57px}
+#st{top:auto;bottom:16px}
 .th .tc input{display:none}
 .g2{grid-template-columns:1fr}
 }
