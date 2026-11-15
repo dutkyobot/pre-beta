@@ -64,7 +64,7 @@ small{color:var(--mut)}
 
 /* 레이아웃 (button.main 과 겹치지 않게 div.main 으로 한정) */
 div.main{display:grid;grid-template-columns:340px minmax(0,1fr);min-height:0}
-.panel{display:flex;flex-direction:column;min-height:0;overflow:auto;background:linear-gradient(180deg,var(--p1),#0d0d11);border-right:1px solid var(--bd)}
+.panel{display:flex;flex-direction:column;min-height:0;overflow:auto;scrollbar-gutter:stable;background:linear-gradient(180deg,var(--p1),#0d0d11);border-right:1px solid var(--bd)}
 .panel.r{border-right:0;border-left:1px solid var(--bd)}
 .ph{flex:none;display:flex;align-items:center;padding:11px 16px;font-size:12px;font-weight:800;letter-spacing:.06em;color:var(--mut);border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);background:var(--p1)}
 .ph::before{content:"";width:3px;height:12px;margin-right:9px;border-radius:2px;background:var(--ac);box-shadow:0 0 10px var(--glow)}
