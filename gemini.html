@@ -187,11 +187,11 @@ function connect(){teardown();setStatus('연결 중','warn');renderPeers();
       ch=sb.channel('duo-'+room,{config:{broadcast:{self:false},presence:{key:'a'+me}}});
       ch.on('broadcast',{event:'msg'},({payload})=>recv(payload))
         .on('presence',{event:'sync'},()=>{const s=ch.presenceState();peers={};Object.keys(s).forEach(k=>peers[k.slice(1)]=Date.now());peers[me]=Date.now();renderPeers()})
-        .subscribe(async s=>{if(s==='SUBSCRIBED'){setStatus('Supabase 실시간 연결됨','ok');await ch.track({me})}
-          else if(s==='CHANNEL_ERROR'||s==='TIMED_OUT'){setStatus('연결 오류 — 설정 확인','err')}else if(s==='CLOSED')setStatus('연결 끊김','err')});
+        .subscribe(async (s,er)=>{if(s==='SUBSCRIBED'){setStatus('Supabase 실시간 연결됨','ok');await ch.track({me})}
+          else if(s==='CHANNEL_ERROR'||s==='TIMED_OUT'){setStatus('연결 오류 — 설정 확인','err');toast(er&&er.message?er.message:'URL/키를 확인하세요');console.error('realtime',s,er)}else if(s==='CLOSED')setStatus('연결 끊김','err')});
       hb=setInterval(renderPeers,4000)}catch(e){setStatus('Supabase 오류','err');toast(e.message)}};
     if(window.supabase)go();else{const s=document.createElement('script');
-      s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js';s.onload=go;s.onerror=()=>{setStatus('라이브러리 로드 실패','err');fallbackBC()};document.head.appendChild(s)}
+      s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.1/dist/umd/supabase.js';s.onload=go;s.onerror=()=>{setStatus('라이브러리 로드 실패','err');fallbackBC()};document.head.appendChild(s)}
   }else fallbackBC(cfg.mode==='sb')}
 function fallbackBC(warn){
   if(!('BroadcastChannel' in window)){setStatus('동기화 불가 (미지원)','err');return}
@@ -213,7 +213,7 @@ $('#send').onclick=()=>{send($('#inp').value,$('#kind').value);$('#inp').value='
 $('#inp').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();$('#send').click()}});
 $('#cfgBtn').onclick=()=>{$('#cMode').value=cfg.mode;$('#cUrl').value=cfg.url;$('#cKey').value=cfg.key;$('#modal').classList.add('on')};
 $('#cCancel').onclick=()=>$('#modal').classList.remove('on');
-$('#cSave').onclick=()=>{cfg={mode:$('#cMode').value,url:$('#cUrl').value.trim(),key:$('#cKey').value.trim()};LS('gcCfg',JSON.stringify(cfg));sb=null;$('#modal').classList.remove('on');connect()};
+$('#cSave').onclick=()=>{cfg={mode:$('#cMode').value,url:$('#cUrl').value.trim().replace(/^(https?:\/\/[^\/]+).*$/,'$1'),key:$('#cKey').value.trim()};LS('gcCfg',JSON.stringify(cfg));sb=null;$('#modal').classList.remove('on');connect()};
 
 /* ---------- 하청 탭 ---------- */
 const ov=n=>{['Idle','Load','Block'].forEach(k=>$('#ov'+k).classList.toggle('on',k===n));$('#frame').style.display=n?'none':'block'};
