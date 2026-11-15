@@ -190,6 +190,20 @@ div.main{display:block}
 .tp>label:not(.tf){gap:7px;color:var(--mut);font-size:12px;font-weight:700;cursor:pointer;user-select:none}
 .tp>label:not(.tf):has(input:checked){color:var(--ac)}
 .tp>label:not(.tf) input{width:15px;height:15px;margin:0;padding:0;border:0;cursor:pointer}
+
+/* 작곡 방식 전환: API / 프롬프트 복붙 (복붙 방식 UI는 AI 영상 편집기와 같은 구성) */
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin-bottom:14px;background:var(--p2);border:1px solid var(--bd);border-radius:12px}
+.seg button{min-height:32px;padding:0 8px;border-color:transparent;background:transparent;color:var(--mut);font-size:13px}
+.seg button.on,.seg button.on:hover:not(:disabled){background:var(--p3);border-color:var(--bd2);color:var(--ac)}
+.hint{margin:0 0 10px;color:var(--mut);font-size:12.5px;line-height:1.55}
+.links{display:flex;gap:8px;margin-top:10px}.links a{flex:1;text-align:center;text-decoration:none;color:var(--fg);background:var(--p3);border:1px solid var(--bd);border-radius:10px;padding:9px 0;font-size:13px;font-weight:700;transition:.15s}
+.links a:hover{border-color:var(--ac);color:var(--ac);background:rgba(53,230,212,.07)}
+#cpb{margin-top:6px}
+#cpb h3{margin:18px 0 6px;font-size:12px;font-weight:800;letter-spacing:.04em;color:var(--mut)}
+#cp,#ap{width:100%;min-height:46px;border-radius:12px;font-size:15px}
+#pin{min-height:110px}
+#fx{width:100%;min-height:32px;margin-top:8px;font-size:12px}
+body:not(.cp) #cpb,body.cp #ks,body.cp #gen{display:none}
 </style>
 </head>
 <body>
@@ -208,6 +222,7 @@ div.main{display:block}
 <aside class="panel">
 <div class="ph">곡 만들기</div>
 <div class="pane">
+<div class="seg"><button id="m1" class="on">API 방식</button><button id="m2">프롬프트 복붙</button></div>
 <textarea id="p" placeholder="예: 비 오는 밤 재즈 카페 느낌, 느린 스윙, 피아노·콘트라베이스·브러시 드럼, 16마디"></textarea>
 <div id="ex" class="row"><small>예시</small>
 <button data-t="비 오는 밤 재즈 카페 느낌, 느린 스윙, 피아노·콘트라베이스·브러시 드럼, 16마디">재즈 카페</button>
@@ -225,6 +240,15 @@ div.main{display:block}
 </div>
 </details>
 <button id="gen" class="main" title="Ctrl+Enter" style="width:100%;margin-top:6px">작곡하기</button>
+<div id="cpb">
+<button id="cp" class="main" title="Ctrl+Enter">프롬프트 복사</button>
+<div class="links" id="lk" hidden><a target="_blank" rel="noopener" href="https://claude.ai/new">Claude</a><a target="_blank" rel="noopener" href="https://chatgpt.com/">ChatGPT</a><a target="_blank" rel="noopener" href="https://gemini.google.com/app">Gemini</a></div>
+<h3>AI 답변 붙여넣기</h3>
+<p class="hint">복사한 프롬프트를 위 AI 중 하나에 보내고, 받은 답(코드블록)을 아래에 붙여넣어요. 곡 수정도 같은 칸에 붙여넣으면 돼요.</p>
+<textarea id="pin" placeholder="AI가 준 코드블록을 그대로 붙여넣으세요"></textarea>
+<div class="row"><button id="ap" class="main">적용</button></div>
+<button id="fx" hidden>문제 AI에게 다시 요청 (문구 복사)</button>
+</div>
 </div>
 <div class="ph">보관함</div>
 <div class="pane"><div id="lib"></div></div>
@@ -666,10 +690,13 @@ const gen = async (p, plan) => {
   try { localStorage.setItem('ak', $('k').value.trim()); } catch (e) {}
   try { return await compose(p, undefined, plan); } catch (e) { if (/^API/.test(e.message)) throw e; return await compose(p, e.message, plan); }
 };
-const busy = (b, m) => { document.body.classList.toggle('work', b); $('gen').disabled = $('eb').disabled = b; $('gen').textContent = b ? '작곡 중…' : '작곡하기'; $('eb').textContent = b ? '수정 중…' : '수정하기'; if (m) $('st').textContent = m; };
-$('gen').onclick = async () => {
+const busy = (b, m) => { document.body.classList.toggle('work', b); $('gen').disabled = $('eb').disabled = b; $('gen').textContent = b ? '작곡 중…' : '작곡하기'; $('eb').textContent = b ? '수정 중…' : copyMode ? '요청 복사' : '수정하기'; if (m) $('st').textContent = m; };
+const reqText = () => {
   const o = [['장르', 'og'], ['키', 'ok'], ['BPM', 'ob'], ['마디 수', 'om'], ['악기', 'oi']].map(([l, i]) => $(i).value.trim() && `${l}: ${$(i).value.trim()}`).filter(Boolean);
-  const p = [$('p').value.trim(), o.length && '[고급 옵션] ' + o.join(' / ')].filter(Boolean).join('\n');
+  return [$('p').value.trim(), o.length && '[고급 옵션] ' + o.join(' / ')].filter(Boolean).join('\n');
+};
+$('gen').onclick = async () => {
+  const p = reqText();
   if (!p || needKey()) return;
   stop(); busy(true, 'AI가 편곡 중입니다… (10~40초)');
   try { setComp(await gen(p, true)); $('st').textContent = '완료'; } catch (e) { $('st').textContent = '오류: ' + e.message; }
@@ -686,18 +713,81 @@ function merge(o, n, ins, b0, b1) {
   if (!ins) out.chordProgression = o.chordProgression.filter((c) => !within((c.bar - 1) * bpb)).concat(n.chordProgression.filter((c) => within((c.bar - 1) * bpb)));
   return out;
 }
-$('eb').onclick = async () => {
-  if (needKey()) return;
-  const ins = tgt, bpb = comp.beatsPerBar;
-  const a = rg ? rg[0] : 1, z = rg ? rg[1] : comp.totalBars;
+const editReq = () => {
+  const ins = tgt, a = rg ? rg[0] : 1, z = rg ? rg[1] : comp.totalBars;
   const whole = !ins && a === 1 && z === comp.totalBars;
   const rule = whole ? '요청에 필요하면 bpm·악기·코드·노트를 모두 바꿀 수 있다.' : '악기 id, bpm, 마디 수는 유지하고 수정 범위 밖의 노트는 그대로 둔다.';
   const p = `현재 곡(JSON):\n${JSON.stringify(comp, (k, v) => (k === 'midi' ? undefined : v))}\n\n수정 요청: ${$('ei').value.trim() || '같은 분위기로 새롭게 다시 만들어줘'}\n수정 범위: ${whole ? '곡 전체' : `${ins ? '악기 ' + ins : '모든 악기'}의 ${a}~${z}마디`}\n${rule} 수정된 곡 전체 JSON을 출력한다.`;
+  return { ins, a, z, whole, p };
+};
+$('eb').onclick = async () => {
+  if (copyMode) return copyEdit();
+  if (needKey()) return;
+  const bpb = comp.beatsPerBar, { ins, a, z, whole, p } = editReq();
   stop(); busy(true, 'AI가 수정 중입니다…');
   try { const n = await gen(p); setComp(whole ? n : merge(comp, n, ins, (a - 1) * bpb, z * bpb), true); $('st').textContent = '수정 완료'; }
   catch (e) { $('st').textContent = '오류: ' + e.message; }
   busy(false);
 };
+
+// ---- 프롬프트 복붙 방식: API 없이 AI 채팅에 프롬프트를 복사해 보내고, 받은 답을 붙여넣어 적용 (API 방식과 같은 프롬프트·스키마·보정 사용) ----
+const FENCE = '`'.repeat(3);
+let copyMode = false, pend = null, lastFix = '';
+function setMode(on) {
+  copyMode = on; document.body.classList.toggle('cp', on);
+  $('m1').classList.toggle('on', !on); $('m2').classList.toggle('on', on);
+  $('eb').textContent = on ? '요청 복사' : '수정하기';
+  try { localStorage.setItem('mode', on ? 'copy' : 'api'); } catch (e) {}
+}
+$('m1').onclick = () => setMode(false);
+$('m2').onclick = () => setMode(true);
+try { setMode(localStorage.getItem('mode') === 'copy'); } catch (e) { setMode(false); }
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); return true; }
+  catch (e) { const x = document.createElement('textarea'); x.value = t; document.body.append(x); x.select(); const ok = document.execCommand('copy'); x.remove(); return ok; }
+}
+async function copied(t, msg) {
+  const ok = await copyText(t); $('lk').hidden = false;
+  $('st').textContent = ok ? msg : '오류: 복사가 막혔어요. 이 페이지를 새 탭이나 파일로 열어 다시 시도해 주세요';
+}
+const outRule = `설명 없이 ${FENCE}json 코드블록 하나만 출력하세요. JSON에 주석은 쓰지 마세요. 이 JSON은 웹 작곡기가 읽어서 그대로 곡으로 재생하므로, 아래 JSON 스키마에 정확히 맞추세요(문법이 틀리면 전체가 실패합니다).`;
+$('cp').onclick = () => {
+  const p = reqText();
+  if (!p) { $('st').textContent = '오류: 만들 곡을 먼저 설명해 주세요'; $('p').focus(); return; }
+  pend = null;
+  copied(`${PLAN_SYSTEM}\n\n${outRule}\n\n[JSON 스키마]\n${JSON.stringify(PLAN)}\n\n[곡 요청]\n${p}`, '프롬프트를 복사했어요. AI에 보내고, 받은 답을 아래 칸에 붙여넣어 적용하세요');
+};
+function copyEdit() { // 곡 수정: 현재 곡 + 수정 요청 + 범위를 복사. 받은 답을 같은 칸에 붙여넣으면 범위만 교체됨
+  const { ins, a, z, whole, p } = editReq();
+  pend = { ins, a, z, whole, base: comp };
+  copied(`${SYSTEM}\n\n${outRule}\n\n[JSON 스키마]\n${JSON.stringify(SCHEMA)}\n\n${p}`, '수정 요청을 복사했어요. AI에 보내고, 받은 답을 왼쪽 붙여넣기 칸에 넣어 적용하세요');
+}
+function parseAns(txt) {
+  const m = txt.match(/```(?:json)?\s*([\s\S]*?)```/i); let s = m ? m[1] : txt;
+  const a = s.indexOf('{'), b = s.lastIndexOf('}');
+  if (a < 0 || b < a) throw new Error('JSON을 찾을 수 없어요. 답변의 코드블록 전체를 붙여넣었는지 확인해 주세요');
+  s = s.slice(a, b + 1).replace(/,\s*([}\]])/g, '$1');
+  try { return JSON.parse(s); } catch (e) { throw new Error('JSON 형식 오류: ' + e.message); }
+}
+$('ap').onclick = () => {
+  const txt = $('pin').value.trim();
+  if (!txt) { $('st').textContent = '오류: AI 답변을 먼저 붙여넣어 주세요'; $('pin').focus(); return; }
+  $('fx').hidden = true;
+  try {
+    const o = parseAns(txt), isPlan = !!o.sections, n = normalize(isPlan ? build(o) : o);
+    if (pend && !isPlan) {
+      if (pend.base !== comp) { pend = null; $('st').textContent = '오류: 그 사이 곡이 바뀌었어요. 곡 아래의 "요청 복사"를 다시 눌러 주세요'; return; }
+      const { ins, a, z, whole } = pend, bpb = comp.beatsPerBar;
+      stop(); setComp(whole ? n : merge(comp, n, ins, (a - 1) * bpb, z * bpb), true); pend = null; $('st').textContent = '수정 완료';
+    } else { stop(); pend = null; setComp(n); $('st').textContent = '적용 완료'; }
+    $('pin').value = '';
+  } catch (e) {
+    $('st').textContent = '오류: ' + e.message;
+    lastFix = `아래 JSON에 문제가 있어요. 문제만 고쳐서 ${FENCE}json 코드블록 하나로 전체를 다시 주세요. 설명은 쓰지 마세요.\n\n[문제]\n${e.message}\n\n[현재 JSON]\n${txt}`;
+    $('fx').hidden = false;
+  }
+};
+$('fx').onclick = () => copied(lastFix, '문제 수정 요청을 복사했어요. AI에 보내고, 받은 답을 다시 붙여넣어 주세요');
 
 // ---- MP3 내보내기: 오프라인 렌더링 후 lamejs로 인코딩 ----
 let lameP;
@@ -809,7 +899,7 @@ new MutationObserver(() => {
 }).observe($('st'), { childList: true });
 $('ks').open = !$('k').value;
 document.querySelectorAll('#ex button').forEach((b) => (b.onclick = () => { $('p').value = b.dataset.t; $('p').focus(); }));
-$('p').addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) $('gen').click(); });
+$('p').addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) (copyMode ? $('cp') : $('gen')).click(); });
 document.addEventListener('keydown', (e) => {
   if (e.code === 'Space' && comp && !/INPUT|TEXTAREA|SELECT|BUTTON/.test(document.activeElement.tagName)) { e.preventDefault(); $('play').click(); }
 });
