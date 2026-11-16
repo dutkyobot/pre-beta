@@ -84,6 +84,33 @@
     .main{ overflow-y:auto; padding-bottom:var(--bar-space); scrollbar-width:thin; }
   }
 
+  .mobile-divider,
+  .mobile-library-label{ display:none; }
+
+  @media (max-width:1023px){
+    .mobile-divider{
+      display:block;
+      width:48px;
+      height:1px;
+      margin:4px auto 0;
+      background:var(--line);
+      flex:none;
+    }
+    .mobile-library-label{
+      display:block;
+      margin:0 2px -5px;
+      color:var(--mute);
+      font-size:11px;
+      font-weight:600;
+      letter-spacing:.04em;
+    }
+    .lib-strip{
+      align-items:center;
+      padding:2px 2px 8px;
+      margin-bottom:2px;
+    }
+  }
+
   /* ============================== 왼쪽 라이브러리 줄 ============================== */
   .rail-logo{
     width:36px; height:36px;
@@ -715,8 +742,6 @@
 <!-- ============================== 플레이어 화면 ============================== -->
 <div id="app" class="app" hidden>
 
-  <div id="libStrip" class="lib-strip"></div>
-
   <nav class="rail card" aria-label="라이브러리">
     <div class="rail-logo"><i class="fa-solid fa-list-ol"></i></div>
     <button id="railNew" class="rail-btn" aria-label="플레이리스트 추가" title="플레이리스트 추가"><i class="fa-solid fa-plus"></i></button>
@@ -742,6 +767,10 @@
       </section>
     </div>
   </aside>
+
+  <div class="mobile-divider" aria-hidden="true"></div>
+  <div class="mobile-library-label">라이브러리</div>
+  <div id="libStrip" class="lib-strip"></div>
 
   <main id="main" class="main">
     <section class="card">
