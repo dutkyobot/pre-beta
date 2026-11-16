@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nature Canvas - 자연 풍경 힐링 갤러리</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts (Inter & Noto Sans KR) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans KR', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            500: '#22c55e',
+                            900: '#14532d',
+                        }
+                    },
+                    animation: {
+                        'kenburns-zoom': 'kenburnsZoom 25s ease-out infinite alternate',
+                        'kenburns-pan': 'kenburnsPan 30s ease-in-out infinite alternate',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        kenburnsZoom: {
+                            '0%': { transform: 'scale(1) translate(0, 0)' },
+                            '100%': { transform: 'scale(1.12) translate(-1%, -1%)' }
+                        },
+                        kenburnsPan: {
+                            '0%': { transform: 'scale(1.08) translate(-1.5%, 0)' },
+                            '100%': { transform: 'scale(1.15) translate(1.5%, -1.5%)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom scrollbar and glassmorphism styles */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .glass-panel {
+            background: rgba(20, 26, 36, 0.32);
+            backdrop-filter: blur(22px) saturate(150%);
+            -webkit-backdrop-filter: blur(22px) saturate(150%);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.10), 0 8px 28px rgba(0, 0, 0, 0.22);
+        }
+
+        .glass-button {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(18px) saturate(160%);
+            -webkit-backdrop-filter: blur(18px) saturate(160%);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.18), 0 2px 10px rgba(0, 0, 0, 0.15);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-button:hover {
+            background: rgba(255, 255, 255, 0.16);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+        .glass-button:active {
+            transform: scale(0.94);
+        }
+
+        /* Image transitions */
+        .slide-bg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition-property: opacity, transform, filter;
+            transition-duration: 1200ms;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+            z-index: 1;
+            will-change: opacity, transform;
+        }
+
+        .slide-bg.active {
+            opacity: 1;
+            z-index: 2;
+        }
+
+        /* Transition effect variations */
+        .effect-fade .slide-bg {
+            transition-duration: 1200ms;
+        }
+        
+        .effect-zoom .slide-bg {
+            transform: scale(1.08);
+        }
+        .effect-zoom .slide-bg.active {
+            transform: scale(1);
+        }
+
+        .effect-blur .slide-bg {
+            filter: blur(12px);
+        }
+        .effect-blur .slide-bg.active {
+            filter: blur(0px);
+        }
+
+        /* Ambient glow background */
+        .ambient-overlay {
+            background: radial-gradient(circle at center, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.6) 100%),
+                        linear-gradient(to bottom, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0) 25%, rgba(0, 0, 0, 0) 75%, rgba(0, 0, 0, 0.7) 100%);
+        }
+
+        /* Custom Progress Ring SVG */
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.1s linear;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        /* Hide interface when idle */
+        .hud-interface {
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        }
+        .hud-hidden {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: translateY(10px);
+        }
+    </style>
+</head>
+<body class="bg-black text-white font-sans overflow-hidden select-none h-screen w-screen relative">
+
+    <!-- Background Image Layers for smooth crossfading -->
+    <div id="slideshow-container" class="absolute inset-0 w-full h-full bg-slate-950 overflow-hidden effect-zoom">
+        <img id="bg-layer-1" class="slide-bg active" alt="Nature landscape 1" src="" />
+        <img id="bg-layer-2" class="slide-bg" alt="Nature landscape 2" src="" />
+        <div id="vignette-overlay" class="hud-interface absolute inset-0 ambient-overlay z-10 pointer-events-none"></div>
+    </div>
+
+    <!-- Top HUD Header -->
+    <header id="top-hud" class="hud-interface absolute top-0 left-0 right-0 p-4 z-20 flex justify-between items-start pointer-events-auto">
+        <!-- Brand & Clock -->
+        <div class="glass-panel px-4 py-2 rounded-full flex items-center shadow-lg">
+            <div>
+                <h1 class="text-[10px] font-semibold tracking-widest text-emerald-300/80 uppercase leading-none">Nature Canvas</h1>
+                <div id="clock-display" class="text-lg font-bold tracking-tight text-white/90 leading-tight">00:00:00</div>
+            </div>
+        </div>
+
+        <!-- Right Quick Controls -->
+        <div class="flex items-center space-x-2">
+            <!-- Audio Ambient Synth Toggle -->
+            <button id="btn-sound" title="자연 소리 재생" class="glass-button p-2.5 rounded-full text-white/85 hover:text-white">
+                <i id="icon-sound-off" data-lucide="volume-x" class="w-4 h-4"></i>
+                <i id="icon-sound-on" data-lucide="volume-2" class="w-4 h-4 hidden"></i>
+            </button>
+
+            <!-- Favorites Gallery Button -->
+            <button id="btn-favorites" title="저장한 풍경" class="glass-button p-2.5 rounded-full text-white/85 hover:text-white relative">
+                <i data-lucide="bookmark" class="w-4 h-4"></i>
+                <span id="fav-count-badge" class="absolute -top-0.5 -right-0.5 bg-emerald-400 text-black font-bold text-[9px] w-4 h-4 rounded-full flex items-center justify-center opacity-0 transition-opacity">0</span>
+            </button>
+
+            <!-- Settings Modal Button -->
+            <button id="btn-settings" title="설정" class="glass-button p-2.5 rounded-full text-white/85 hover:text-white">
+                <i data-lucide="sliders" class="w-4 h-4"></i>
+            </button>
+
+            <!-- Fullscreen Toggle Button -->
+            <button id="btn-fullscreen" title="전체화면" class="glass-button p-2.5 rounded-full text-white/85 hover:text-white">
+                <i id="icon-fullscreen-enter" data-lucide="maximize" class="w-4 h-4"></i>
+                <i id="icon-fullscreen-exit" data-lucide="minimize" class="w-4 h-4 hidden"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Bottom HUD Controls -->
+    <footer id="bottom-hud" class="hud-interface absolute bottom-0 left-0 right-0 p-4 z-20 pointer-events-auto">
+        <div class="relative flex flex-col md:flex-row justify-between items-end md:items-center gap-3">
+            <!-- Photo Metadata Info -->
+            <div id="photo-info-card" class="glass-panel h-12 flex items-center px-4 rounded-full max-w-md w-full md:w-auto shadow-lg transition-all duration-300">
+                <div class="flex items-center justify-between w-full space-x-4">
+                    <div class="min-w-0 pl-1">
+                        <h2 id="photo-title" class="text-sm font-semibold text-white truncate leading-tight">자연 풍경 불러오는 중...</h2>
+                        <p id="photo-credit" class="text-[11px] text-white/60 truncate leading-tight">작가: -</p>
+                    </div>
+                    <!-- Action Buttons for Image -->
+                    <div class="flex items-center space-x-0.5 flex-shrink-0">
+                        <button id="btn-like-photo" title="보관함에 저장" class="p-2 text-white/70 hover:text-emerald-300 hover:bg-white/10 rounded-full transition">
+                            <i id="icon-heart" data-lucide="heart" class="w-4 h-4"></i>
+                        </button>
+                        <a id="btn-download-photo" href="#" target="_blank" download title="원본 이미지 내려받기" class="p-2 text-white/70 hover:text-emerald-300 hover:bg-white/10 rounded-full transition">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Central Playback Controls with Circular Timer: always centered regardless of side panel widths -->
+            <div class="glass-panel h-12 flex items-center px-3 space-x-1.5 rounded-full shadow-lg self-center md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2">
+                <!-- Prev Button -->
+                <button id="btn-prev" title="이전 이미지" class="p-1.5 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </button>
+
+                <!-- Play/Pause Button with SVG Circular Progress Bar -->
+                <div class="relative flex items-center justify-center">
+                    <svg class="w-10 h-10">
+                        <circle class="text-white/10" stroke-width="3" stroke="currentColor" fill="transparent" r="17" cx="20" cy="20"/>
+                        <circle id="progress-circle" class="progress-ring__circle text-emerald-300" stroke-width="3" stroke-dasharray="106.81" stroke-dashoffset="0" stroke-linecap="round" stroke="currentColor" fill="transparent" r="17" cx="20" cy="20"/>
+                    </svg>
+                    <button id="btn-toggle-play" title="일시정지/재생" class="absolute inset-0 m-auto w-7 h-7 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold rounded-full flex items-center justify-center shadow-md transition transform hover:scale-105 active:scale-95">
+                        <i id="icon-pause" data-lucide="pause" class="w-3.5 h-3.5 fill-current"></i>
+                        <i id="icon-play" data-lucide="play" class="w-3.5 h-3.5 fill-current hidden"></i>
+                    </button>
+                </div>
+
+                <!-- Next Button -->
+                <button id="btn-next" title="다음 이미지" class="p-1.5 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition">
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Timer Counter & Source badge -->
+            <div class="glass-panel h-12 flex items-center px-4 space-x-2 rounded-full hidden lg:flex text-[11px] text-white/70 shadow-lg">
+                <span>주기 <strong id="hud-interval-text" class="text-white font-semibold">20초</strong></span>
+                <span class="text-white/25">·</span>
+                <span id="hud-source-text">Unsplash 자연 사진</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Settings Modal -->
+    <div id="modal-settings" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="glass-panel w-full max-w-lg p-6 sm:p-8 rounded-3xl shadow-2xl m-4 border border-white/20 transform scale-95 transition-transform duration-300 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center pb-4 mb-6 border-b border-white/10">
+                <h3 class="text-lg font-bold text-white">슬라이드쇼 설정</h3>
+                <button id="btn-close-settings" class="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-full transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Interval Selector -->
+                <div>
+                    <label class="block text-sm font-medium text-white/90 mb-2 flex justify-between items-center">
+                        <span>이미지 교체 주기 (초)</span>
+                        <span id="setting-interval-val" class="text-emerald-400 font-bold text-base">20초</span>
+                    </label>
+                    <input id="setting-interval-slider" type="range" min="3" max="120" value="20" step="1" class="w-full accent-emerald-500 bg-white/20 h-2 rounded-lg cursor-pointer">
+                    <div class="flex justify-between text-xs text-white/50 mt-1">
+                        <span>3초 · 빠르게</span>
+                        <span>20초 · 기본</span>
+                        <span>60초 · 느리게</span>
+                        <span>120초 · 매우 느리게</span>
+                    </div>
+                </div>
+
+                <!-- Image Provider Source -->
+                <div>
+                    <label class="block text-sm font-medium text-white/90 mb-2">이미지 소스 선택</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" data-source="unsplash" class="source-btn p-3 rounded-2xl border text-left transition border-emerald-400 bg-emerald-400/15 text-white">
+                            <div class="font-semibold text-sm">Unsplash</div>
+                            <div class="text-[11px] text-white/60">선명한 고화질 자연 사진</div>
+                        </button>
+                        <button type="button" data-source="picsum" class="source-btn p-3 rounded-2xl border text-left transition border-white/10 bg-white/5 text-white/80 hover:bg-white/10">
+                            <div class="font-semibold text-sm">Picsum</div>
+                            <div class="text-[11px] text-white/60">다양한 고화질 랜덤 사진</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Category / Keyword Filter -->
+                <div id="category-section">
+                    <label class="block text-sm font-medium text-white/90 mb-2">자연 테마 필터 (Unsplash 전용)</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" data-category="nature,landscape" class="category-btn p-2.5 rounded-full border border-emerald-400 bg-emerald-400/15 text-emerald-300 text-xs font-medium text-center transition">전체 자연</button>
+                        <button type="button" data-category="mountains" class="category-btn p-2.5 rounded-full border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 text-xs font-medium text-center transition">웅장한 산</button>
+                        <button type="button" data-category="ocean,beach" class="category-btn p-2.5 rounded-full border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 text-xs font-medium text-center transition">바다·파도</button>
+                        <button type="button" data-category="forest,trees" class="category-btn p-2.5 rounded-full border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 text-xs font-medium text-center transition">울창한 숲</button>
+                        <button type="button" data-category="sunset,sunrise" class="category-btn p-2.5 rounded-full border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 text-xs font-medium text-center transition">노을·일출</button>
+                        <button type="button" data-category="aurora,night-sky" class="category-btn p-2.5 rounded-full border border-white/10 bg-white/5 text-white/80 hover:bg-white/10 text-xs font-medium text-center transition">밤하늘·오로라</button>
+                    </div>
+                </div>
+
+                <!-- Transition Effect -->
+                <div>
+                    <label class="block text-sm font-medium text-white/90 mb-2">화면 전환 애니메이션</label>
+                    <select id="setting-effect" class="w-full bg-slate-900 border border-white/20 rounded-full px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-400">
+                        <option value="effect-zoom">확대 페이드</option>
+                        <option value="effect-fade">부드러운 전환</option>
+                        <option value="effect-blur">흐림 전환</option>
+                    </select>
+                </div>
+
+                <!-- Ken Burns Motion Toggle -->
+                <div class="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/10">
+                    <div>
+                        <div class="text-sm font-medium text-white">시네마틱 파노라마 효과</div>
+                        <div class="text-xs text-white/60">이미지가 서서히 확대되며 미세하게 움직입니다</div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input id="setting-kenburns" type="checkbox" checked class="sr-only peer">
+                        <div class="w-11 h-6 bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-400"></div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Apply / Save button -->
+            <div class="mt-8">
+                <button id="btn-save-settings" class="w-full py-3.5 bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold rounded-full shadow-xl transition transform active:scale-95">
+                    설정 적용하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Favorites Drawer Modal -->
+    <div id="modal-favorites" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="glass-panel w-full max-w-4xl p-6 sm:p-8 rounded-3xl shadow-2xl m-4 border border-white/20 transform scale-95 transition-transform duration-300 max-h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center pb-4 mb-4 border-b border-white/10">
+                <h3 class="text-lg font-bold text-white">보관된 명장면 (<span id="fav-modal-count">0</span>)</h3>
+                <button id="btn-close-favorites" class="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-full transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Empty State or Gallery Grid -->
+            <div id="fav-gallery-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 overflow-y-auto pr-2 flex-grow">
+                <!-- Dynamically filled with JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast-message" class="fixed top-8 left-1/2 -translate-x-1/2 z-50 glass-panel px-5 py-2.5 rounded-full border border-emerald-400/30 text-white text-sm font-medium shadow-2xl transition-all duration-300 opacity-0 pointer-events-none translate-y-[-20px]">
+        <span id="toast-text">알림 메시지</span>
+    </div>
+
+    <script>
+        // Curated High-Res Nature Landscapes Dataset (Guarantees instant, highly cinematic images)
+        const CURATED_NATURE_PHOTOS = [
+            {
+                id: 'curated-1',
+                url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=2560&q=85',
+                thumb: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=70',
+                title: '요세미티 국립공원의 아침 반사',
+                credit: 'Bailey Zindel',
+                source: 'Unsplash 자연 사진',
+                category: 'mountains'
+            },
+            {
+                id: 'curated-2',
+                url: 'https://images.unsplash.com/photo-1511884642898-4c92249e20b6?auto=format&fit=crop&w=2560&q=85',
+                thumb: 'https://images.unsplash.com/photo-1511884642898-4c92249e20b6?auto=format&fit=crop&w=400&q=70',
+                title: '고요한 산맥과 푸른 안개',
+                credit: 'Luca Bravo',
+                source: 'Unsplash 자연 사진',
+                category: 'mountains'
+            },
+            {
+                id: 'curated-3',
+                url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=2560&q=85',
+                thumb: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=400&q=70',
+                title: '몽환적인 안개속 산봉우리',
+                credit: 'v2osc',
+                source: 'Unsplash 자연 사진',
+                category: 'forest,trees'
+            },
+            {
+                id: 'curated-4',
+                url: 'https://images.unsplash.com/photo-1426604966848-d7adac402bff?auto=format&fit=crop&w=2560&q=85',
+                thumb: 'https://images.unsplash.com/photo-1426604966848-d7adac402bff?auto=format&fit=crop&w=400&q=70',
+                title: '협곡 사이의 눈부신 햇살',
+                credit: 'Kalen Emsley',
+                source: 'Unsplash 자연 사진',
+                category: 'mountains'
+            },
+            {
+                id: 'curated-5',
+                url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2560&q=85',
+                thumb: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=70',
+                title: '에메랄드빛 열대 바다',
+                credit: 'Sean Oulashin',
+                source: 'Unsplash 자연 사진',
+                category: 'ocean,beach'
+            },
+            {
+                id: 'curated-6',
+                url: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=2560&q=85',
+                thumb: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=400&q=70',
+                title: '황혼의 해안가 파도',
+                credit: 'Guy Kawasaki',
+                source: 'Unsplash 자연 사진',
+                category: 'ocean,beach'
+            },
+            {
+                id: 'curated-7',
+                url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=2560&q=85',
+                thumb: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=400&q=70',
+                title: '숲속을 비추는 햇살',
+                credit: 'Sebastian Unrau',
+                source: 'Unsplash 자연 사진',
+                category: 'forest,trees'
+            },
+            {
+                id: 'curated-8',
+                url: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?auto=format&fit=crop&w=2560&q=85',
+                thumb: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?auto=format&fit=crop&w=400&q=70',
+                title: '노르웨이 밤하늘의 오로라',
+                credit: 'Jonatan Pie',
+                source: 'Unsplash 자연 사진',
+                category: 'aurora,night-sky'
+            },
+            {
+                id: 'curated-9',
+                url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2560&q=85',
+                thumb: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=400&q=70',
+                title: '장엄한 설산의 석양',
+                credit: 'Kal Visuals',
+                source: 'Unsplash 자연 사진',
+                category: 'sunset,sunrise'
+            },
+            {
+                id: 'curated-10',
+                url: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=2560&q=85',
+                thumb: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=400&q=70',
+                title: '초원과 뭉게구름',
+                credit: 'Ales Krivec',
+                source: 'Unsplash 자연 사진',
+                category: 'nature,landscape'
+            }
+        ];
+
+        class SlideshowApp {
+            constructor() {
+                // Application State
+                this.intervalSeconds = 20; // Default 20s as requested
+                this.timer = null;
+                this.elapsedSeconds = 0;
+                this.isPlaying = true;
+                this.currentProvider = 'unsplash'; // 'unsplash' or 'picsum'
+                this.selectedCategory = 'nature,landscape';
+                this.activeEffect = 'effect-zoom';
+                this.isKenBurnsEnabled = true;
+
+                // Photo collections
+                this.photoHistory = [];
+                this.currentIndex = -1;
+                this.favorites = JSON.parse(localStorage.getItem('nature_canvas_favs') || '[]');
+                this.picsumList = [];
+
+                // UI references
+                this.activeLayer = 1; // 1 or 2
+                this.hudTimeout = null;
+                this.audioContext = null;
+                this.audioNodes = null;
+                this.isAudioPlaying = false;
+
+                this.initElements();
+                this.bindEvents();
+                this.startClock();
+                this.loadInitialImages();
+            }
+
+            initElements() {
+                // Background elements
+                this.bg1 = document.getElementById('bg-layer-1');
+                this.bg2 = document.getElementById('bg-layer-2');
+                this.slideshowContainer = document.getElementById('slideshow-container');
+
+                // HUD elements
+                this.topHud = document.getElementById('top-hud');
+                this.bottomHud = document.getElementById('bottom-hud');
+                this.vignetteOverlay = document.getElementById('vignette-overlay');
+                this.clockDisplay = document.getElementById('clock-display');
+                this.progressCircle = document.getElementById('progress-circle');
+                this.progressCircleCircumference = 2 * Math.PI * 17; // r=17
+
+                // Info elements
+                this.photoTitle = document.getElementById('photo-title');
+                this.photoCredit = document.getElementById('photo-credit');
+                this.btnLike = document.getElementById('btn-like-photo');
+                this.iconHeart = document.getElementById('icon-heart');
+                this.btnDownload = document.getElementById('btn-download-photo');
+                this.hudIntervalText = document.getElementById('hud-interval-text');
+                this.hudSourceText = document.getElementById('hud-source-text');
+
+                // Buttons
+                this.btnTogglePlay = document.getElementById('btn-toggle-play');
+                this.iconPause = document.getElementById('icon-pause');
+                this.iconPlay = document.getElementById('icon-play');
+                this.btnPrev = document.getElementById('btn-prev');
+                this.btnNext = document.getElementById('btn-next');
+                this.btnSettings = document.getElementById('btn-settings');
+                this.btnFavorites = document.getElementById('btn-favorites');
+                this.btnFullscreen = document.getElementById('btn-fullscreen');
+                this.btnSound = document.getElementById('btn-sound');
+                this.favCountBadge = document.getElementById('fav-count-badge');
+
+                // Modals
+                this.modalSettings = document.getElementById('modal-settings');
+                this.modalFavorites = document.getElementById('modal-favorites');
+                this.btnCloseSettings = document.getElementById('btn-close-settings');
+                this.btnCloseFavorites = document.getElementById('btn-close-favorites');
+                this.btnSaveSettings = document.getElementById('btn-save-settings');
+
+                // Settings inputs
+                this.sliderInterval = document.getElementById('setting-interval-slider');
+                this.valInterval = document.getElementById('setting-interval-val');
+                this.selectEffect = document.getElementById('setting-effect');
+                this.checkKenburns = document.getElementById('setting-kenburns');
+
+                // Toast
+                this.toast = document.getElementById('toast-message');
+                this.toastText = document.getElementById('toast-text');
+
+                this.updateFavBadge();
+            }
+
+            bindEvents() {
+                // Play / Pause Toggle
+                this.btnTogglePlay.addEventListener('click', () => this.togglePlayPause());
+                this.btnPrev.addEventListener('click', () => this.prevImage());
+                this.btnNext.addEventListener('click', () => this.nextImage());
+
+                // Fullscreen Toggle
+                this.btnFullscreen.addEventListener('click', () => this.toggleFullscreen());
+
+                // Sound Toggle
+                this.btnSound.addEventListener('click', () => this.toggleAmbientSound());
+
+                // Modals Controls
+                this.btnSettings.addEventListener('click', () => this.openModal(this.modalSettings));
+                this.btnCloseSettings.addEventListener('click', () => this.closeModal(this.modalSettings));
+                this.btnFavorites.addEventListener('click', () => this.openFavoritesModal());
+                this.btnCloseFavorites.addEventListener('click', () => this.closeModal(this.modalFavorites));
+
+                // Save Settings
+                this.btnSaveSettings.addEventListener('click', () => this.applySettings());
+
+                // Interval Slider
+                this.sliderInterval.addEventListener('input', (e) => {
+                    this.valInterval.textContent = `${e.target.value}초`;
+                });
+
+                // Source Selector Buttons
+                document.querySelectorAll('.source-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const targetBtn = e.currentTarget;
+                        document.querySelectorAll('.source-btn').forEach(b => {
+                            b.classList.remove('border-emerald-400', 'bg-emerald-400/15');
+                            b.classList.add('border-white/10', 'bg-white/5');
+                        });
+                        targetBtn.classList.remove('border-white/10', 'bg-white/5');
+                        targetBtn.classList.add('border-emerald-400', 'bg-emerald-400/15');
+                        this.currentProvider = targetBtn.dataset.source;
+
+                        // Toggle category visibility
+                        const catSection = document.getElementById('category-section');
+                        catSection.style.display = this.currentProvider === 'unsplash' ? 'block' : 'none';
+                    });
+                });
+
+                // Category Buttons
+                document.querySelectorAll('.category-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.category-btn').forEach(b => {
+                            b.classList.remove('border-emerald-400', 'bg-emerald-400/15', 'text-emerald-300');
+                            b.classList.add('border-white/10', 'bg-white/5', 'text-white/80');
+                        });
+                        e.currentTarget.classList.remove('border-white/10', 'bg-white/5', 'text-white/80');
+                        e.currentTarget.classList.add('border-emerald-400', 'bg-emerald-400/15', 'text-emerald-300');
+                        this.selectedCategory = e.currentTarget.dataset.category;
+                    });
+                });
+
+                // Favorite Photo Toggle
+                this.btnLike.addEventListener('click', () => this.toggleFavoriteCurrentPhoto());
+
+                // Auto-hide HUD on Mouse Inactivity
+                document.addEventListener('mousemove', () => this.resetHudTimer());
+                document.addEventListener('touchstart', () => this.resetHudTimer());
+
+                // Keyboard Shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.code === 'Space') {
+                        e.preventDefault();
+                        this.togglePlayPause();
+                    } else if (e.code === 'ArrowRight') {
+                        this.nextImage();
+                    } else if (e.code === 'ArrowLeft') {
+                        this.prevImage();
+                    } else if (e.code === 'KeyF') {
+                        this.toggleFullscreen();
+                    }
+                });
+            }
+
+            async fetchImageFromSource() {
+                const width = window.innerWidth > 1920 ? 2560 : 1920;
+                const height = window.innerHeight > 1080 ? 1440 : 1080;
+
+                if (this.currentProvider === 'picsum') {
+                    // Picsum 사진 integration using official Picsum API v2
+                    try {
+                        if (!this.picsumList || this.picsumList.length === 0) {
+                            const page = Math.floor(Math.random() * 10) + 1;
+                            const res = await fetch(`https://picsum.photos/v2/list?page=${page}&limit=30`);
+                            if (res.ok) {
+                                this.picsumList = await res.json();
+                            }
+                        }
+
+                        if (this.picsumList && this.picsumList.length > 0) {
+                            const randomIndex = Math.floor(Math.random() * this.picsumList.length);
+                            const item = this.picsumList.splice(randomIndex, 1)[0];
+                            return {
+                                id: `picsum-${item.id}-${Date.now()}`,
+                                url: `https://picsum.photos/id/${item.id}/${width}/${height}`,
+                                thumb: `https://picsum.photos/id/${item.id}/400/300`,
+                                title: `Picsum 감성 풍경화 #${item.id}`,
+                                credit: `${item.author}`,
+                                source: 'Picsum 사진',
+                                category: 'picsum'
+                            };
+                        }
+                    } catch (err) {
+                        console.warn('Picsum API Fetch Fallback:', err);
+                    }
+
+                    // Direct random seed URL fallback for Picsum
+                    const randomSeed = Math.floor(Math.random() * 1000) + 1;
+                    return {
+                        id: `picsum-${randomSeed}-${Date.now()}`,
+                        url: `https://picsum.photos/${width}/${height}?random=${randomSeed}`,
+                        thumb: `https://picsum.photos/400/300?random=${randomSeed}`,
+                        title: `Picsum 랜덤 자연 풍경 #${randomSeed}`,
+                        credit: `Picsum Contributor`,
+                        source: 'Picsum 사진',
+                        category: 'picsum'
+                    };
+                } else {
+                    // Dynamic Unsplash Source Fetching
+                    try {
+                        const randomSig = Math.floor(Math.random() * 100000);
+                        const randomCurated = CURATED_NATURE_PHOTOS[Math.floor(Math.random() * CURATED_NATURE_PHOTOS.length)];
+                        
+                        return {
+                            id: `unsplash-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                            url: `${randomCurated.url}&sig=${randomSig}`,
+                            thumb: randomCurated.thumb,
+                            title: randomCurated.title,
+                            credit: randomCurated.credit,
+                            source: 'Unsplash 자연 사진',
+                            category: this.selectedCategory
+                        };
+                    } catch (err) {
+                        console.warn('Fallback to curated list', err);
+                        return CURATED_NATURE_PHOTOS[Math.floor(Math.random() * CURATED_NATURE_PHOTOS.length)];
+                    }
+                }
+            }
+
+            async loadInitialImages() {
+                // Populate history with initial curated items
+                this.photoHistory = [...CURATED_NATURE_PHOTOS];
+                // Shuffle history slightly for variety
+                this.photoHistory.sort(() => Math.random() - 0.5);
+                
+                this.currentIndex = 0;
+                await this.displayPhoto(this.photoHistory[0]);
+                this.startTimer();
+                this.preloadNext();
+            }
+
+            async preloadNext() {
+                const nextItem = await this.fetchImageFromSource();
+                this.photoHistory.push(nextItem);
+                
+                // Background image preloader
+                const img = new Image();
+                img.src = nextItem.url;
+            }
+
+            async displayPhoto(photoObj) {
+                if (!photoObj) return;
+
+                const targetLayer = this.activeLayer === 1 ? this.bg2 : this.bg1;
+                const currentLayer = this.activeLayer === 1 ? this.bg1 : this.bg2;
+
+                // Set image source
+                targetLayer.src = photoObj.url;
+
+                // Wait for image load to prevent flickering
+                await new Promise((resolve) => {
+                    if (targetLayer.complete) {
+                        resolve();
+                    } else {
+                        targetLayer.onload = resolve;
+                        targetLayer.onerror = resolve; // Continue on error
+                    }
+                });
+
+                // Apply Ken Burns animation if enabled
+                if (this.isKenBurnsEnabled) {
+                    targetLayer.classList.add('animate-kenburns-zoom');
+                } else {
+                    targetLayer.classList.remove('animate-kenburns-zoom');
+                }
+
+                // Crossfade
+                currentLayer.classList.remove('active');
+                targetLayer.classList.add('active');
+
+                // Toggle active layer indicator
+                this.activeLayer = this.activeLayer === 1 ? 2 : 1;
+
+                // Update UI details
+                this.photoTitle.textContent = photoObj.title || '아름다운 자연 풍경';
+                this.photoCredit.textContent = `출처: ${photoObj.credit} (${photoObj.source})`;
+                this.btnDownload.href = photoObj.url;
+
+                // Check heart state
+                const isFav = this.favorites.some(f => f.url === photoObj.url);
+                if (isFav) {
+                    this.iconHeart.classList.add('text-emerald-300', 'fill-current');
+                } else {
+                    this.iconHeart.classList.remove('text-emerald-300', 'fill-current');
+                }
+
+                // Reset slide countdown
+                this.elapsedSeconds = 0;
+                this.updateProgressCircle();
+            }
+
+            async nextImage() {
+                this.currentIndex++;
+                if (this.currentIndex >= this.photoHistory.length) {
+                    const newPhoto = await this.fetchImageFromSource();
+                    this.photoHistory.push(newPhoto);
+                }
+                await this.displayPhoto(this.photoHistory[this.currentIndex]);
+            }
+
+            async prevImage() {
+                if (this.currentIndex > 0) {
+                    this.currentIndex--;
+                    await this.displayPhoto(this.photoHistory[this.currentIndex]);
+                } else {
+                    this.showToast('첫 번째 이미지입니다.');
+                }
+            }
+
+            startTimer() {
+                if (this.timer) clearInterval(this.timer);
+                
+                this.timer = setInterval(() => {
+                    if (!this.isPlaying) return;
+
+                    this.elapsedSeconds += 0.2;
+                    this.updateProgressCircle();
+
+                    if (this.elapsedSeconds >= this.intervalSeconds) {
+                        this.elapsedSeconds = 0;
+                        this.nextImage();
+                    }
+                }, 200);
+            }
+
+            updateProgressCircle() {
+                const fraction = Math.min(this.elapsedSeconds / this.intervalSeconds, 1);
+                const offset = this.progressCircleCircumference * (1 - fraction);
+                this.progressCircle.style.strokeDashoffset = offset;
+            }
+
+            togglePlayPause() {
+                this.isPlaying = !this.isPlaying;
+                
+                if (this.isPlaying) {
+                    this.iconPause.classList.remove('hidden');
+                    this.iconPlay.classList.add('hidden');
+                    this.showToast('슬라이드쇼 재생');
+                } else {
+                    this.iconPause.classList.add('hidden');
+                    this.iconPlay.classList.remove('hidden');
+                    this.showToast('슬라이드쇼 일시정지');
+                }
+            }
+
+            toggleAmbientSound() {
+                if (!this.audioContext) {
+                    // Initialize Web Audio API synth soundscape (Ocean/Wind Noise Generator)
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    this.audioContext = new AudioContext();
+
+                    // Create pink noise for gentle ocean wave breeze
+                    const bufferSize = this.audioContext.sampleRate * 2;
+                    const noiseBuffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+                    const output = noiseBuffer.getChannelData(0);
+                    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+                    for (let i = 0; i < bufferSize; i++) {
+                        const white = Math.random() * 2 - 1;
+                        b0 = 0.99886 * b0 + white * 0.0555179;
+                        b1 = 0.99332 * b1 + white * 0.0750759;
+                        b2 = 0.96900 * b2 + white * 0.1538520;
+                        b3 = 0.86650 * b3 + white * 0.3104856;
+                        b4 = 0.55000 * b4 + white * 0.5329522;
+                        b5 = -0.7616 * b5 - white * 0.0168980;
+                        output[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+                        output[i] *= 0.11; // volume boost
+                        b6 = white * 0.115926;
+                    }
+
+                    const whiteNoise = this.audioContext.createBufferSource();
+                    whiteNoise.buffer = noiseBuffer;
+                    whiteNoise.loop = true;
+
+                    // Filter for ocean wave frequency modulation
+                    const filter = this.audioContext.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(350, this.audioContext.currentTime);
+
+                    // LFO for wave swelling sound effect
+                    const lfo = this.audioContext.createOscillator();
+                    lfo.frequency.value = 0.12; // wave cycle ~8 seconds
+                    const lfoGain = this.audioContext.createGain();
+                    lfoGain.gain.value = 250;
+                    lfo.connect(lfoGain);
+                    lfoGain.connect(filter.frequency);
+                    lfo.start();
+
+                    // Master Volume Gain
+                    const masterGain = this.audioContext.createGain();
+                    masterGain.gain.value = 0.15;
+
+                    whiteNoise.connect(filter);
+                    filter.connect(masterGain);
+                    masterGain.connect(this.audioContext.destination);
+
+                    whiteNoise.start();
+                    this.audioNodes = { whiteNoise, masterGain };
+                }
+
+                if (this.isAudioPlaying) {
+                    this.audioContext.suspend();
+                    this.isAudioPlaying = false;
+                    document.getElementById('icon-sound-off').classList.remove('hidden');
+                    document.getElementById('icon-sound-on').classList.add('hidden');
+                    this.showToast('자연 소리를 껐습니다.');
+                } else {
+                    this.audioContext.resume();
+                    this.isAudioPlaying = true;
+                    document.getElementById('icon-sound-off').classList.add('hidden');
+                    document.getElementById('icon-sound-on').classList.remove('hidden');
+                    this.showToast('자연 소리(파도·바람)를 재생합니다.');
+                }
+            }
+
+            resetHudTimer() {
+                this.topHud.classList.remove('hud-hidden');
+                this.bottomHud.classList.remove('hud-hidden');
+                this.vignetteOverlay.style.opacity = '1';
+
+                if (this.hudTimeout) clearTimeout(this.hudTimeout);
+
+                // Auto-hide controls after 4 seconds of inactivity
+                this.hudTimeout = setTimeout(() => {
+                    this.topHud.classList.add('hud-hidden');
+                    this.bottomHud.classList.add('hud-hidden');
+                    this.vignetteOverlay.style.opacity = '0';
+                }, 4500);
+            }
+
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.error('Fullscreen error', err);
+                    });
+                    document.getElementById('icon-fullscreen-enter').classList.add('hidden');
+                    document.getElementById('icon-fullscreen-exit').classList.remove('hidden');
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                    document.getElementById('icon-fullscreen-enter').classList.remove('hidden');
+                    document.getElementById('icon-fullscreen-exit').classList.add('hidden');
+                }
+            }
+
+            startClock() {
+                const update = () => {
+                    const now = new Date();
+                    const hours = String(now.getHours()).padStart(2, '0');
+                    const mins = String(now.getMinutes()).padStart(2, '0');
+                    const secs = String(now.getSeconds()).padStart(2, '0');
+                    this.clockDisplay.textContent = `${hours}:${mins}:${secs}`;
+                };
+                update();
+                setInterval(update, 1000);
+            }
+
+            toggleFavoriteCurrentPhoto() {
+                const currentPhoto = this.photoHistory[this.currentIndex];
+                if (!currentPhoto) return;
+
+                const index = this.favorites.findIndex(f => f.url === currentPhoto.url);
+                if (index > -1) {
+                    this.favorites.splice(index, 1);
+                    this.iconHeart.classList.remove('text-emerald-300', 'fill-current');
+                    this.showToast('보관함에서 제거되었습니다.');
+                } else {
+                    this.favorites.push(currentPhoto);
+                    this.iconHeart.classList.add('text-emerald-300', 'fill-current');
+                    this.showToast('보관함에 추가되었습니다.');
+                }
+
+                localStorage.setItem('nature_canvas_favs', JSON.stringify(this.favorites));
+                this.updateFavBadge();
+            }
+
+            updateFavBadge() {
+                if (this.favorites.length > 0) {
+                    this.favCountBadge.textContent = this.favorites.length;
+                    this.favCountBadge.classList.remove('opacity-0');
+                } else {
+                    this.favCountBadge.classList.add('opacity-0');
+                }
+            }
+
+            openFavoritesModal() {
+                const grid = document.getElementById('fav-gallery-grid');
+                document.getElementById('fav-modal-count').textContent = this.favorites.length;
+
+                if (this.favorites.length === 0) {
+                    grid.innerHTML = `
+                        <div class="col-span-full py-12 text-center text-white/50 space-y-3">
+                            <p class="text-base font-medium">저장된 아름다운 명장면이 없습니다.</p>
+                            <p class="text-xs">마음에 드는 풍경의 하트 버튼을 눌러 저장해보세요.</p>
+                        </div>
+                    `;
+                } else {
+                    grid.innerHTML = this.favorites.map((item, idx) => `
+                        <div class="group relative rounded-2xl overflow-hidden glass-panel border border-white/10 shadow-lg aspect-video">
+                            <img src="${item.thumb || item.url}" class="w-full h-full object-cover transition transform duration-500 group-hover:scale-110" alt="${item.title}" />
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-between">
+                                <button onclick="app.removeFavoriteAt(${idx})" class="self-end w-6 h-6 flex items-center justify-center bg-white/15 hover:bg-white/25 text-white text-sm leading-none rounded-full transition">✕</button>
+                                <div>
+                                    <div class="text-xs font-bold text-white truncate">${item.title}</div>
+                                    <div class="text-[10px] text-white/70">${item.credit}</div>
+                                    <button onclick="app.jumpToFavorite(${idx})" class="mt-2 w-full py-1.5 bg-emerald-400 text-slate-950 font-bold text-xs rounded-full shadow">
+                                        이 풍경 감상하기
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                this.openModal(this.modalFavorites);
+            }
+
+            removeFavoriteAt(idx) {
+                this.favorites.splice(idx, 1);
+                localStorage.setItem('nature_canvas_favs', JSON.stringify(this.favorites));
+                this.updateFavBadge();
+                this.openFavoritesModal(); // refresh modal
+            }
+
+            jumpToFavorite(idx) {
+                const fav = this.favorites[idx];
+                if (fav) {
+                    this.closeModal(this.modalFavorites);
+                    this.displayPhoto(fav);
+                    this.showToast('선택한 풍경으로 이동했습니다.');
+                }
+            }
+
+            async applySettings() {
+                // Read interval
+                this.intervalSeconds = parseInt(this.sliderInterval.value, 10);
+                this.hudIntervalText.textContent = `${this.intervalSeconds}초`;
+
+                // Read effect & Ken Burns
+                this.activeEffect = this.selectEffect.value;
+                this.isKenBurnsEnabled = this.checkKenburns.checked;
+
+                // Update container effect class
+                this.slideshowContainer.className = `absolute inset-0 w-full h-full bg-slate-950 overflow-hidden ${this.activeEffect}`;
+
+                // Source indicator text
+                const providerTitle = this.currentProvider === 'unsplash' ? 'Unsplash 자연 사진' : 'Picsum 사진';
+                this.hudSourceText.textContent = providerTitle;
+
+                this.closeModal(this.modalSettings);
+                this.showToast(`설정이 적용되었습니다. (${providerTitle}, ${this.intervalSeconds}초 주기)`);
+
+                // Immediately fetch and display a fresh image matching the newly selected provider
+                const newPhoto = await this.fetchImageFromSource();
+                this.photoHistory.splice(this.currentIndex + 1, 0, newPhoto);
+                this.currentIndex++;
+                await this.displayPhoto(newPhoto);
+            }
+
+            openModal(modal) {
+                modal.classList.remove('opacity-0', 'pointer-events-none');
+                modal.querySelector('div').classList.remove('scale-95');
+                modal.querySelector('div').classList.add('scale-100');
+            }
+
+            closeModal(modal) {
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                modal.querySelector('div').classList.remove('scale-100');
+                modal.querySelector('div').classList.add('scale-95');
+            }
+
+            showToast(message) {
+                this.toastText.textContent = message;
+                this.toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-[-20px]');
+                this.toast.classList.add('opacity-100', 'translate-y-0');
+
+                setTimeout(() => {
+                    this.toast.classList.remove('opacity-100', 'translate-y-0');
+                    this.toast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-[-20px]');
+                }, 2800);
+            }
+        }
+
+        let app = null;
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            app = new SlideshowApp();
+        });
+    </script>
+</body>
+</html>

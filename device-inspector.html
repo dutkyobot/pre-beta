@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>내 기기 상태 확인 | Dutkyobot</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        accent: 'var(--color-accent)',
+                        accentHover: 'var(--color-accent-hover)',
+                        accentLight: 'var(--color-accent-light)',
+                        mint: '#21D67A',
+                        blue: '#3B9EFF',
+                    },
+                    fontFamily: {
+                        sans: ['Pretendard Variable', 'Pretendard', 'Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        };
+    </script>
+
+    <!-- Icons and Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+
+        :root {
+            /* Mobile default palette (mint, matching the Dutkyobot brand) */
+            --color-accent: #21D67A;
+            --color-accent-hover: #1BB869;
+            --color-accent-light: rgba(33, 214, 122, 0.12);
+
+            /* Light backgrounds */
+            --bg-base: #f4f4f5;
+            --bg-surface: #ffffff;
+            --border-color: #e4e4e7;
+            --text-main: #09090b;
+            --text-muted: #71717a;
+        }
+
+        .dark {
+            /* Same near-black / zinc palette as the Dutkyobot hub page */
+            --bg-base: #000000;
+            --bg-surface: #18181b;
+            --border-color: #2a2a2e;
+            --text-main: #ffffff;
+            --text-muted: #9b9ba3;
+        }
+
+        /* PC mode palette override (blue, the secondary Dutkyobot brand color) */
+        body.is-pc {
+            --color-accent: #3B9EFF;
+            --color-accent-hover: #2A8CE8;
+            --color-accent-light: rgba(59, 158, 255, 0.12);
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: 'Pretendard Variable', 'Pretendard', 'Inter', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            overflow: hidden;
+        }
+
+        .layout-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .surface {
+            background-color: var(--bg-surface);
+            border-color: var(--border-color);
+            transition: border-color 0.2s ease;
+        }
+        .dark .surface.border-color:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Scrollbars */
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 10px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 입력창: 한 줄일 땐 완전한 알약, 여러 줄로 늘어나면 살짝 둥근 사각형으로 전환 (ZETA Lite·D-AI Web과 동일 패턴) */
+        #composer-shell.is-multiline { border-radius: 1.75rem; }
+
+        /* Markdown-ish response formatting */
+        .md-content h3 { font-size: 1.1rem; font-weight: 600; margin: 1.2rem 0 0.5rem; color: var(--text-main); }
+        .md-content p { margin-bottom: 0.8rem; line-height: 1.6; color: var(--text-muted); font-size: 0.95rem; }
+        .md-content strong { color: var(--text-main); font-weight: 600; }
+        .md-content ul { list-style-type: disc; margin-bottom: 1rem; padding-left: 1.25rem; color: var(--text-muted); }
+        .md-content li { margin-bottom: 0.25rem; }
+        .md-content code {
+            background: var(--bg-base);
+            padding: 0.1rem 0.3rem;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85em;
+            border: 1px solid var(--border-color);
+            color: var(--color-accent);
+        }
+
+        .gradient-brand {
+            background: linear-gradient(135deg, var(--c-mint, #21D67A) 0%, var(--c-blue, #3B9EFF) 100%);
+        }
+
+        /* Modal */
+        #data-modal,
+        #apikey-modal,
+        #device-detail-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Mobile sidebar */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 30;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .sidebar-overlay.active { display: block; opacity: 1; }
+
+        @media (max-width: 768px) {
+            .left-sidebar {
+                position: fixed;
+                left: -100%;
+                top: 0;
+                bottom: 0;
+                z-index: 40;
+                transition: left 0.3s ease;
+            }
+            .left-sidebar.active { left: 0; }
+        }
+    </style>
+</head>
+<body class="is-mobile">
+
+    <div class="layout-container">
+
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+        <!-- Left Sidebar: Device Info & Settings -->
+        <aside id="left-sidebar" class="left-sidebar w-72 surface border-r flex flex-col flex-shrink-0 transition-colors duration-300 shadow-xl md:shadow-none">
+            <div class="p-6 border-b border-color flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl gradient-brand text-white flex items-center justify-center text-xl shadow-lg shadow-black/20">
+                        <i id="device-icon" class="fas fa-mobile-screen-button"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-[var(--text-main)] leading-tight text-lg">Inspector</h1>
+                        <span id="device-badge" class="text-[10px] font-bold text-[var(--color-accent)] uppercase tracking-wider bg-[var(--color-accent-light)] px-1.5 py-0.5 rounded">Mobile</span>
+                    </div>
+                </div>
+                <button id="sidebar-close-btn" class="md:hidden text-[var(--text-muted)]" aria-label="사이드바 닫기">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto custom-scroll p-4 space-y-6">
+                <div>
+                    <h2 class="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3 px-2">내 기기</h2>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center p-3 rounded-2xl surface border border-color">
+                            <span class="text-sm text-[var(--text-muted)] flex items-center gap-2"><i class="fas fa-microchip w-4"></i> 운영체제</span>
+                            <span id="info-os" class="text-sm font-medium text-[var(--text-main)] truncate max-w-[100px]">확인 중</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 rounded-2xl surface border border-color">
+                            <span class="text-sm text-[var(--text-muted)] flex items-center gap-2"><i class="fas fa-memory w-4"></i> 메모리</span>
+                            <span id="info-ram" class="text-sm font-medium text-[var(--text-main)] font-mono">--</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 rounded-2xl surface border border-color">
+                            <span class="text-sm text-[var(--text-muted)] flex items-center gap-2"><i class="fas fa-battery-half w-4"></i> 배터리</span>
+                            <span id="info-bat" class="text-sm font-medium text-[var(--text-main)] font-mono">--%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3 px-2">인터넷 연결</h2>
+                    <div class="space-y-2">
+                        <div class="p-3 rounded-2xl surface border border-color flex justify-between items-center">
+                            <span class="text-sm text-[var(--text-muted)] flex items-center gap-2"><i class="fas fa-wifi w-4"></i> 연결 상태</span>
+                            <div class="flex items-center gap-2">
+                                <div id="net-dot" class="w-2 h-2 rounded-full bg-green-500"></div>
+                                <span id="info-net" class="text-sm font-medium text-[var(--text-main)]">온라인</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="surface border border-color p-3 rounded-2xl text-center">
+                                <span class="block text-[10px] text-[var(--text-muted)] mb-1">예상 속도</span>
+                                <span id="info-downlink" class="text-xs font-mono font-medium text-[var(--text-main)]">--</span>
+                            </div>
+                            <div class="surface border border-color p-3 rounded-2xl text-center">
+                                <span class="block text-[10px] text-[var(--text-muted)] mb-1">지연시간</span>
+                                <span id="info-rtt" class="text-xs font-mono font-medium text-[var(--text-main)]">--</span>
+                            </div>
+                        </div>
+                        <div class="p-3 rounded-2xl surface border border-color flex justify-between items-center">
+                            <span class="text-sm text-[var(--text-muted)] flex items-center gap-2"><i class="fas fa-signal w-4"></i> 연결 종류</span>
+                            <span id="info-conn-type" class="text-sm font-medium text-[var(--text-main)]">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-color space-y-3">
+                <button id="open-device-detail-btn" class="w-full py-3 px-4 rounded-full gradient-brand text-white text-sm font-semibold hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-lg shadow-black/20">
+                    <i class="fas fa-magnifying-glass"></i> 내 기기 정보 자세히 보기
+                </button>
+                <button id="open-apikey-modal-btn" class="w-full py-3 px-4 rounded-full bg-[var(--bg-base)] border border-color text-sm font-medium text-[var(--text-main)] hover:bg-[var(--color-accent-light)] hover:text-[var(--color-accent)] hover:border-[var(--color-accent)] transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-key"></i>
+                    <span>Gemini API 키</span>
+                    <span id="apikey-status-badge" class="text-[9px] font-bold px-1.5 py-0.5 rounded-full ml-1 uppercase tracking-wide bg-white/10 text-[var(--text-muted)]">미설정</span>
+                </button>
+                <div class="flex justify-between items-center px-2 pt-2">
+                    <span class="text-xs text-[var(--text-muted)]">화면 테마</span>
+                    <button id="theme-toggle" class="w-10 h-10 rounded-full bg-[var(--bg-base)] border border-color flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors" aria-label="테마 전환">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Center Chat Area -->
+        <main class="flex-1 flex flex-col min-w-0 bg-[var(--bg-base)] relative">
+            <button id="desktop-reset-btn" class="hidden md:flex absolute top-4 right-4 z-10 w-10 h-10 rounded-full surface border border-color items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-[var(--color-accent)] transition-colors shadow-sm" aria-label="대화 초기화">
+                <i class="fas fa-arrow-rotate-left text-sm"></i>
+            </button>
+            <header class="md:hidden h-14 surface border-b flex items-center justify-between px-4 sticky top-0 z-20">
+                <button id="sidebar-open-btn" class="w-10 h-10 rounded-full flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-surface)] transition-colors" aria-label="사이드바 열기">
+                    <i class="fas fa-bars text-lg"></i>
+                </button>
+                <span class="font-semibold text-[var(--text-main)]">내 기기 상태 확인</span>
+                <div class="flex items-center gap-1">
+                    <button id="mobile-reset-btn" class="w-10 h-10 rounded-full flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-surface)] transition-colors" aria-label="대화 초기화">
+                        <i class="fas fa-arrow-rotate-left"></i>
+                    </button>
+                    <button id="mobile-device-detail-btn" class="w-10 h-10 rounded-full flex items-center justify-center text-[var(--color-accent)] bg-[var(--color-accent-light)]" aria-label="내 기기 정보 자세히 보기">
+                        <i class="fas fa-magnifying-glass"></i>
+                    </button>
+                </div>
+            </header>
+
+            <div id="chat-history" class="flex-1 overflow-y-auto p-4 md:p-8 custom-scroll scroll-smooth flex flex-col gap-6">
+                <div class="flex gap-4 max-w-3xl mx-auto w-full">
+                    <div class="w-10 h-10 rounded-xl bg-[var(--bg-surface)] border border-color flex flex-shrink-0 items-center justify-center text-[var(--text-main)]">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <div class="flex-1 mt-1">
+                        <span class="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1 block">AI 도우미</span>
+                        <div class="surface border border-color rounded-3xl rounded-tl-none p-5 text-[var(--text-main)] shadow-sm">
+                            <h3 class="font-bold text-lg mb-2">내 기기 정보를 확인했어요</h3>
+                            <p class="text-sm text-[var(--text-muted)] leading-relaxed">
+                                배터리, 저장공간, 인터넷 연결 같은 정보를 살펴봤어요.<br>
+                                궁금한 걸 편하게 물어보세요. 예를 들면 "배터리가 왜 빨리 닳지?" 같은 질문도 좋아요.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 md:p-6 bg-[var(--bg-base)] border-t border-color relative z-10">
+                <div class="max-w-3xl mx-auto">
+                    <div id="suggestions" class="flex gap-2 overflow-x-auto no-scrollbar pb-3 mb-1"></div>
+
+                    <div id="composer-shell" class="relative flex items-end surface border border-color rounded-full focus-within:border-[var(--color-accent)] focus-within:ring-1 focus-within:ring-[var(--color-accent)] transition-all shadow-sm">
+                        <textarea id="user-input" rows="1" placeholder="궁금한 점을 편하게 입력해 보세요..."
+                            class="flex-1 bg-transparent border-none py-4 pl-4 pr-12 focus:outline-none focus:ring-0 resize-none text-[var(--text-main)] placeholder-[var(--text-muted)] text-sm"></textarea>
+                        <button id="send-btn" class="absolute right-2 bottom-2 w-10 h-10 rounded-full bg-[var(--color-accent)] text-white flex items-center justify-center hover:bg-[var(--color-accent-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed" aria-label="전송">
+                            <i class="fas fa-paper-plane text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- API Key Modal -->
+    <div id="apikey-modal">
+        <div class="surface w-[90%] max-w-md rounded-[1.75rem] flex flex-col shadow-2xl border border-color overflow-hidden">
+            <div class="p-5 border-b border-color flex justify-between items-center bg-[var(--bg-base)]">
+                <div>
+                    <h2 class="text-lg font-bold text-[var(--text-main)] flex items-center gap-2">
+                        <i class="fas fa-key text-[var(--color-accent)]"></i> Gemini API 키
+                    </h2>
+                    <p class="text-xs text-[var(--text-muted)] mt-1">이 브라우저에만 저장되며, 서버로 전송되지 않습니다.</p>
+                </div>
+                <button id="close-apikey-modal-btn" class="w-8 h-8 rounded-full hover:bg-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] transition-colors" aria-label="닫기">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div>
+                    <label for="apikey-input" class="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2 block">API Key</label>
+                    <div class="relative flex items-center surface border border-color rounded-full focus-within:border-[var(--color-accent)] focus-within:ring-1 focus-within:ring-[var(--color-accent)] transition-all">
+                        <input id="apikey-input" type="password" autocomplete="off" spellcheck="false" placeholder="AIzaSy..."
+                            class="flex-1 bg-transparent border-none py-3 pl-4 pr-11 focus:outline-none focus:ring-0 text-[var(--text-main)] placeholder-[var(--text-muted)] text-sm font-mono">
+                        <button id="toggle-apikey-visibility-btn" type="button" class="absolute right-3 text-[var(--text-muted)] hover:text-[var(--text-main)]" aria-label="키 표시/숨김">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <p id="apikey-hint" class="text-[11px] text-[var(--text-muted)] mt-2 leading-relaxed">
+                        Google AI Studio에서 발급한 키를 입력하세요. 키는 이 브라우저에만 저장되고 서버로는 전송되지 않아요. 다만 API 요청이 브라우저에서 직접 이루어지는 구조라, 다른 사람도 접근할 수 있는 공용 기기에는 입력하지 않는 걸 권장해요.
+                    </p>
+                </div>
+            </div>
+            <div class="p-4 border-t border-color bg-[var(--bg-base)] flex justify-between items-center gap-2">
+                <button id="clear-apikey-btn" class="px-4 py-2 rounded-full text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors">
+                    키 삭제
+                </button>
+                <button id="save-apikey-btn" class="px-4 py-2 rounded-full bg-[var(--color-accent)] text-white text-sm font-medium hover:bg-[var(--color-accent-hover)] transition-colors flex items-center gap-2">
+                    <i class="fas fa-check"></i> 저장
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Device Detail Modal: friendly, human-readable view of collected data -->
+    <div id="device-detail-modal">
+        <div class="surface w-[92%] max-w-2xl max-h-[85vh] rounded-[1.75rem] flex flex-col shadow-2xl border border-color overflow-hidden">
+            <div class="p-5 border-b border-color flex justify-between items-center bg-[var(--bg-base)]">
+                <div>
+                    <h2 class="text-lg font-bold text-[var(--text-main)] flex items-center gap-2">
+                        <i class="fas fa-mobile-screen-button text-[var(--color-accent)]"></i> 내 기기 정보
+                    </h2>
+                    <p id="device-detail-timestamp" class="text-xs text-[var(--text-muted)] mt-1">확인한 시각 --</p>
+                </div>
+                <button id="close-device-detail-btn" class="w-8 h-8 rounded-full hover:bg-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] transition-colors" aria-label="닫기">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="device-detail-body" class="flex-1 overflow-y-auto custom-scroll p-5 space-y-6"></div>
+            <div class="p-4 border-t border-color bg-[var(--bg-base)] flex justify-between items-center">
+                <p class="text-[11px] text-[var(--text-muted)] leading-relaxed pr-3">이 기기에서만 확인되며, 저장되거나 전송되지 않아요.</p>
+                <button id="open-json-from-detail-btn" class="px-4 py-2 rounded-full bg-[var(--bg-surface)] border border-color text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-[var(--color-accent)] transition-colors flex items-center gap-2 shrink-0">
+                    <i class="fas fa-code"></i> JSON으로 보기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Modal (JSON Viewer, advanced) -->
+    <div id="data-modal">
+        <div class="surface w-[90%] max-w-3xl max-h-[85vh] rounded-[1.75rem] flex flex-col shadow-2xl border border-color overflow-hidden">
+            <div class="p-5 border-b border-color flex justify-between items-center bg-[var(--bg-base)]">
+                <div>
+                    <h2 class="text-lg font-bold text-[var(--text-main)] flex items-center gap-2">
+                        <i class="fas fa-file-code text-[var(--color-accent)]"></i> JSON 원본 보기
+                    </h2>
+                    <p class="text-xs text-[var(--text-muted)] mt-1">AI에게 전달되는 원본 데이터예요. 개발자·고급 사용자용입니다.</p>
+                </div>
+                <button id="close-data-modal-btn" class="w-8 h-8 rounded-full hover:bg-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] transition-colors" aria-label="닫기">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-hidden p-0 relative">
+                <pre id="json-viewer" class="h-full overflow-y-auto p-5 text-xs font-mono text-[var(--text-main)] bg-[var(--bg-surface)] custom-scroll m-0"></pre>
+            </div>
+            <div class="p-4 border-t border-color bg-[var(--bg-base)] flex justify-end">
+                <button id="copy-json-btn" class="px-4 py-2 rounded-full bg-[var(--color-accent)] text-white text-sm font-medium hover:bg-[var(--color-accent-hover)] transition-colors flex items-center gap-2">
+                    <i class="fas fa-copy"></i> JSON 복사
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (() => {
+        'use strict';
+
+        // ------------------------------------------------------------------
+        // Config
+        // ------------------------------------------------------------------
+        const CONFIG = {
+            apiKeyStorageKey: 'device-inspector:gemini-api-key',
+            // gemini-flash-latest는 구글이 제공하는 "최신 flash 모델" 별칭이라,
+            // 특정 프리뷰 스냅샷(예: -preview-09-2025)이 내려가도 계속 유효합니다.
+            apiUrl: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent',
+            systemDataRefreshMs: 10000,
+            retryDelaysMs: [1000, 2000, 4000, 8000, 16000],
+            suggestions: {
+                pc: [
+                    '내 컴퓨터 상태 어때?',
+                    '인터넷 속도 괜찮은 편이야?',
+                    '저장공간 얼마나 남았어?',
+                    '화면 설정 더 좋아질 수 있어?'
+                ],
+                mobile: [
+                    '배터리 왜 이렇게 빨리 닳지?',
+                    '인터넷 연결 상태 어때?',
+                    '저장공간 얼마나 남았어?',
+                    '내 폰 상태 전체적으로 어때?'
+                ]
+            }
+        };
+
+        // ------------------------------------------------------------------
+        // DOM references (looked up once)
+        // ------------------------------------------------------------------
+        const dom = {
+            body: document.body,
+            html: document.documentElement,
+            leftSidebar: document.getElementById('left-sidebar'),
+            sidebarOverlay: document.getElementById('sidebar-overlay'),
+            sidebarOpenBtn: document.getElementById('sidebar-open-btn'),
+            sidebarCloseBtn: document.getElementById('sidebar-close-btn'),
+            deviceIcon: document.getElementById('device-icon'),
+            deviceBadge: document.getElementById('device-badge'),
+            themeToggleBtn: document.getElementById('theme-toggle'),
+            closeDataModalBtn: document.getElementById('close-data-modal-btn'),
+            copyJsonBtn: document.getElementById('copy-json-btn'),
+            dataModal: document.getElementById('data-modal'),
+            jsonViewer: document.getElementById('json-viewer'),
+            openApiKeyModalBtn: document.getElementById('open-apikey-modal-btn'),
+            closeApiKeyModalBtn: document.getElementById('close-apikey-modal-btn'),
+            apiKeyModal: document.getElementById('apikey-modal'),
+            apiKeyInput: document.getElementById('apikey-input'),
+            apiKeyStatusBadge: document.getElementById('apikey-status-badge'),
+            toggleApiKeyVisibilityBtn: document.getElementById('toggle-apikey-visibility-btn'),
+            saveApiKeyBtn: document.getElementById('save-apikey-btn'),
+            clearApiKeyBtn: document.getElementById('clear-apikey-btn'),
+            openDeviceDetailBtn: document.getElementById('open-device-detail-btn'),
+            mobileDeviceDetailBtn: document.getElementById('mobile-device-detail-btn'),
+            mobileResetBtn: document.getElementById('mobile-reset-btn'),
+            desktopResetBtn: document.getElementById('desktop-reset-btn'),
+            closeDeviceDetailBtn: document.getElementById('close-device-detail-btn'),
+            deviceDetailModal: document.getElementById('device-detail-modal'),
+            deviceDetailBody: document.getElementById('device-detail-body'),
+            deviceDetailTimestamp: document.getElementById('device-detail-timestamp'),
+            openJsonFromDetailBtn: document.getElementById('open-json-from-detail-btn'),
+            infoOs: document.getElementById('info-os'),
+            infoRam: document.getElementById('info-ram'),
+            infoBat: document.getElementById('info-bat'),
+            netDot: document.getElementById('net-dot'),
+            infoNet: document.getElementById('info-net'),
+            infoDownlink: document.getElementById('info-downlink'),
+            infoRtt: document.getElementById('info-rtt'),
+            infoConnType: document.getElementById('info-conn-type'),
+            suggestions: document.getElementById('suggestions'),
+            userInput: document.getElementById('user-input'),
+            composerShell: document.getElementById('composer-shell'),
+            sendBtn: document.getElementById('send-btn'),
+            chatHistory: document.getElementById('chat-history')
+        };
+
+        // ------------------------------------------------------------------
+        // State
+        // ------------------------------------------------------------------
+        const state = {
+            isDarkMode: false,
+            isPC: false,
+            systemData: {},
+            audioSampleRate: null // computed once in init(); repeatedly opening AudioContext is wasteful/limited
+        };
+
+        // ------------------------------------------------------------------
+        // Small utilities
+        // ------------------------------------------------------------------
+        const escapeHtml = (str) => {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        };
+
+        // ------------------------------------------------------------------
+        // Theme
+        // ------------------------------------------------------------------
+        const Theme = {
+            init() {
+                const saved = localStorage.getItem('theme');
+                state.isDarkMode = saved ? saved === 'dark'
+                    : window.matchMedia('(prefers-color-scheme: dark)').matches;
+                this.apply();
+            },
+            toggle() {
+                state.isDarkMode = !state.isDarkMode;
+                localStorage.setItem('theme', state.isDarkMode ? 'dark' : 'light');
+                this.apply();
+            },
+            apply() {
+                const icon = dom.themeToggleBtn.querySelector('i');
+                dom.html.classList.toggle('dark', state.isDarkMode);
+                dom.html.classList.toggle('light', !state.isDarkMode);
+                icon.className = state.isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        };
+
+        // ------------------------------------------------------------------
+        // API Key management (stored client-side only, never sent anywhere
+        // but Google's endpoint as part of the user's own request)
+        // ------------------------------------------------------------------
+        const ApiKeyManager = {
+            get() {
+                try {
+                    return localStorage.getItem(CONFIG.apiKeyStorageKey) || '';
+                } catch {
+                    return '';
+                }
+            },
+            set(key) {
+                try {
+                    localStorage.setItem(CONFIG.apiKeyStorageKey, key);
+                    return true;
+                } catch {
+                    return false;
+                }
+            },
+            clear() {
+                try {
+                    localStorage.removeItem(CONFIG.apiKeyStorageKey);
+                } catch { /* ignore */ }
+            },
+            hasKey() {
+                return this.get().trim().length > 0;
+            },
+            refreshStatusBadge() {
+                const hasKey = this.hasKey();
+                dom.apiKeyStatusBadge.textContent = hasKey ? '설정됨' : '미설정';
+                dom.apiKeyStatusBadge.className = `text-[9px] font-bold px-1.5 py-0.5 rounded-full ml-1 uppercase tracking-wide ${
+                    hasKey
+                        ? 'bg-[var(--color-accent-light)] text-[var(--color-accent)]'
+                        : 'bg-white/10 text-[var(--text-muted)]'
+                }`;
+            }
+        };
+
+        // ------------------------------------------------------------------
+        // Layout: sidebar + modal toggles
+        // ------------------------------------------------------------------
+        const Layout = {
+            toggleSidebar() {
+                dom.leftSidebar.classList.toggle('active');
+                dom.sidebarOverlay.classList.toggle('active');
+            },
+            openDataModal() {
+                dom.dataModal.style.display = 'flex';
+                dom.jsonViewer.innerText = JSON.stringify(state.systemData, null, 4);
+            },
+            closeDataModal() {
+                dom.dataModal.style.display = 'none';
+            },
+            openApiKeyModal() {
+                dom.apiKeyInput.value = ApiKeyManager.get();
+                dom.apiKeyModal.style.display = 'flex';
+                dom.apiKeyInput.focus();
+            },
+            closeApiKeyModal() {
+                dom.apiKeyModal.style.display = 'none';
+            },
+            toggleApiKeyVisibility() {
+                const isHidden = dom.apiKeyInput.type === 'password';
+                dom.apiKeyInput.type = isHidden ? 'text' : 'password';
+                dom.toggleApiKeyVisibilityBtn.querySelector('i').className = isHidden ? 'fas fa-eye-slash' : 'fas fa-eye';
+            },
+            saveApiKey() {
+                const key = dom.apiKeyInput.value.trim();
+                if (!key) {
+                    ApiKeyManager.clear();
+                } else {
+                    ApiKeyManager.set(key);
+                }
+                ApiKeyManager.refreshStatusBadge();
+                this.closeApiKeyModal();
+                Chat.appendMessage('ai', key
+                    ? 'API 키가 저장되었습니다. 이제 질문을 입력하면 분석 결과를 받을 수 있습니다.'
+                    : 'API 키가 삭제되었습니다.');
+            },
+            clearApiKey() {
+                ApiKeyManager.clear();
+                dom.apiKeyInput.value = '';
+                ApiKeyManager.refreshStatusBadge();
+                this.closeApiKeyModal();
+                Chat.appendMessage('ai', 'API 키가 삭제되었습니다.');
+            },
+            adjustTextareaHeight(el) {
+                el.style.height = 'auto';
+                el.style.height = Math.min(el.scrollHeight, 150) + 'px';
+                dom.composerShell.classList.toggle('is-multiline', el.scrollHeight > 56);
+            },
+            copyJsonData(btn) {
+                navigator.clipboard.writeText(JSON.stringify(state.systemData, null, 4)).then(() => {
+                    const original = btn.innerHTML;
+                    btn.innerHTML = '<i class="fas fa-check"></i> 복사 완료!';
+                    btn.classList.add('bg-green-600');
+                    setTimeout(() => {
+                        btn.innerHTML = original;
+                        btn.classList.remove('bg-green-600');
+                    }, 2000);
+                });
+            }
+        };
+
+        // ------------------------------------------------------------------
+        // Environment + system data collection
+        // ------------------------------------------------------------------
+        const Environment = {
+            // Permissions we passively check the state of. navigator.permissions.query()
+            // never triggers an OS prompt by itself, so this is safe to run on load.
+            PERMISSION_NAMES: ['geolocation', 'camera', 'microphone', 'notifications'],
+
+            detect() {
+                const ua = navigator.userAgent.toLowerCase();
+                const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua);
+                state.isPC = !isMobileUA;
+
+                dom.body.classList.toggle('is-pc', state.isPC);
+                dom.body.classList.toggle('is-mobile', !state.isPC);
+                dom.deviceBadge.innerText = state.isPC ? 'Desktop' : 'Mobile';
+                dom.deviceIcon.className = state.isPC ? 'fas fa-desktop' : 'fas fa-mobile-screen-button';
+            },
+
+            async getBattery() {
+                if (!('getBattery' in navigator)) return null;
+                try {
+                    const b = await navigator.getBattery();
+                    return {
+                        level: Math.round(b.level * 100) + '%',
+                        charging: b.charging,
+                        charging_time_min: Number.isFinite(b.chargingTime) ? Math.round(b.chargingTime / 60) : null,
+                        discharging_time_min: Number.isFinite(b.dischargingTime) ? Math.round(b.dischargingTime / 60) : null
+                    };
+                } catch {
+                    return null;
+                }
+            },
+
+            getGpuInfo() {
+                try {
+                    const canvas = document.createElement('canvas');
+                    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                    if (!gl) return { vendor: 'Unknown', renderer: 'Unknown GPU' };
+                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                    return debugInfo
+                        ? {
+                            vendor: gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL),
+                            renderer: gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+                        }
+                        : { vendor: 'Unknown', renderer: 'Unknown GPU' };
+                } catch {
+                    return { vendor: 'Unknown', renderer: 'Unknown GPU' };
+                }
+            },
+
+            async getStorageEstimate() {
+                if (!navigator.storage?.estimate) return null;
+                try {
+                    const { usage, quota } = await navigator.storage.estimate();
+                    return {
+                        usage_mb: usage != null ? +(usage / (1024 * 1024)).toFixed(1) : null,
+                        quota_mb: quota != null ? +(quota / (1024 * 1024)).toFixed(1) : null
+                    };
+                } catch {
+                    return null;
+                }
+            },
+
+            async getPermissionStates() {
+                const result = {};
+                if (!navigator.permissions?.query) {
+                    this.PERMISSION_NAMES.forEach((name) => { result[name] = 'unsupported'; });
+                    return result;
+                }
+                await Promise.all(this.PERMISSION_NAMES.map(async (name) => {
+                    try {
+                        const status = await navigator.permissions.query({ name });
+                        result[name] = status.state; // 'granted' | 'denied' | 'prompt'
+                    } catch {
+                        result[name] = 'unsupported';
+                    }
+                }));
+                return result;
+            },
+
+            async getMediaDeviceCounts() {
+                if (!navigator.mediaDevices?.enumerateDevices) return null;
+                try {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    return devices.reduce((acc, d) => {
+                        if (d.kind === 'audioinput') acc.audio_input++;
+                        else if (d.kind === 'videoinput') acc.video_input++;
+                        else if (d.kind === 'audiooutput') acc.audio_output++;
+                        return acc;
+                    }, { audio_input: 0, video_input: 0, audio_output: 0 });
+                } catch {
+                    return null;
+                }
+            },
+
+            getAudioSampleRate() {
+                try {
+                    const Ctx = window.AudioContext || window.webkitAudioContext;
+                    if (!Ctx) return null;
+                    const ctx = new Ctx();
+                    const rate = ctx.sampleRate;
+                    ctx.close();
+                    return rate;
+                } catch {
+                    return null;
+                }
+            },
+
+            getStorageSupport() {
+                const test = (fn) => { try { return fn(); } catch { return false; } };
+                return {
+                    local_storage: test(() => !!window.localStorage),
+                    session_storage: test(() => !!window.sessionStorage),
+                    indexed_db: test(() => !!window.indexedDB),
+                    service_worker: 'serviceWorker' in navigator
+                };
+            },
+
+            getCapabilities() {
+                const mm = (query) => window.matchMedia?.(query)?.matches ?? null;
+                return {
+                    max_touch_points: navigator.maxTouchPoints ?? 0,
+                    pointer: mm('(pointer: coarse)') ? 'coarse (touch)' : mm('(pointer: fine)') ? 'fine (mouse/pen)' : 'unknown',
+                    any_hover: mm('(any-hover: hover)'),
+                    prefers_color_scheme: mm('(prefers-color-scheme: dark)') ? 'dark' : 'light',
+                    prefers_reduced_motion: mm('(prefers-reduced-motion: reduce)'),
+                    color_depth: window.screen.colorDepth,
+                    pixel_depth: window.screen.pixelDepth
+                };
+            },
+
+            async collect() {
+                const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+                const gpu = this.getGpuInfo();
+                const capabilities = this.getCapabilities();
+
+                const [battery, storageEstimate, permissions, mediaDevices] = await Promise.all([
+                    this.getBattery(),
+                    this.getStorageEstimate(),
+                    this.getPermissionStates(),
+                    this.getMediaDeviceCounts()
+                ]);
+
+                state.systemData = {
+                    diagnostics_timestamp: new Date().toISOString(),
+                    environment: state.isPC ? 'Desktop/Workstation' : 'Mobile/Tablet',
+                    hardware: {
+                        os_platform: navigator.platform,
+                        logical_processors: navigator.hardwareConcurrency || 'Unknown',
+                        approx_ram: navigator.deviceMemory ? navigator.deviceMemory + 'GB' : 'Unknown',
+                        gpu_vendor: gpu.vendor,
+                        gpu_renderer: gpu.renderer,
+                        audio_sample_rate_hz: state.audioSampleRate
+                    },
+                    software: {
+                        user_agent: navigator.userAgent,
+                        language: navigator.language,
+                        languages: navigator.languages ? navigator.languages.join(', ') : navigator.language,
+                        cookies_enabled: navigator.cookieEnabled,
+                        do_not_track: navigator.doNotTrack === '1' ? 'enabled' : 'disabled',
+                        pdf_viewer_enabled: navigator.pdfViewerEnabled ?? 'Unknown',
+                        webdriver_automation: navigator.webdriver === true
+                    },
+                    locale: {
+                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                        timezone_offset_minutes: -new Date().getTimezoneOffset()
+                    },
+                    display: {
+                        resolution: `${window.screen.width}x${window.screen.height}`,
+                        viewport: `${window.innerWidth}x${window.innerHeight}`,
+                        pixel_ratio: window.devicePixelRatio || 1,
+                        is_extended: window.screen.isExtended || false,
+                        color_depth: capabilities.color_depth,
+                        pointer: capabilities.pointer,
+                        max_touch_points: capabilities.max_touch_points,
+                        prefers_color_scheme: capabilities.prefers_color_scheme,
+                        prefers_reduced_motion: capabilities.prefers_reduced_motion
+                    },
+                    storage: {
+                        ...(storageEstimate || { usage_mb: null, quota_mb: null }),
+                        ...this.getStorageSupport()
+                    },
+                    status: {
+                        battery_level: battery?.level ?? 'Unsupported',
+                        battery_charging: battery?.charging ?? null,
+                        network_type: connection ? connection.effectiveType : 'Unknown',
+                        downlink_mbps: connection?.downlink ?? null,
+                        rtt_ms: connection?.rtt ?? null,
+                        save_data: connection?.saveData ?? null,
+                        online: navigator.onLine
+                    },
+                    permissions: permissions,
+                    media_devices: mediaDevices || { audio_input: null, video_input: null, audio_output: null }
+                };
+
+                this.renderToUI();
+            },
+
+            renderToUI() {
+                const { hardware, status, display } = state.systemData;
+
+                dom.infoOs.innerText = hardware.os_platform;
+                dom.infoRam.innerText = hardware.approx_ram;
+                dom.infoBat.innerText = status.battery_level + (status.battery_charging ? ' ⚡' : '');
+
+                dom.netDot.className = `w-2 h-2 rounded-full ${status.online ? 'bg-green-500' : 'bg-red-500'}`;
+                dom.infoNet.innerText = status.online
+                    ? (status.network_type ? `온라인 (${status.network_type})` : '온라인')
+                    : '오프라인';
+
+                dom.infoDownlink.innerText = status.downlink_mbps != null ? `${status.downlink_mbps} Mbps` : '지원 안 함';
+                dom.infoRtt.innerText = status.rtt_ms != null ? `${status.rtt_ms} ms` : '지원 안 함';
+                dom.infoConnType.innerText = status.network_type === 'Unknown'
+                    ? '지원 안 함'
+                    : (status.network_type || '지원 안 함').toUpperCase() + (status.save_data ? ' · 데이터 절약 중' : '');
+            }
+        };
+
+        // ------------------------------------------------------------------
+        // Device Detail: renders the full collected data in a friendly,
+        // plain-language layout for the "내 기기 정보 자세히 보기" modal.
+        // ------------------------------------------------------------------
+        const DeviceDetail = {
+            LABELS: {
+                environment: { 'Desktop/Workstation': '데스크톱', 'Mobile/Tablet': '모바일' },
+                colorScheme: { dark: '어두운 화면 선호', light: '밝은 화면 선호' },
+                permission: { granted: '허용됨', denied: '거부됨', prompt: '확인 필요', unsupported: '지원 안 함' },
+                permissionName: { geolocation: '위치', camera: '카메라', microphone: '마이크', notifications: '알림' },
+                permissionBadgeClass: {
+                    granted: 'bg-green-500/10 text-green-600 dark:text-green-400',
+                    denied: 'bg-red-500/10 text-red-600 dark:text-red-400',
+                    prompt: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+                    unsupported: 'bg-[var(--border-color)] text-[var(--text-muted)]'
+                }
+            },
+
+            section(title, rowsHtml) {
+                return `
+                    <div>
+                        <h3 class="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">${escapeHtml(title)}</h3>
+                        <div class="space-y-2">${rowsHtml}</div>
+                    </div>
+                `;
+            },
+
+            row(icon, label, value) {
+                return `
+                    <div class="flex justify-between items-center p-3 rounded-2xl surface border border-color">
+                        <span class="text-sm text-[var(--text-muted)] flex items-center gap-2"><i class="fas ${icon} w-4"></i> ${escapeHtml(label)}</span>
+                        <span class="text-sm font-medium text-[var(--text-main)] text-right">${escapeHtml(String(value ?? '확인 불가'))}</span>
+                    </div>
+                `;
+            },
+
+            render() {
+                const d = state.systemData;
+                if (!d.hardware) return '<p class="text-sm text-[var(--text-muted)]">아직 정보를 모으는 중이에요.</p>';
+
+                const L = this.LABELS;
+                const parts = [];
+
+                parts.push(this.section('기본 정보', [
+                    this.row('fa-tablet-screen-button', '기기 종류', L.environment[d.environment] || d.environment),
+                    this.row('fa-microchip', '운영체제', d.hardware.os_platform),
+                    this.row('fa-layer-group', '처리 코어 수', d.hardware.logical_processors + '개'),
+                    this.row('fa-memory', '예상 메모리', d.hardware.approx_ram)
+                ].join('')));
+
+                parts.push(this.section('배터리 · 인터넷', [
+                    this.row('fa-battery-half', '배터리 잔량', d.status.battery_level + (d.status.battery_charging ? ' (충전 중)' : '')),
+                    this.row('fa-wifi', '연결 상태', d.status.online ? '온라인' : '오프라인'),
+                    this.row('fa-gauge-high', '연결 종류', d.status.network_type === 'Unknown' ? '확인 불가' : (d.status.network_type || '확인 불가').toUpperCase()),
+                    this.row('fa-bolt-lightning', '예상 속도', d.status.downlink_mbps != null ? `${d.status.downlink_mbps} Mbps` : '확인 불가')
+                ].join('')));
+
+                parts.push(this.section('화면 · 그래픽', [
+                    this.row('fa-display', '해상도', d.display.resolution),
+                    this.row('fa-expand', '화면 배율', d.display.pixel_ratio + 'x'),
+                    this.row('fa-circle-half-stroke', '화면 모드', L.colorScheme[d.display.prefers_color_scheme] || d.display.prefers_color_scheme),
+                    this.row('fa-hand-pointer', '터치 지원', d.display.max_touch_points > 0 ? '지원함' : '지원 안 함'),
+                    this.row('fa-champagne-glasses', '그래픽 장치', d.hardware.gpu_renderer)
+                ].join('')));
+
+                parts.push(this.section('저장공간', [
+                    this.row('fa-database', '사용 중 / 전체',
+                        d.storage.quota_mb ? `${d.storage.usage_mb ?? 0} MB / ${d.storage.quota_mb} MB` : '측정 불가')
+                ].join('')));
+
+                parts.push(this.section('언어 · 시간대', [
+                    this.row('fa-language', '사용 언어', d.software.language),
+                    this.row('fa-clock', '시간대', d.locale.timezone)
+                ].join('')));
+
+                if (d.media_devices) {
+                    parts.push(this.section('연결된 미디어 장치', [
+                        this.row('fa-microphone', '감지된 마이크', (d.media_devices.audio_input ?? '확인 불가') + (typeof d.media_devices.audio_input === 'number' ? '개' : '')),
+                        this.row('fa-video', '감지된 카메라', (d.media_devices.video_input ?? '확인 불가') + (typeof d.media_devices.video_input === 'number' ? '개' : '')),
+                        this.row('fa-volume-high', '감지된 스피커', (d.media_devices.audio_output ?? '확인 불가') + (typeof d.media_devices.audio_output === 'number' ? '개' : ''))
+                    ].join('')));
+                }
+
+                if (d.permissions) {
+                    const permRows = Object.entries(d.permissions).map(([name, permState]) => {
+                        const badgeClass = L.permissionBadgeClass[permState] || L.permissionBadgeClass.unsupported;
+                        const label = L.permissionName[name] || name;
+                        const stateLabel = L.permission[permState] || permState;
+                        return `
+                            <div class="flex justify-between items-center p-3 rounded-2xl surface border border-color">
+                                <span class="text-sm text-[var(--text-muted)]">${escapeHtml(label)}</span>
+                                <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full ${badgeClass}">${escapeHtml(stateLabel)}</span>
+                            </div>
+                        `;
+                    }).join('');
+                    parts.push(`
+                        <div>
+                            <h3 class="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">권한 상태</h3>
+                            <div class="space-y-2">${permRows}</div>
+                            <p class="text-[11px] text-[var(--text-muted)] mt-2 leading-relaxed">직접 요청하지 않고, 브라우저가 이미 알고 있는 상태만 확인해요.</p>
+                        </div>
+                    `);
+                }
+
+                return parts.join('');
+            },
+
+            open() {
+                dom.deviceDetailBody.innerHTML = this.render();
+                dom.deviceDetailTimestamp.innerText = state.systemData.diagnostics_timestamp
+                    ? `확인한 시각 ${new Date(state.systemData.diagnostics_timestamp).toLocaleTimeString('ko-KR')}`
+                    : '';
+                dom.deviceDetailModal.style.display = 'flex';
+            },
+
+            close() {
+                dom.deviceDetailModal.style.display = 'none';
+            }
+        };
+
+        // ------------------------------------------------------------------
+        // Chat
+        // ------------------------------------------------------------------
+        const Chat = {
+            WELCOME_HTML: `
+                <div class="flex gap-4 max-w-3xl mx-auto w-full">
+                    <div class="w-10 h-10 rounded-xl bg-[var(--bg-surface)] border border-color flex flex-shrink-0 items-center justify-center text-[var(--text-main)]">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <div class="flex-1 mt-1">
+                        <span class="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1 block">AI 도우미</span>
+                        <div class="surface border border-color rounded-3xl rounded-tl-none p-5 text-[var(--text-main)] shadow-sm">
+                            <h3 class="font-bold text-lg mb-2">내 기기 정보를 확인했어요</h3>
+                            <p class="text-sm text-[var(--text-muted)] leading-relaxed">
+                                배터리, 저장공간, 인터넷 연결 같은 정보를 살펴봤어요.<br>
+                                궁금한 걸 편하게 물어보세요. 예를 들면 "배터리가 왜 빨리 닳지?" 같은 질문도 좋아요.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `,
+            resetChat() {
+                if (dom.chatHistory.children.length <= 1) return;
+                if (!window.confirm('대화를 초기화할까요? 지금까지 나눈 대화 내용이 모두 사라져요.')) return;
+                dom.chatHistory.innerHTML = this.WELCOME_HTML;
+            },
+            renderSuggestions() {
+                const items = state.isPC ? CONFIG.suggestions.pc : CONFIG.suggestions.mobile;
+                dom.suggestions.innerHTML = items.map((text) => `
+                    <button type="button" data-quick-ask="${escapeHtml(text)}"
+                        class="flex-shrink-0 px-3 py-1.5 rounded-full surface border border-color text-[11px] text-[var(--text-muted)] hover:text-[var(--text-main)] hover:border-[var(--color-accent)] transition-colors whitespace-nowrap">
+                        ${escapeHtml(text)}
+                    </button>
+                `).join('');
+            },
+
+            parseMarkdown(text) {
+                return escapeHtml(text)
+                    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                    .replace(/^## (.*$)/gim, '<h3>$1</h3>')
+                    .replace(/^# (.*$)/gim, '<h3>$1</h3>')
+                    .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+                    .replace(/\*(.*)\*/gim, '<em>$1</em>')
+                    .replace(/`(.*?)`/gim, '<code>$1</code>')
+                    .replace(/\n\n/gim, '</p><p>')
+                    .replace(/^- (.*$)/gim, '<ul><li>$1</li></ul>')
+                    .replace(/<\/ul>\n<ul>/gim, '');
+            },
+
+            appendMessage(role, text) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'flex gap-4 max-w-3xl mx-auto w-full';
+
+                if (role === 'user') {
+                    wrapper.innerHTML = `
+                        <div class="flex-1 flex justify-end mt-1">
+                            <div class="bg-[var(--color-accent)] text-white px-5 py-3 rounded-3xl rounded-tr-none text-sm shadow-sm inline-block max-w-[85%] break-words">
+                                ${escapeHtml(text)}
+                            </div>
+                        </div>
+                        <div class="w-10 h-10 rounded-xl bg-[var(--bg-surface)] border border-color flex flex-shrink-0 items-center justify-center text-[var(--text-main)]">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    `;
+                } else {
+                    wrapper.innerHTML = `
+                        <div class="w-10 h-10 rounded-xl bg-[var(--bg-surface)] border border-color flex flex-shrink-0 items-center justify-center text-[var(--text-main)]">
+                            <i class="fas fa-server"></i>
+                        </div>
+                        <div class="flex-1 mt-1">
+                            <span class="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1 block">AI 도우미</span>
+                            <div class="surface border border-color rounded-3xl rounded-tl-none p-5 text-[var(--text-main)] text-sm shadow-sm md-content overflow-hidden break-words">
+                                <p>${this.parseMarkdown(text)}</p>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                dom.chatHistory.appendChild(wrapper);
+                dom.chatHistory.scrollTo({ top: dom.chatHistory.scrollHeight, behavior: 'smooth' });
+            },
+
+            appendLoadingIndicator() {
+                const id = 'loading-' + Date.now();
+                const el = document.createElement('div');
+                el.id = id;
+                el.className = 'flex gap-4 max-w-3xl mx-auto w-full animate-pulse';
+                el.innerHTML = `
+                    <div class="w-10 h-10 rounded-xl bg-[var(--bg-surface)] border border-color flex flex-shrink-0 items-center justify-center text-[var(--text-muted)]">
+                        <i class="fas fa-circle-notch fa-spin"></i>
+                    </div>
+                    <div class="flex-1 mt-1">
+                        <div class="h-10 surface border border-color rounded-3xl rounded-tl-none w-1/3"></div>
+                    </div>
+                `;
+                dom.chatHistory.appendChild(el);
+                dom.chatHistory.scrollTo({ top: dom.chatHistory.scrollHeight, behavior: 'smooth' });
+                return id;
+            },
+
+            removeLoadingIndicator(id) {
+                document.getElementById(id)?.remove();
+            },
+
+            async fetchWithRetry(url, options) {
+                const delays = CONFIG.retryDelaysMs;
+                for (let attempt = 0; attempt < delays.length; attempt++) {
+                    let response;
+                    try {
+                        response = await fetch(url, options);
+                    } catch (networkErr) {
+                        // fetch() itself threw: no internet, CORS block, ad-blocker, etc.
+                        // This never has a numeric status, so we tag it explicitly.
+                        console.error('Gemini fetch failed before a response was received:', networkErr);
+                        if (attempt === delays.length - 1) {
+                            const err = new Error('Network request failed');
+                            err.isNetworkError = true;
+                            throw err;
+                        }
+                        await new Promise((resolve) => setTimeout(resolve, delays[attempt]));
+                        continue;
+                    }
+
+                    if (response.ok) return await response.json();
+
+                    // Client errors (bad/invalid API key, unknown model, malformed request)
+                    // won't be fixed by retrying — fail fast with the response body.
+                    if (response.status >= 400 && response.status < 500) {
+                        const body = await response.json().catch(() => null);
+                        console.error('Gemini API error response:', response.status, body);
+                        const err = new Error(`HTTP error: ${response.status}`);
+                        err.status = response.status;
+                        err.body = body;
+                        throw err;
+                    }
+
+                    if (attempt === delays.length - 1) {
+                        const err = new Error(`HTTP error: ${response.status}`);
+                        err.status = response.status;
+                        throw err;
+                    }
+                    await new Promise((resolve) => setTimeout(resolve, delays[attempt]));
+                }
+            },
+
+            buildSystemInstruction() {
+                return `
+                    You are a friendly assistant that helps an everyday, non-technical user understand their own device.
+                    Avoid technical jargon; when a technical term is unavoidable, briefly explain it in plain language.
+                    Keep answers short, warm, and easy to skim. Give a simple verdict (e.g. "정상이에요" / "확인해보면 좋아요") before details when relevant.
+                    User's Device Data (for your reference only — do not dump this raw data back to the user): ${JSON.stringify(state.systemData)}.
+                    Target environment: ${state.isPC ? 'Desktop PC' : 'Mobile'}.
+                    Write in Korean. Use markdown headers, lists, and bold text sparingly for structure. Be concise and approachable, not clinical.
+                `;
+            },
+
+            async send(rawQuery) {
+                const query = (rawQuery ?? dom.userInput.value).trim();
+                if (!query) return;
+
+                this.appendMessage('user', query);
+                dom.userInput.value = '';
+                dom.userInput.style.height = 'auto';
+
+                const apiKey = ApiKeyManager.get().trim();
+                if (!apiKey) {
+                    this.appendMessage('ai', 'Gemini API 키가 설정되지 않았습니다. 좌측 사이드바의 **Gemini API 키** 버튼을 눌러 키를 입력해 주세요.');
+                    Layout.openApiKeyModal();
+                    return;
+                }
+
+                const loadingId = this.appendLoadingIndicator();
+
+                try {
+                    const data = await this.fetchWithRetry(`${CONFIG.apiUrl}?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ role: 'user', parts: [{ text: query }] }],
+                            systemInstruction: { parts: [{ text: this.buildSystemInstruction() }] }
+                        })
+                    });
+
+                    const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text
+                        || '데이터 분석을 완료할 수 없습니다.';
+
+                    this.removeLoadingIndicator(loadingId);
+                    this.appendMessage('ai', resultText);
+                } catch (error) {
+                    this.removeLoadingIndicator(loadingId);
+                    if (error.status === 400 || error.status === 401 || error.status === 403) {
+                        this.appendMessage('ai', 'API 키가 유효하지 않거나 권한이 없습니다. 사이드바에서 키를 다시 확인해 주세요.');
+                    } else if (error.status === 404) {
+                        this.appendMessage('ai', '요청한 모델을 찾을 수 없습니다. Gemini API 버전이 바뀌었을 수 있어요 — 잠시 후 다시 시도해 주세요.');
+                    } else if (error.isNetworkError) {
+                        this.appendMessage('ai', '인터넷 연결에 문제가 있거나, 브라우저 확장 프로그램(광고 차단기 등)이 요청을 막고 있을 수 있어요. 확인 후 다시 시도해 주세요.');
+                    } else {
+                        this.appendMessage('ai', '네트워크 통신 중 오류가 발생했습니다. 잠시 후 다시 시도하십시오.');
+                    }
+                }
+            }
+        };
+
+        // ------------------------------------------------------------------
+        // Event wiring
+        // ------------------------------------------------------------------
+        function bindEvents() {
+            dom.sidebarOpenBtn.addEventListener('click', () => Layout.toggleSidebar());
+            dom.sidebarCloseBtn.addEventListener('click', () => Layout.toggleSidebar());
+            dom.sidebarOverlay.addEventListener('click', () => Layout.toggleSidebar());
+
+            dom.themeToggleBtn.addEventListener('click', () => Theme.toggle());
+
+            dom.closeDataModalBtn.addEventListener('click', () => Layout.closeDataModal());
+            dom.dataModal.addEventListener('click', (e) => {
+                if (e.target === dom.dataModal) Layout.closeDataModal();
+            });
+            dom.copyJsonBtn.addEventListener('click', () => Layout.copyJsonData(dom.copyJsonBtn));
+
+            dom.openDeviceDetailBtn.addEventListener('click', () => DeviceDetail.open());
+            dom.mobileDeviceDetailBtn.addEventListener('click', () => DeviceDetail.open());
+            dom.mobileResetBtn.addEventListener('click', () => Chat.resetChat());
+            dom.desktopResetBtn.addEventListener('click', () => Chat.resetChat());
+            dom.closeDeviceDetailBtn.addEventListener('click', () => DeviceDetail.close());
+            dom.deviceDetailModal.addEventListener('click', (e) => {
+                if (e.target === dom.deviceDetailModal) DeviceDetail.close();
+            });
+            dom.openJsonFromDetailBtn.addEventListener('click', () => {
+                DeviceDetail.close();
+                Layout.openDataModal();
+            });
+
+            dom.openApiKeyModalBtn.addEventListener('click', () => Layout.openApiKeyModal());
+            dom.closeApiKeyModalBtn.addEventListener('click', () => Layout.closeApiKeyModal());
+            dom.apiKeyModal.addEventListener('click', (e) => {
+                if (e.target === dom.apiKeyModal) Layout.closeApiKeyModal();
+            });
+            dom.toggleApiKeyVisibilityBtn.addEventListener('click', () => Layout.toggleApiKeyVisibility());
+            dom.saveApiKeyBtn.addEventListener('click', () => Layout.saveApiKey());
+            dom.clearApiKeyBtn.addEventListener('click', () => Layout.clearApiKey());
+            dom.apiKeyInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    Layout.saveApiKey();
+                }
+            });
+
+            dom.userInput.addEventListener('input', (e) => Layout.adjustTextareaHeight(e.target));
+            dom.userInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    Chat.send();
+                }
+            });
+            dom.sendBtn.addEventListener('click', () => Chat.send());
+
+            dom.suggestions.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-quick-ask]');
+                if (btn) Chat.send(btn.dataset.quickAsk);
+            });
+
+            window.addEventListener('resize', () => Environment.detect());
+        }
+
+        // ------------------------------------------------------------------
+        // Boot
+        // ------------------------------------------------------------------
+        async function init() {
+            Theme.init();
+            Environment.detect();
+            state.audioSampleRate = Environment.getAudioSampleRate();
+            bindEvents();
+            ApiKeyManager.refreshStatusBadge();
+            await Environment.collect();
+            Chat.renderSuggestions();
+
+            setInterval(() => Environment.collect(), CONFIG.systemDataRefreshMs);
+        }
+
+        window.addEventListener('load', init);
+    })();
+    </script>
+</body>
+</html>
