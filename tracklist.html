@@ -632,11 +632,16 @@
   /* Desktop: scroll the page, not a clipped inner grid column.
      The playlist can grow to its natural height while the player stays in view. */
   @media (min-width:1024px){
-    html,body{
+    html{
       height:auto;
       min-height:100%;
       overflow-x:hidden;
       overflow-y:auto;
+    }
+    body{
+      height:auto;
+      min-height:100%;
+      overflow:visible;
     }
     .app{
       display:grid;
@@ -661,15 +666,17 @@
       height:max-content;
       min-height:0;
       max-height:calc(100dvh - 32px);
-      overflow:visible;
+      overflow:hidden;
       padding:18px 0 16px;
     }
     .rail .lib{
       display:flex;
       flex:none;
       min-height:0;
-      max-height:none;
-      overflow:visible;
+      max-height:calc(100dvh - 150px);
+      overflow-y:auto;
+      overflow-x:hidden;
+      scrollbar-width:thin;
     }
     .panel{
       position:sticky;
