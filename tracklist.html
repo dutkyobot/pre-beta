@@ -650,33 +650,39 @@
       padding:var(--desktop-inset);
     }
     .rail{
-      position:static;
+      position:sticky;
+      top:var(--desktop-inset);
       display:flex;
       flex-direction:column;
       align-items:center;
+      align-self:start;
       gap:14px;
       width:var(--rail-width);
-      height:calc(100vh - 32px);
-      height:calc(100dvh - 32px);
+      height:max-content;
       min-height:0;
-      overflow:hidden;
+      max-height:calc(100dvh - 32px);
+      overflow:visible;
       padding:18px 0 16px;
     }
     .rail .lib{
       display:flex;
-      flex:1;
+      flex:none;
       min-height:0;
-      overflow-y:auto;
-      overflow-x:hidden;
+      max-height:none;
+      overflow:visible;
     }
     .panel{
-      position:static;
+      position:sticky;
+      top:var(--desktop-inset);
       display:block;
       width:var(--player-width);
       align-self:start;
       height:auto;
-      max-height:none;
-      overflow:visible;
+      max-height:calc(100dvh - 32px);
+      overflow-y:auto;
+      overflow-x:hidden;
+      scrollbar-width:thin;
+      overscroll-behavior:contain;
     }
     .panel-body{
       padding-bottom:28px;
