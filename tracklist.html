@@ -645,25 +645,24 @@
       align-items:start;
     }
     .rail{
-      position:sticky;
-      top:var(--desktop-inset);
+      position:static;
       align-self:start;
-      height:calc(100vh - 32px);
-      height:calc(100dvh - 32px);
-      padding-bottom:16px;
-      overscroll-behavior:contain;
+      height:auto;
+      min-height:0;
+      overflow:visible;
+      padding-bottom:18px;
+    }
+    .rail .lib{
+      flex:none;
+      min-height:auto;
+      overflow:visible;
     }
     .panel{
-      position:sticky;
-      top:var(--desktop-inset);
+      position:static;
       align-self:start;
-      height:calc(100vh - 32px);
-      height:calc(100dvh - 32px);
-      max-height:calc(100vh - 32px);
-      max-height:calc(100dvh - 32px);
-      overflow-y:auto;
-      overscroll-behavior:contain;
-      scrollbar-width:thin;
+      height:auto;
+      max-height:none;
+      overflow:visible;
     }
     .panel-body{
       padding-bottom:28px;
