@@ -84,33 +84,6 @@
     .main{ overflow-y:auto; padding-bottom:var(--bar-space); scrollbar-width:thin; }
   }
 
-  .mobile-divider,
-  .mobile-library-label{ display:none; }
-
-  @media (max-width:1023px){
-    .mobile-divider{
-      display:block;
-      width:48px;
-      height:1px;
-      margin:4px auto 0;
-      background:var(--line);
-      flex:none;
-    }
-    .mobile-library-label{
-      display:block;
-      margin:0 2px -5px;
-      color:var(--mute);
-      font-size:11px;
-      font-weight:600;
-      letter-spacing:.04em;
-    }
-    .lib-strip{
-      align-items:center;
-      padding:2px 2px 8px;
-      margin-bottom:2px;
-    }
-  }
-
   /* ============================== 왼쪽 라이브러리 줄 ============================== */
   .rail-logo{
     width:36px; height:36px;
@@ -734,6 +707,35 @@
     }
   }
 
+  /* Mobile: floating library above the playback bar; player info follows the list. */
+  @media (max-width:1023px){
+    body{ padding-bottom:calc(var(--bar-space) + 108px); }
+    .panel{ order:2; }
+    .lib-strip{
+      position:fixed;
+      left:12px;
+      right:12px;
+      bottom:calc(var(--bar-space) + 36px);
+      z-index:19;
+      align-items:center;
+      justify-content:flex-start;
+      gap:10px;
+      min-height:62px;
+      margin:0;
+      padding:6px 10px;
+      border:1px solid var(--line);
+      border-radius:20px;
+      background:rgba(21,23,27,.92);
+      -webkit-backdrop-filter:blur(18px) saturate(1.25);
+      backdrop-filter:blur(18px) saturate(1.25);
+      box-shadow:0 10px 30px rgba(0,0,0,.42);
+    }
+  }
+  @media (min-width:900px) and (max-width:1023px){
+    body{ padding-bottom:190px; }
+    .lib-strip{ bottom:112px; }
+  }
+
 </style>
 </head>
 
@@ -768,8 +770,6 @@
     </div>
   </aside>
 
-  <div class="mobile-divider" aria-hidden="true"></div>
-  <div class="mobile-library-label">라이브러리</div>
   <div id="libStrip" class="lib-strip"></div>
 
   <main id="main" class="main">
