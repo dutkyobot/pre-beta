@@ -551,6 +551,101 @@
   @media (prefers-reduced-motion: reduce){
     * { transition:none !important; animation-duration:0.001ms !important; }
   }
+
+  /* ============================== UX refinement ============================== */
+  :root{ --surface:#15171b; --line:#292d33; --bar-space:128px; }
+  .card{ border-radius:24px; }
+  .panel-body{ padding-bottom:26px; }
+  .hero{ min-height:172px; }
+  .list-card{ border-radius:22px; }
+  .list-head{ padding:18px 22px; }
+  .list-head h2{ font-size:15px; }
+
+  .list-toolbar{ display:flex; align-items:center; gap:12px; padding:12px 20px; border-bottom:1px solid var(--line); }
+  .search-field{ position:relative; width:min(100%,420px); min-width:0; }
+  .search-field > i{ position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--dim); font-size:13px; pointer-events:none; }
+  .track-search{ display:block; width:100%; height:40px; padding:0 40px 0 38px; border:1px solid var(--line); border-radius:12px; background:#0d0e11; color:var(--ink); font-size:13px; outline:none; transition:border-color .15s,background .15s; }
+  .track-search::placeholder{ color:var(--dim); }
+  .track-search:focus{ border-color:var(--blue); background:#101216; }
+  .track-search::-webkit-search-cancel-button{ display:none; }
+  .search-clear{ position:absolute; right:7px; top:50%; transform:translateY(-50%); display:grid; place-items:center; width:28px; height:28px; border-radius:8px; color:var(--mute); }
+  .search-clear:hover{ background:rgba(255,255,255,.08); color:#fff; }
+  .search-count{ margin-left:auto; color:var(--mute); font-size:12px; white-space:nowrap; }
+
+  .track-row{ grid-template-columns:minmax(0,1fr) 54px 72px; gap:8px; padding:10px 14px; cursor:default; }
+  .track-play{ display:grid; grid-template-columns:28px minmax(0,1fr); align-items:center; gap:12px; width:100%; min-width:0; padding:3px 4px; border-radius:10px; color:inherit; text-align:left; }
+  .track-play:hover .c-title .t{ color:#fff; }
+  .track-play:focus-visible{ outline:2px solid var(--blue); outline-offset:2px; }
+  .track-row .c-num{ min-width:24px; }
+  .track-row .c-title{ min-width:0; }
+  .track-row .c-title .t{ font-size:14px; }
+  .track-row .num{ display:inline; }
+  .track-row .hov{ display:none; }
+  .track-row:hover .num{ display:none; }
+  .track-row:hover .hov{ display:inline-flex; align-items:center; justify-content:center; }
+  .track-row.active .num{ display:none; }
+  .track-row.active .eq,.track-row.active:hover .eq{ display:flex; }
+  .track-row .c-start{ display:none; }
+  .track-row .c-len{ text-align:right; font-size:12px; color:var(--mute); font-variant-numeric:tabular-nums; }
+  .track-row .c-act{ display:flex; align-items:center; justify-content:flex-end; gap:4px; opacity:1; white-space:nowrap; }
+  .mini-btn{ width:30px; height:32px; border-radius:9px; background:rgba(0,0,0,.22); font-size:10px; }
+  .mini-btn:disabled{ opacity:.25; cursor:not-allowed; }
+  .track-row:focus-within{ background:rgba(255,255,255,.035); }
+  .list-empty{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-height:132px; padding:24px; color:#fff; font-size:14px; text-align:center; }
+  .list-empty span{ color:var(--mute); font-size:12px; }
+
+  .lib-entry{ position:relative; flex:none; width:48px; height:48px; }
+  .lib-remove{ position:absolute; z-index:2; top:-5px; right:-5px; display:grid; place-items:center; width:19px; height:19px; border:1px solid rgba(255,255,255,.18); border-radius:50%; background:#292d33; color:#e5e7eb; font-size:9px; opacity:0; transition:opacity .15s,background .15s; }
+  .lib-entry:hover .lib-remove,.lib-entry:focus-within .lib-remove{ opacity:1; }
+  .lib-remove:hover{ background:#a63c45; color:#fff; }
+  .lib-strip .lib-remove{ opacity:1; }
+
+  .field-help{ margin:7px 2px 0; color:var(--dim); font-size:12px; line-height:1.5; }
+  .form-feedback{ margin:12px 0 0; color:#ff9c9c; font-size:13px; line-height:1.5; }
+  .form-feedback[data-kind="success"]{ color:var(--mint); }
+  .player-status{ margin:14px 0 0; padding:11px 13px; border:1px solid rgba(255,122,122,.2); border-radius:12px; background:rgba(255,80,80,.07); color:#ffb1b1; font-size:12px; line-height:1.5; }
+
+  @media (min-width:640px){
+    .track-row{ grid-template-columns:minmax(0,1fr) 68px 56px 72px; padding:12px 22px; }
+    .track-row .c-start{ display:block; color:var(--mute); font-size:12px; font-variant-numeric:tabular-nums; }
+    .track-row .c-act{ opacity:0; }
+    .track-row:hover .c-act,.track-row:focus-within .c-act{ opacity:1; }
+  }
+  @media (max-width:639px){
+    .hero{ padding:20px; gap:16px; }
+    .cover{ width:88px; height:88px; border-radius:17px; }
+    .controls{ padding:14px 18px; }
+    .big-play{ width:48px; height:48px; }
+    .list-head{ padding:16px 18px; }
+    .list-toolbar{ padding:11px 14px; }
+    .list-toolbar .search-field{ width:100%; }
+    .search-count{ font-size:11px; }
+    .track-row{ padding:10px 12px; }
+    .track-play{ gap:8px; grid-template-columns:24px minmax(0,1fr); }
+    .track-row .c-title .t{ font-size:13px; }
+    .track-row .c-len{ font-size:11px; }
+    .mini-btn{ width:29px; height:32px; }
+    .lib-strip{ padding:5px 2px 8px; }
+    .lib-remove{ opacity:1; }
+  }
+  @media (max-width:380px){
+    .hero{ padding:16px; }
+    .cover{ width:76px; height:76px; }
+    .track-row{ grid-template-columns:minmax(0,1fr) 46px 66px; gap:6px; padding:9px; }
+    .mini-btn{ width:27px; height:30px; }
+    .bar{ width:calc(100% - 16px); padding:11px 12px; }
+    .bar-btns{ gap:7px; }
+  }
+  @media (max-width:899px){
+    .bar{ bottom:10px; border-radius:22px; padding:12px 14px; gap:8px; }
+    .bar-thumb{ width:42px; height:42px; border-radius:12px; }
+    .bar-btns{ gap:8px; }
+    .bar-btns .ctl{ width:35px; height:35px; }
+    .play-btn{ width:42px; height:42px; }
+    .seek{ gap:8px; }
+    .seek span{ width:34px; }
+  }
+
 </style>
 </head>
 
@@ -576,9 +671,10 @@
         <div class="eq"><span></span><span></span><span></span></div>
         <div style="min-width:0">
           <div id="nowSub" class="now-sub">—</div>
-          <div id="nowTitle" class="now-title">재생 없음</div>
+          <div id="nowTitle" class="now-title" aria-live="polite">재생 없음</div>
         </div>
       </div>
+      <p id="playerStatus" class="player-status" role="status" hidden></p>
 
       <section class="next-card">
         <div class="label">다음 곡</div>
@@ -610,7 +706,15 @@
         <h2>트랙리스트</h2>
         <span id="trackCount"></span>
       </div>
-      <div id="list"></div>
+      <div class="list-toolbar" role="search" aria-label="트랙 검색">
+        <div class="search-field">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <input id="trackSearch" class="track-search" type="search" placeholder="곡 제목 검색" autocomplete="off" aria-label="곡 제목 검색">
+          <button id="searchClear" class="search-clear" type="button" aria-label="검색어 지우기" hidden><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <span id="searchCount" class="search-count" aria-live="polite"></span>
+      </div>
+      <div id="list" role="list" aria-label="곡 목록"></div>
     </section>
   </main>
 </div>
@@ -661,7 +765,8 @@
 
     <div class="field">
       <label class="label" for="videoId">영상 ID</label>
-      <input id="videoId" class="field-input" placeholder="예: dQw4w9WgXcQ" autocomplete="off" />
+      <input id="videoId" class="field-input" placeholder="YouTube 영상 주소 또는 ID" autocomplete="off" />
+      <p class="field-help">youtube.com/watch 또는 youtu.be 주소를 그대로 붙여넣어도 돼요.</p>
     </div>
 
     <div class="field">
@@ -675,6 +780,7 @@
     </div>
 
     <button id="generateBtn" class="submit">플레이리스트 추가</button>
+    <p id="intakeFeedback" class="form-feedback" role="status" aria-live="polite" hidden></p>
 
     <p class="hint">한 줄에 시간 하나, 그 뒤에 곡 제목을 붙여넣으면 자동으로 시간순 정렬해요. 시:분:초 또는 분:초 형식 모두 인식해요.</p>
     <div class="copy"><b>Dutkyobot</b> &copy; 2026. All Rights Reserved.</div>
@@ -722,12 +828,15 @@ const App = {
     videoTitle:'',
     videoAuthor:'',
     duration:0,
+    search:'',
   },
 
   els:{
     app:$('app'), intake:$('intake'), intakeClose:$('intakeClose'),
     videoId:$('videoId'), plName:$('plName'), timeline:$('timeline'), generateBtn:$('generateBtn'),
     list:$('list'), main:$('main'),
+    trackSearch:$('trackSearch'), searchClear:$('searchClear'), searchCount:$('searchCount'),
+    intakeFeedback:$('intakeFeedback'), playerStatus:$('playerStatus'),
     plTitle:$('plTitle'), trackCount:$('trackCount'), plMeta:$('plMeta'), cover:$('cover'),
     libRail:$('libRail'), libStrip:$('libStrip'), ctx:$('ctx'), ctxDelete:$('ctxDelete'),
     nowTitle:$('nowTitle'), nowSub:$('nowSub'), nextList:$('nextList'),
@@ -763,6 +872,25 @@ const App = {
     e.list.addEventListener('dragover', (ev) => this.onDragOver(ev));
     e.list.addEventListener('drop', (ev) => this.onDrop(ev));
     e.list.addEventListener('dragend', (ev) => this.onDragEnd(ev));
+
+    e.trackSearch.addEventListener('input', () => {
+      this.state.search = e.trackSearch.value.trim();
+      e.searchClear.hidden = !e.trackSearch.value;
+      this.render();
+    });
+    e.searchClear.addEventListener('click', () => {
+      e.trackSearch.value = '';
+      this.state.search = '';
+      e.searchClear.hidden = true;
+      this.render();
+      e.trackSearch.focus();
+    });
+    [e.videoId, e.plName, e.timeline].forEach((field) => {
+      field.addEventListener('input', () => {
+        if(!e.intakeFeedback.hidden) this.showIntakeFeedback('');
+      });
+    });
+
     e.nextList.addEventListener('click', (ev) => {
       const b = ev.target.closest('[data-pos]');
       if(b) this.play(Number(b.dataset.pos));
@@ -774,6 +902,12 @@ const App = {
     [e.libRail, e.libStrip].forEach((box) => {
       box.addEventListener('click', (ev) => {
         if(ev.target.closest('[data-add]')){ this.openIntake(); return; }
+        const remove = ev.target.closest('[data-remove]');
+        if(remove){
+          const pl = this.state.playlists.find((p) => p.id === remove.dataset.remove);
+          if(pl && window.confirm('"' + this.plName(pl) + '" 플레이리스트를 삭제할까요?')) this.deletePlaylist(pl.id);
+          return;
+        }
         const b = ev.target.closest('[data-id]');
         if(b && b.dataset.id !== this.state.activeId) this.selectPlaylist(b.dataset.id);
       });
@@ -824,25 +958,54 @@ const App = {
     return duration > 0 ? Math.max(0, duration - t.time) : null;
   },
 
-  /* ---------- 타임테이블 파싱 ---------- */
+  /* ---------- 입력 검증 및 타임테이블 파싱 ---------- */
 
-  parseTimeToSeconds(t){
-    const parts = t.split(':').map(Number);
-    if(parts.length === 2) return parts[0]*60 + parts[1];
-    if(parts.length === 3) return parts[0]*3600 + parts[1]*60 + parts[2];
-    return 0;
+  normalizeVideoId(value){
+    const raw = String(value || '').trim();
+    if(!raw) return null;
+    let id = raw;
+    if(/youtube\.com|youtu\.be/i.test(raw)){
+      try{
+        const url = new URL(/^https?:\/\//i.test(raw) ? raw : 'https://' + raw);
+        const host = url.hostname.replace(/^www\./, '');
+        if(host === 'youtu.be'){
+          id = url.pathname.split('/').filter(Boolean)[0] || '';
+        }else if(host.endsWith('youtube.com') || host.endsWith('youtube-nocookie.com')){
+          id = url.searchParams.get('v') || ((url.pathname.match(/^\/(?:embed|shorts|live)\/([^/]+)/) || [])[1] || '');
+        }else return null;
+      }catch(err){ return null; }
+    }
+    return /^[A-Za-z0-9_-]{11}$/.test(id) ? id : null;
+  },
+
+  showIntakeFeedback(message, kind = 'error'){
+    const el = this.els.intakeFeedback;
+    el.textContent = message;
+    el.dataset.kind = kind;
+    el.hidden = !message;
+  },
+
+  parseTimeToSeconds(value){
+    const parts = value.split(':').map(Number);
+    if(parts.length === 2){
+      if(parts[1] >= 60) return null;
+      return parts[0] * 60 + parts[1];
+    }
+    if(parts.length === 3){
+      if(parts[1] >= 60 || parts[2] >= 60) return null;
+      return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    }
+    return null;
   },
 
   parseTimeline(rawText, videoId){
     const tracks = [];
     for(const line of rawText.split('\n')){
-      const match = line.trim().match(/(\d{1,2}:\d{2}(?::\d{2})?)\s*(.*)/);
+      const match = line.trim().match(/^(?:[-*•]\s*)?(?:\d+\.\s*)?((?:\d{1,2}:)?\d{1,3}:[0-5]\d)\s*(?:[-–—]\s*)?(.*)$/);
       if(!match) continue;
-      tracks.push({
-        time: this.parseTimeToSeconds(match[1]),
-        title: match[2] || '제목 없음',
-        videoId,
-      });
+      const time = this.parseTimeToSeconds(match[1]);
+      if(time === null) continue;
+      tracks.push({ time, title:match[2].trim() || '제목 없음', videoId });
     }
     return tracks.sort((a, b) => a.time - b.time);
   },
@@ -861,13 +1024,29 @@ const App = {
   },
 
   generate(){
-    const videoId = this.els.videoId.value.trim();
+    const videoId = this.normalizeVideoId(this.els.videoId.value);
     const rawText = this.els.timeline.value;
-    if(!videoId || !rawText.trim()) return;
-
+    if(!videoId){
+      this.showIntakeFeedback('유효한 YouTube 영상 주소 또는 11자리 영상 ID를 입력해 주세요.');
+      this.els.videoId.focus();
+      return;
+    }
+    if(!rawText.trim()){
+      this.showIntakeFeedback('영상 설명란의 타임테이블을 입력해 주세요.');
+      this.els.timeline.focus();
+      return;
+    }
     const tracks = this.parseTimeline(rawText, videoId);
-    if(tracks.length === 0) return;
-
+    if(tracks.length === 0){
+      this.showIntakeFeedback('시간과 곡 제목이 포함된 줄을 찾지 못했어요. 예시 형식으로 입력해 주세요.');
+      this.els.timeline.focus();
+      return;
+    }
+    if(tracks.some((track, i) => i > 0 && track.time === tracks[i - 1].time)){
+      this.showIntakeFeedback('같은 시작 시간이 두 번 이상 있어요. 타임스탬프를 확인해 주세요.');
+      this.els.timeline.focus();
+      return;
+    }
     const pl = {
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       videoId,
@@ -876,11 +1055,10 @@ const App = {
       meta: null,
     };
     this.state.playlists.push(pl);
-
     this.els.videoId.value = '';
     this.els.plName.value = '';
     this.els.timeline.value = '';
-
+    this.showIntakeFeedback('');
     this.selectPlaylist(pl.id);
   },
 
@@ -932,6 +1110,9 @@ const App = {
     s.videoAuthor = (pl.meta && pl.meta.author) || '';
     s.duration = (pl.meta && pl.meta.duration) || 0;
     s.finished = false;
+    s.search = '';
+    this.els.trackSearch.value = '';
+    this.els.searchClear.hidden = true;
 
     this.els.intake.hidden = true;
     this.els.app.hidden = false;
@@ -951,9 +1132,12 @@ const App = {
     const s = this.state;
     const item = (p) => {
       const name = this.plName(p);
-      return `<button class="lib-item${p.id === s.activeId ? ' active' : ''}" data-id="${esc(p.id)}" title="${esc(name)}" aria-label="${esc(name)}">
-        <span class="lib-in"><span class="lib-ph">${esc([...name][0] || '♪')}</span><img src="https://i.ytimg.com/vi/${encodeURIComponent(p.videoId)}/mqdefault.jpg" alt="" onerror="this.remove()"></span>
-      </button>`;
+      return '<div class="lib-entry">' +
+        '<button class="lib-item' + (p.id === s.activeId ? ' active' : '') + '" data-id="' + esc(p.id) + '" title="' + esc(name) + '" aria-label="' + esc(name) + '">' +
+          '<span class="lib-in"><span class="lib-ph">' + esc([...name][0] || '♪') + '</span><img src="https://i.ytimg.com/vi/' + encodeURIComponent(p.videoId) + '/mqdefault.jpg" alt="" onerror="this.remove()"></span>' +
+        '</button>' +
+        '<button class="lib-remove" type="button" data-remove="' + esc(p.id) + '" aria-label="' + esc(name) + ' 삭제" title="플레이리스트 삭제"><i class="fa-solid fa-xmark"></i></button>' +
+      '</div>';
     };
     const items = s.playlists.map(item).join('');
     this.els.libRail.innerHTML = items;
@@ -1004,28 +1188,36 @@ const App = {
   /* ---------- 렌더 ---------- */
 
   render(){
-    const { playlist, order, index } = this.state;
+    const { playlist, order, index, search } = this.state;
+    const query = (search || '').toLocaleLowerCase('ko');
+    const visible = order.map((pi, position) => ({ pi, position, track:playlist[pi] }))
+      .filter((item) => !query || item.track.title.toLocaleLowerCase('ko').includes(query));
 
-    this.els.trackCount.textContent = `${playlist.length}곡`;
-    this.els.list.innerHTML = order.map((pi, position) => {
-      const track = playlist[pi];
+    this.els.trackCount.textContent = playlist.length + '곡';
+    this.els.searchCount.textContent = query ? (visible.length + ' / ' + playlist.length + '곡 표시') : '';
+    if(visible.length === 0){
+      this.els.list.innerHTML = '<div class="list-empty">검색 결과가 없어요.<span>다른 곡 제목으로 검색해 보세요.</span></div>';
+      this.renderNext();
+      return;
+    }
+
+    this.els.list.innerHTML = visible.map(({ pi, position, track }) => {
       const active = position === index;
       const d = this.trackDuration(pi);
-      return `
-        <div class="track-row${active ? ' active' : ''}" draggable="true" data-position="${position}">
-          <div class="c-num" data-action="play">
-            <span class="num">${position + 1}</span>
-            <i class="fa-solid fa-play hov"></i>
-            ${active ? '<div class="eq"><span></span><span></span><span></span></div>' : ''}
-          </div>
-          <div class="c-title" data-action="play"><span class="t">${esc(track.title)}</span></div>
-          <div class="c-start">${this.fmt(track.time)}</div>
-          <div class="c-len r">${d === null ? '--:--' : this.fmt(d)}</div>
-          <div class="c-act">
-            <button class="mini-btn" data-action="up" aria-label="위로 이동"><i class="fa-solid fa-chevron-up"></i></button>
-            <button class="mini-btn" data-action="down" aria-label="아래로 이동"><i class="fa-solid fa-chevron-down"></i></button>
-          </div>
-        </div>`;
+      const eq = '<span class="eq" aria-hidden="true"><span></span><span></span><span></span></span>';
+      const hoverIcon = '<span class="hov" aria-hidden="true"><i class="fa-solid fa-play"></i></span>';
+      return '<div class="track-row' + (active ? ' active' : '') + '" draggable="true" data-position="' + position + '" role="listitem">' +
+        '<button class="track-play" type="button" data-action="play" aria-label="' + esc(track.title) + ' 재생" aria-current="' + (active ? 'true' : 'false') + '">' +
+          '<span class="c-num"><span class="num">' + (position + 1) + '</span>' + (active ? eq : hoverIcon) + '</span>' +
+          '<span class="c-title"><span class="t">' + esc(track.title) + '</span></span>' +
+        '</button>' +
+        '<div class="c-start">' + this.fmt(track.time) + '</div>' +
+        '<div class="c-len">' + (d === null ? '--:--' : this.fmt(d)) + '</div>' +
+        '<div class="c-act">' +
+          '<button class="mini-btn" type="button" data-action="up" aria-label="' + (position + 1) + '번 곡 위로 이동" title="위로 이동"' + (position === 0 ? ' disabled' : '') + '><i class="fa-solid fa-chevron-up"></i></button>' +
+          '<button class="mini-btn" type="button" data-action="down" aria-label="' + (position + 1) + '번 곡 아래로 이동" title="아래로 이동"' + (position === order.length - 1 ? ' disabled' : '') + '><i class="fa-solid fa-chevron-down"></i></button>' +
+        '</div>' +
+      '</div>';
     }).join('');
 
     this.renderNext();
@@ -1364,12 +1556,24 @@ const App = {
     }
     if(this.state.playlist.length === 0) return;
     const tag = (ev.target.tagName || '').toLowerCase();
-    if(tag === 'input' || tag === 'textarea') return;
+    if(ev.key === 'Escape' && this.state.search){
+      this.els.trackSearch.value = '';
+      this.state.search = '';
+      this.els.searchClear.hidden = true;
+      this.render();
+      return;
+    }
+    if(tag === 'input' || tag === 'textarea' || tag === 'select') return;
     if(ev.metaKey || ev.ctrlKey || ev.altKey) return;
-
+    if(ev.key === '/' && tag !== 'button'){
+      ev.preventDefault();
+      this.els.trackSearch.focus();
+      return;
+    }
+    if(ev.target.closest && ev.target.closest('button, a, [role="button"]')) return;
     if(ev.code === 'Space'){ ev.preventDefault(); this.togglePlay(); }
-    else if(ev.key === 'ArrowRight'){ this.next(); }
-    else if(ev.key === 'ArrowLeft'){ this.prev(); }
+    else if(ev.key === 'ArrowRight'){ ev.preventDefault(); this.next(); }
+    else if(ev.key === 'ArrowLeft'){ ev.preventDefault(); this.prev(); }
   },
 
   /* ---------- 목록 클릭 위임 (재생 / 순서 이동) ---------- */
@@ -1380,12 +1584,13 @@ const App = {
 
     const position = Number(row.dataset.position);
     const btn = e.target.closest('[data-action]');
-    const action = btn ? btn.dataset.action : 'play';
+    if(!btn) return;
+    const action = btn.dataset.action;
 
     if(action === 'up') this.moveTrack(position, position - 1);
     else if(action === 'down') this.moveTrack(position, position + 1);
-    else if(position === this.state.index && !this.state.finished) this.togglePlay();
-    else this.play(position);
+    else if(action === 'play' && position === this.state.index && !this.state.finished) this.togglePlay();
+    else if(action === 'play') this.play(position);
   },
 
   moveTrack(from, to){
@@ -1482,8 +1687,10 @@ function onYouTubeIframeAPIReady(){
       },
       onStateChange:(e) => {
         const s = App.state;
-        if(e.data === 1) s.isPlaying = true;
-        else if(e.data === 2) s.isPlaying = false;
+        if(e.data === 1){
+          s.isPlaying = true;
+          App.els.playerStatus.hidden = true;
+        }else if(e.data === 2) s.isPlaying = false;
         else if(e.data === 0){
           s.isPlaying = false;
           App.advance(true);
@@ -1492,6 +1699,16 @@ function onYouTubeIframeAPIReady(){
       },
       onError:(e) => {
         console.error('YT Error:', e.data);
+        const messages = {
+          2:'영상 ID가 올바르지 않거나 요청 형식이 잘못됐어요.',
+          5:'YouTube 플레이어에서 재생 오류가 발생했어요.',
+          100:'영상이 삭제됐거나 비공개 상태예요.',
+          101:'이 영상은 외부 사이트에서 재생할 수 없어요.',
+          150:'이 영상은 외부 사이트에서 재생할 수 없어요.',
+          153:'YouTube가 재생 요청의 출처 정보를 확인하지 못했어요. 페이지를 새로고침해 보세요.'
+        };
+        App.els.playerStatus.textContent = messages[e.data] || '영상을 재생할 수 없어요. 영상 공개 상태를 확인해 주세요.';
+        App.els.playerStatus.hidden = false;
       },
     },
   });
