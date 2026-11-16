@@ -7,147 +7,501 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
-<script src="https://cdn.tailwindcss.com"></script>
-
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          bg: "#000000",
-          surface: "#18181B",
-          line: "#2A2A2E",
-          mute: "#9B9BA3",
-          ink: "#FFFFFF",
-          mint: "#21D67A",
-          blue: "#3B9EFF",
-          discord: "#5865F2",
-        },
-        fontFamily: {
-          sans: ["Pretendard Variable", "Pretendard", "sans-serif"],
-        },
-      },
-    },
-  };
-</script>
 
 <style>
   :root{
-    --c-mint:#21D67A;
-    --c-blue:#3B9EFF;
+    --bg:#000000;
+    --panel:#121212;
+    --card:#1f1f1f;
+    --hover:#2a2a2a;
+    --ink:#ffffff;
+    --mute:#b3b3b3;
+    --dim:#7a7a7a;
+    --line:rgba(255,255,255,0.1);
+    --mint:#21D67A;
+    --hue:160;
+    --bar-space:112px;
   }
 
-  html{ scroll-behavior:smooth; }
+  *{ box-sizing:border-box; }
+  [hidden]{ display:none !important; }
 
+  html,body{ margin:0; background:var(--bg); color:var(--ink); }
   body{
-    background-color:#000000;
-    color:#FFFFFF;
+    font-family:"Pretendard Variable","Pretendard",-apple-system,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:calc(var(--bar-space) + 36px);
   }
+  button{ font:inherit; color:inherit; background:none; border:0; padding:0; cursor:pointer; }
+  input,textarea{ font:inherit; }
 
   a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible{
-    outline:2px solid var(--c-blue);
+    outline:2px solid #3B9EFF;
     outline-offset:2px;
-    border-radius:4px;
+    border-radius:6px;
   }
 
-  .card{
-    background:#18181B;
-    border:1px solid #2A2A2E;
-    border-radius:28px;
-    transition:border-color .2s ease;
-  }
-  .card:hover{ border-color:rgba(255,255,255,0.3); }
-
-  .gradient-brand{
-    background:linear-gradient(135deg, var(--c-mint) 0%, var(--c-blue) 100%);
-  }
-
-  .field-input{
-    width:100%;
-    background:#000000;
-    border:1px solid #2A2A2E;
-    border-radius:14px;
-    padding:12px 14px;
-    color:#FFFFFF;
-    font-size:14px;
-    outline:none;
-    transition:border-color .15s;
-  }
-  .field-input::placeholder{ color:#6B6B72; }
-  .field-input:focus{ border-color:var(--c-blue); }
-  textarea.field-input{ resize:vertical; min-height:200px; line-height:1.6; }
-
-  .btn-primary{
-    transition:opacity .2s ease, transform .1s ease;
-  }
-  .btn-primary:hover{ opacity:.88; }
-  .btn-primary:active{ transform:translateY(1px); }
-
-  .track-row{
-    display:grid;
-    grid-template-columns:28px 1fr auto;
-    align-items:center;
-    gap:12px;
-    padding:12px 18px;
-    border-bottom:1px solid #2A2A2E;
-    cursor:grab;
-    transition:background .12s;
-  }
-  .track-row:last-child{ border-bottom:none; }
-  .track-row:hover{ background:rgba(255,255,255,0.03); }
-  .track-row.dragging{ opacity:.4; }
-  .track-row.active{ background:rgba(59,158,255,0.10); }
-
-  .transport-btn{
-    width:46px;
-    height:46px;
-    border-radius:9999px;
-    border:1px solid #2A2A2E;
-    background:#18181B;
-    color:#FFFFFF;
+  /* ============================== 전체 레이아웃 ============================== */
+  .app{
     display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:14px;
-    cursor:pointer;
-    transition:border-color .15s, background .15s, color .15s;
+    flex-direction:column;
+    gap:8px;
+    padding:8px;
   }
-  .transport-btn:hover{ border-color:rgba(255,255,255,0.3); }
-  .transport-btn[aria-pressed="true"]{
-    background:linear-gradient(135deg, var(--c-mint) 0%, var(--c-blue) 100%);
-    border-color:transparent;
-    color:#000000;
+  .rail{ display:none; }
+
+  .panel, .main{
+    background:var(--panel);
+    border-radius:10px;
+    min-width:0;
   }
 
-  .track-icon-btn{
-    width:26px;
-    height:26px;
+  @media (min-width:1024px){
+    html,body{ height:100%; overflow:hidden; }
+    body{ padding-bottom:0; }
+    .app{
+      display:grid;
+      grid-template-columns:72px 340px minmax(0,1fr);
+      height:100vh;
+      padding:8px;
+    }
+    .rail{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:14px;
+      padding:14px 0;
+      background:var(--panel);
+      border-radius:10px;
+    }
+    .panel, .main{ overflow-y:auto; padding-bottom:var(--bar-space); }
+  }
+
+  /* ============================== 왼쪽 라이브러리 줄 ============================== */
+  .rail-logo{
+    width:40px; height:40px;
+    border-radius:12px;
+    background:var(--mint);
+    color:#000;
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px;
+  }
+  .rail-btn{
+    width:40px; height:40px;
+    border-radius:9999px;
+    color:var(--mute);
+    font-size:16px;
+    display:flex; align-items:center; justify-content:center;
+    transition:color .15s, background .15s;
+  }
+  .rail-btn:hover{ color:#fff; background:var(--card); }
+  .rail-thumb{
+    width:48px; height:48px;
     border-radius:8px;
-    border:1px solid #2A2A2E;
-    background:#000000;
-    color:#9B9BA3;
-    font-size:10px;
-    cursor:pointer;
-    transition:border-color .15s, color .15s;
+    overflow:hidden;
+    background:var(--card);
   }
-  .track-icon-btn:hover{ border-color:rgba(255,255,255,0.3); color:#FFFFFF; }
+  .rail-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
 
-  .eq{
+  /* ============================== 가운데 패널 (영상 + 곡 정보 + 다음 곡) ============================== */
+  .panel{
+    order:-1;
+    padding:16px;
+  }
+  @media (min-width:1024px){ .panel{ order:0; } }
+
+  .panel-title{
+    font-size:15px; font-weight:700;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    margin-bottom:12px;
+  }
+  .video-box{
+    aspect-ratio:16/9;
+    background:#000;
+    border-radius:10px;
+    overflow:hidden;
+  }
+  .video-box iframe{ width:100%; height:100%; display:block; }
+
+  .now{ margin-top:16px; }
+  .now-title{
+    font-size:22px; font-weight:800; line-height:1.25;
+    overflow-wrap:anywhere;
+  }
+  .now-sub{ font-size:13px; color:var(--mute); margin-top:6px; font-variant-numeric:tabular-nums; }
+
+  .next-card{
+    margin-top:20px;
+    background:var(--card);
+    border-radius:10px;
+    padding:14px 8px 8px;
+  }
+  @media (max-width:1023px){ .next-card{ display:none; } }
+  .next-card h3{ margin:0 0 6px 8px; font-size:14px; font-weight:700; }
+  .next-item{
+    display:grid;
+    grid-template-columns:24px minmax(0,1fr) auto;
+    gap:10px;
+    align-items:center;
+    width:100%;
+    text-align:left;
+    padding:8px;
+    border-radius:6px;
+    font-size:13px;
+    color:var(--mute);
+    transition:background .12s, color .12s;
+  }
+  .next-item:hover{ background:var(--hover); color:#fff; }
+  .next-item .n{ text-align:right; font-variant-numeric:tabular-nums; }
+  .next-item .t{ color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .next-item .d{ font-variant-numeric:tabular-nums; }
+  .next-empty{ padding:8px; font-size:13px; color:var(--dim); }
+
+  /* ============================== 오른쪽 메인 (헤더 + 컨트롤 + 곡 목록) ============================== */
+  .main{
+    --hue:160;
+    background:linear-gradient(180deg, hsl(var(--hue) 32% 28%) 0, var(--panel) 380px);
+  }
+  .hero{
     display:flex;
     align-items:flex-end;
-    gap:2px;
-    height:14px;
+    gap:20px;
+    padding:48px 24px 24px;
   }
+  .cover{
+    flex:none;
+    width:128px; height:128px;
+    border-radius:8px;
+    overflow:hidden;
+    background:var(--card);
+    box-shadow:0 8px 30px rgba(0,0,0,0.5);
+  }
+  .cover img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .hero-text{ min-width:0; }
+  .eyebrow{ font-size:12px; font-weight:600; }
+  .pl-title{
+    margin:6px 0 10px;
+    font-size:clamp(28px, 6vw, 64px);
+    font-weight:800;
+    line-height:1.08;
+    letter-spacing:-0.02em;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+    overflow:hidden;
+    overflow-wrap:anywhere;
+  }
+  .pl-meta{ font-size:13px; color:#e6e6e6; }
+  @media (min-width:640px){
+    .cover{ width:200px; height:200px; }
+    .hero{ padding:56px 32px 28px; gap:24px; }
+  }
+
+  .controls{
+    display:flex;
+    align-items:center;
+    gap:20px;
+    padding:8px 24px 16px;
+    background:rgba(0,0,0,0.18);
+  }
+  @media (min-width:640px){ .controls{ padding:12px 32px 20px; } }
+
+  .big-play{
+    width:56px; height:56px;
+    border-radius:9999px;
+    background:var(--mint);
+    color:#000;
+    font-size:20px;
+    display:flex; align-items:center; justify-content:center;
+    transition:transform .1s, filter .15s;
+  }
+  .big-play:hover{ transform:scale(1.05); filter:brightness(1.08); }
+  .big-play .fa-play{ margin-left:3px; }
+
+  .ctl{
+    width:36px; height:36px;
+    border-radius:9999px;
+    color:var(--mute);
+    font-size:20px;
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+    transition:color .15s;
+  }
+  .ctl:hover{ color:#fff; }
+  .ctl[aria-pressed="true"], .ctl[data-on="true"]{ color:var(--mint); }
+  .ctl[aria-pressed="true"]::after, .ctl[data-on="true"]::after{
+    content:"";
+    position:absolute; bottom:1px; left:50%;
+    width:4px; height:4px; margin-left:-2px;
+    border-radius:9999px;
+    background:var(--mint);
+  }
+  .ctl[data-mode="one"]::before{
+    content:"1";
+    position:absolute; top:3px; right:5px;
+    font-size:9px; font-weight:800;
+  }
+
+  .chip{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:8px 14px;
+    border-radius:9999px;
+    background:rgba(255,255,255,0.1);
+    font-size:13px; font-weight:600;
+    transition:background .15s;
+  }
+  .chip:hover{ background:rgba(255,255,255,0.18); }
+
+  /* 곡 목록 */
+  .list-wrap{ padding:0 8px 24px; }
+  @media (min-width:640px){ .list-wrap{ padding:0 16px 24px; } }
+
+  .track-row, .thead{
+    display:grid;
+    grid-template-columns:36px minmax(0,1fr) 56px 56px;
+    align-items:center;
+    gap:12px;
+    padding:0 12px;
+  }
+  .thead{
+    height:36px;
+    margin:0 0 8px;
+    border-bottom:1px solid var(--line);
+    font-size:12px;
+    color:var(--mute);
+    position:sticky; top:0; z-index:2;
+    background:var(--panel);
+  }
+  .thead .r, .track-row .r{ text-align:right; }
+  .c-start{ display:none; }
+  .c-act{ display:none; }
+  @media (min-width:640px){
+    .track-row, .thead{ grid-template-columns:36px minmax(0,1fr) 72px 64px 60px; }
+    .c-start, .c-act{ display:block; }
+  }
+
+  .track-row{
+    height:52px;
+    border-radius:6px;
+    cursor:pointer;
+    font-size:14px;
+    color:var(--mute);
+    transition:background .12s;
+  }
+  .track-row:hover{ background:rgba(255,255,255,0.1); }
+  .track-row.dragging{ opacity:.4; }
+  .track-row.active .c-title .t{ color:var(--mint); }
+  .track-row .c-num{
+    text-align:right;
+    font-variant-numeric:tabular-nums;
+    display:flex; justify-content:flex-end; align-items:center;
+    height:100%;
+  }
+  .track-row .hov{ display:none; color:#fff; font-size:12px; }
+  .track-row:hover .num{ display:none; }
+  .track-row:hover .hov{ display:inline; }
+  .track-row.active:hover .eq{ display:none; }
+  .track-row.active .num{ display:none; }
+  .c-title .t{
+    color:#fff;
+    font-weight:500;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    display:block;
+  }
+  .track-row .c-start, .track-row .c-len{ font-variant-numeric:tabular-nums; }
+  .c-act{
+    display:none;
+    opacity:0;
+    text-align:right;
+    transition:opacity .12s;
+  }
+  @media (min-width:640px){ .c-act{ display:block; } }
+  .track-row:hover .c-act{ opacity:1; }
+  .mini-btn{
+    width:22px; height:22px;
+    border-radius:6px;
+    color:var(--mute);
+    font-size:10px;
+  }
+  .mini-btn:hover{ color:#fff; background:rgba(255,255,255,0.12); }
+
+  .eq{ display:flex; align-items:flex-end; gap:2px; height:14px; }
   .eq span{
-    width:3px;
-    border-radius:1px;
-    background:linear-gradient(180deg, var(--c-mint), var(--c-blue));
+    width:3px; border-radius:1px;
+    background:var(--mint);
     animation:eq 1s ease-in-out infinite;
   }
   .eq span:nth-child(1){ height:40%; animation-delay:-0.6s; }
   .eq span:nth-child(2){ height:100%; animation-delay:-0.2s; }
   .eq span:nth-child(3){ height:65%; animation-delay:-0.9s; }
   @keyframes eq{ 0%,100%{ transform:scaleY(0.4); } 50%{ transform:scaleY(1); } }
+  body.is-paused .eq span{ animation-play-state:paused; }
+
+  /* ============================== 플로팅 재생바 ============================== */
+  .bar{
+    position:fixed;
+    left:50%;
+    bottom:16px;
+    transform:translateX(-50%);
+    width:min(1180px, calc(100% - 24px));
+    z-index:20;
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    gap:8px;
+    padding:12px 16px;
+    background:rgba(24,24,24,0.78);
+    -webkit-backdrop-filter:blur(22px) saturate(1.4);
+    backdrop-filter:blur(22px) saturate(1.4);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:20px;
+    box-shadow:0 12px 40px rgba(0,0,0,0.6);
+  }
+  @media (min-width:900px){
+    .bar{
+      grid-template-columns:minmax(0,1fr) minmax(320px,560px) minmax(0,1fr);
+      align-items:center;
+      gap:16px;
+      padding:10px 18px;
+    }
+  }
+  .bar-info{ display:flex; align-items:center; gap:12px; min-width:0; }
+  .bar-thumb{
+    flex:none;
+    width:48px; height:48px;
+    border-radius:8px;
+    overflow:hidden;
+    background:var(--card);
+  }
+  .bar-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .bar-text{ min-width:0; }
+  .bar-title{ font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bar-sub{ font-size:12px; color:var(--mute); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
+
+  .bar-center{ display:flex; flex-direction:column; gap:6px; min-width:0; }
+  .bar-btns{ display:flex; align-items:center; justify-content:center; gap:14px; }
+  .bar-btns .ctl{ font-size:16px; width:32px; height:32px; }
+  .play-btn{
+    width:36px; height:36px;
+    border-radius:9999px;
+    background:#fff; color:#000;
+    font-size:14px;
+    display:flex; align-items:center; justify-content:center;
+    transition:transform .1s;
+  }
+  .play-btn:hover{ transform:scale(1.06); }
+  .play-btn .fa-play{ margin-left:2px; }
+
+  .seek{ display:flex; align-items:center; gap:10px; font-size:11px; color:var(--mute); font-variant-numeric:tabular-nums; }
+  .seek span{ width:38px; flex:none; }
+  .seek span:first-child{ text-align:right; }
+
+  input[type=range]{
+    -webkit-appearance:none; appearance:none;
+    flex:1; min-width:0;
+    height:14px;
+    background:transparent;
+    cursor:pointer;
+    --p:0%;
+  }
+  input[type=range]::-webkit-slider-runnable-track{
+    height:4px; border-radius:9999px;
+    background:linear-gradient(90deg, #fff var(--p), rgba(255,255,255,0.25) var(--p));
+  }
+  input[type=range]::-moz-range-track{ height:4px; border-radius:9999px; background:rgba(255,255,255,0.25); }
+  input[type=range]::-moz-range-progress{ height:4px; border-radius:9999px; background:#fff; }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none;
+    width:0; height:0;
+    margin-top:-4px;
+    border-radius:9999px;
+    background:#fff;
+    transition:width .1s, height .1s;
+  }
+  input[type=range]:hover::-webkit-slider-thumb, input[type=range]:focus-visible::-webkit-slider-thumb{ width:12px; height:12px; margin-top:-4px; }
+  input[type=range]::-moz-range-thumb{ width:0; height:0; border:0; background:#fff; }
+  input[type=range]:hover::-moz-range-thumb{ width:12px; height:12px; }
+  input[type=range]:hover::-webkit-slider-runnable-track{
+    background:linear-gradient(90deg, var(--mint) var(--p), rgba(255,255,255,0.25) var(--p));
+  }
+  input[type=range]:disabled{ opacity:.4; cursor:default; }
+
+  .bar-right{ display:none; align-items:center; justify-content:flex-end; gap:8px; }
+  @media (min-width:900px){ .bar-right{ display:flex; } }
+  .bar-right .ctl{ font-size:15px; width:32px; height:32px; }
+  .bar-right input[type=range]{ flex:none; width:96px; }
+
+  /* ============================== 새 플레이리스트 입력창 ============================== */
+  .modal{
+    position:fixed; inset:0;
+    z-index:50;
+    display:flex; align-items:center; justify-content:center;
+    padding:16px;
+    background:rgba(0,0,0,0.78);
+    -webkit-backdrop-filter:blur(6px);
+    backdrop-filter:blur(6px);
+    overflow-y:auto;
+  }
+  .modal-card{
+    position:relative;
+    width:100%; max-width:520px;
+    max-height:100%;
+    overflow-y:auto;
+    background:#18181B;
+    border:1px solid #2A2A2E;
+    border-radius:24px;
+    padding:28px;
+  }
+  @media (min-width:640px){ .modal-card{ padding:36px; } }
+  .modal-close{
+    position:absolute; top:16px; right:16px;
+    width:32px; height:32px;
+    border-radius:9999px;
+    color:var(--mute);
+  }
+  .modal-close:hover{ color:#fff; background:var(--hover); }
+  .brand{ display:flex; align-items:center; gap:10px; margin-bottom:22px; }
+  .brand .logo{
+    width:32px; height:32px; border-radius:8px;
+    background:var(--mint); color:#000;
+    display:flex; align-items:center; justify-content:center; font-size:12px;
+  }
+  .brand b{ font-size:18px; letter-spacing:-0.01em; }
+  .modal-card h1{ margin:0; font-size:26px; line-height:1.25; letter-spacing:-0.02em; }
+  .modal-card p.lead{ margin:10px 0 0; color:var(--mute); font-size:15px; line-height:1.6; }
+  .field{ margin-top:20px; }
+  .field label{
+    display:block; margin-bottom:6px;
+    font-size:11px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--mute);
+  }
+  .field-input{
+    width:100%;
+    background:#000;
+    border:1px solid #2A2A2E;
+    border-radius:14px;
+    padding:12px 14px;
+    color:#fff; font-size:14px;
+    outline:none;
+    transition:border-color .15s;
+  }
+  .field-input::placeholder{ color:#6B6B72; }
+  .field-input:focus{ border-color:#3B9EFF; }
+  textarea.field-input{ resize:vertical; min-height:180px; line-height:1.6; }
+  .submit{
+    margin-top:22px;
+    padding:12px 28px;
+    border-radius:9999px;
+    background:var(--mint); color:#000;
+    font-size:14px; font-weight:700;
+    transition:filter .15s, transform .1s;
+  }
+  .submit:hover{ filter:brightness(1.08); }
+  .submit:active{ transform:translateY(1px); }
+  .hint{
+    margin:26px 0 0; padding-top:20px;
+    border-top:1px solid #2A2A2E;
+    font-size:12px; color:var(--mute); line-height:1.7;
+  }
+  .copy{ margin-top:10px; font-size:12px; color:var(--dim); }
+  .copy b{ color:var(--mute); }
 
   @media (prefers-reduced-motion: reduce){
     * { transition:none !important; animation-duration:0.001ms !important; }
@@ -155,98 +509,126 @@
 </style>
 </head>
 
-<body class="min-h-screen flex flex-col font-sans antialiased">
+<body>
 
-<main class="flex-1 w-full max-w-3xl lg:max-w-5xl mx-auto px-6 pt-16 pb-20 sm:pt-20 flex flex-col gap-8">
+<!-- ============================== 플레이어 화면 ============================== -->
+<div id="app" class="app" hidden>
 
-  <!-- ============================== 입력 화면 ============================== -->
-  <section id="intake" class="card p-8 sm:p-10 max-w-xl w-full mx-auto">
-    <div class="flex items-center gap-2.5 mb-7">
-      <div class="w-8 h-8 rounded-[0.5rem] gradient-brand flex items-center justify-center">
-        <i class="fa-solid fa-list-ol text-[12px] text-black/80"></i>
-      </div>
-      <span class="text-lg font-bold tracking-tight text-ink">트랙리스트</span>
+  <nav class="rail" aria-label="라이브러리">
+    <div class="rail-logo"><i class="fa-solid fa-list-ol"></i></div>
+    <button id="railNew" class="rail-btn" aria-label="새 플레이리스트"><i class="fa-solid fa-plus"></i></button>
+    <div class="rail-thumb" id="railThumb"></div>
+  </nav>
+
+  <aside class="panel" aria-label="재생 중인 곡">
+    <div id="panelTitle" class="panel-title">트랙리스트</div>
+    <div class="video-box"><div id="player"></div></div>
+
+    <div class="now">
+      <div id="nowTitle" class="now-title">재생 없음</div>
+      <div id="nowSub" class="now-sub">—</div>
     </div>
 
-    <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-ink leading-tight">
-      타임테이블로 트랙을 나눠요
-    </h1>
-    <p class="text-[15px] text-mute mt-3 leading-relaxed">
-      영상 설명란에 있는 타임테이블을 붙여넣으면 곡 단위로 끊어 들을 수 있는 재생목록을 만들어줘요.
-    </p>
+    <section class="next-card">
+      <h3>다음 곡</h3>
+      <div id="nextList"></div>
+    </section>
+  </aside>
 
-    <div class="mt-8 flex flex-col gap-5">
-      <div>
-        <label for="videoId" class="text-[11px] font-semibold text-mute uppercase tracking-widest mb-1.5 block">영상 ID</label>
-        <input id="videoId" class="field-input" placeholder="예: dQw4w9WgXcQ" />
+  <main id="main" class="main">
+    <header class="hero">
+      <div class="cover" id="cover"></div>
+      <div class="hero-text">
+        <div class="eyebrow">트랙리스트</div>
+        <h1 id="plTitle" class="pl-title">트랙리스트</h1>
+        <div id="plMeta" class="pl-meta"></div>
       </div>
+    </header>
 
-      <div>
-        <label for="timeline" class="text-[11px] font-semibold text-mute uppercase tracking-widest mb-1.5 block">타임테이블</label>
-        <textarea id="timeline" class="field-input" placeholder="00:00 첫 번째 곡&#10;03:24 두 번째 곡&#10;07:10 세 번째 곡"></textarea>
-      </div>
-
-      <button id="generateBtn" class="btn-primary gradient-brand text-black font-semibold text-sm rounded-full px-6 py-3 self-start">
-        트랙리스트 만들기
-      </button>
+    <div class="controls">
+      <button id="bigPlay" class="big-play" aria-label="재생 / 일시정지"><i class="fa-solid fa-play"></i></button>
+      <button class="ctl js-shuffle" aria-label="셔플" aria-pressed="false"><i class="fa-solid fa-shuffle"></i></button>
+      <button id="newBtn" class="chip"><i class="fa-solid fa-plus"></i> 새 플레이리스트</button>
     </div>
 
-    <p class="text-xs text-mute mt-7 pt-6 border-t border-line leading-relaxed">
-      한 줄에 시간 하나, 그 뒤에 곡 제목을 붙여넣으면 자동으로 시간순 정렬해요. 시:분:초 또는 분:초 형식 모두 인식해요.
-    </p>
-  </section>
-
-  <!-- ============================== 플레이어 화면 ============================== -->
-  <section id="playerSection" style="display:none;" class="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-6 items-start">
-
-    <div class="card overflow-hidden lg:sticky lg:top-8">
-      <div class="aspect-video bg-black">
-        <div id="player" class="w-full h-full"></div>
-      </div>
-
-      <div class="p-6 flex flex-col gap-5">
-        <div class="flex items-center gap-3 min-w-0">
-          <div class="eq" id="eq" hidden><span></span><span></span><span></span></div>
-          <div class="min-w-0">
-            <div id="nowIndex" class="text-[11px] text-mute">—</div>
-            <div id="now" class="text-lg font-bold text-ink truncate">재생 없음</div>
-          </div>
-        </div>
-
-        <div class="flex items-center justify-center gap-3 pt-4 border-t border-line">
-          <button id="prevBtn" class="transport-btn" aria-label="이전 곡"><i class="fa-solid fa-backward-step"></i></button>
-          <button id="nextBtn" class="transport-btn" aria-label="다음 곡"><i class="fa-solid fa-forward-step"></i></button>
-          <button id="shuffleBtn" class="transport-btn" aria-label="셔플" aria-pressed="false"><i class="fa-solid fa-shuffle"></i></button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card overflow-hidden">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-line">
-        <h2 class="text-sm font-bold text-ink">트랙리스트</h2>
-        <span id="trackCount" class="text-xs text-mute"></span>
+    <div class="list-wrap">
+      <div class="thead">
+        <div class="r">#</div>
+        <div>제목</div>
+        <div class="c-start">시작</div>
+        <div class="r"><i class="fa-regular fa-clock"></i></div>
+        <div class="c-act"></div>
       </div>
       <div id="list"></div>
     </div>
+  </main>
+</div>
 
-  </section>
-
-</main>
-
-<footer class="py-9 border-t border-line mt-auto">
-  <div class="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row justify-center sm:justify-between items-center text-mute text-sm gap-4">
-    <div class="flex items-center gap-2">
-      <div class="w-6 h-6 rounded-md gradient-brand flex items-center justify-center">
-        <i class="fa-solid fa-list-ol text-[9px] text-black/80"></i>
-      </div>
-      <span class="font-bold text-ink">트랙리스트</span>
-    </div>
-    <div class="flex items-center gap-2">
-      <span class="font-bold text-ink">Dutkyobot</span>
-      <span>&copy; 2026. All Rights Reserved.</span>
+<!-- ============================== 플로팅 재생바 ============================== -->
+<div id="bar" class="bar" hidden>
+  <div class="bar-info">
+    <div class="bar-thumb" id="barThumb"></div>
+    <div class="bar-text">
+      <div id="barTitle" class="bar-title">재생 없음</div>
+      <div id="barSub" class="bar-sub"></div>
     </div>
   </div>
-</footer>
+
+  <div class="bar-center">
+    <div class="bar-btns">
+      <button class="ctl js-shuffle" aria-label="셔플" aria-pressed="false"><i class="fa-solid fa-shuffle"></i></button>
+      <button id="prevBtn" class="ctl" aria-label="이전 곡"><i class="fa-solid fa-backward-step"></i></button>
+      <button id="playBtn" class="play-btn" aria-label="재생 / 일시정지"><i class="fa-solid fa-play"></i></button>
+      <button id="nextBtn" class="ctl" aria-label="다음 곡"><i class="fa-solid fa-forward-step"></i></button>
+      <button id="repeatBtn" class="ctl" aria-label="반복" data-mode="off" data-on="false"><i class="fa-solid fa-repeat"></i></button>
+    </div>
+    <div class="seek">
+      <span id="tCur">0:00</span>
+      <input id="seek" type="range" min="0" max="0" step="1" value="0" aria-label="재생 위치" disabled />
+      <span id="tDur">--:--</span>
+    </div>
+  </div>
+
+  <div class="bar-right">
+    <button id="muteBtn" class="ctl" aria-label="음소거"><i class="fa-solid fa-volume-high"></i></button>
+    <input id="volume" type="range" min="0" max="100" step="1" value="100" aria-label="볼륨" />
+  </div>
+</div>
+
+<!-- ============================== 입력 화면 (새 플레이리스트) ============================== -->
+<section id="intake" class="modal">
+  <div class="modal-card">
+    <button id="intakeClose" class="modal-close" aria-label="닫기" hidden><i class="fa-solid fa-xmark"></i></button>
+
+    <div class="brand">
+      <div class="logo"><i class="fa-solid fa-list-ol"></i></div>
+      <b>트랙리스트</b>
+    </div>
+
+    <h1>타임테이블로 트랙을 나눠요</h1>
+    <p class="lead">영상 설명란에 있는 타임테이블을 붙여넣으면 곡 단위로 끊어 들을 수 있는 재생목록을 만들어줘요.</p>
+
+    <div class="field">
+      <label for="videoId">영상 ID</label>
+      <input id="videoId" class="field-input" placeholder="예: dQw4w9WgXcQ" autocomplete="off" />
+    </div>
+
+    <div class="field">
+      <label for="plName">플레이리스트 이름 (선택)</label>
+      <input id="plName" class="field-input" placeholder="비워두면 영상 제목을 써요" autocomplete="off" />
+    </div>
+
+    <div class="field">
+      <label for="timeline">타임테이블</label>
+      <textarea id="timeline" class="field-input" placeholder="00:00 첫 번째 곡&#10;03:24 두 번째 곡&#10;07:10 세 번째 곡"></textarea>
+    </div>
+
+    <button id="generateBtn" class="submit">트랙리스트 만들기</button>
+
+    <p class="hint">한 줄에 시간 하나, 그 뒤에 곡 제목을 붙여넣으면 자동으로 시간순 정렬해요. 시:분:초 또는 분:초 형식 모두 인식해요.</p>
+    <div class="copy"><b>Dutkyobot</b> &copy; 2026. All Rights Reserved.</div>
+  </div>
+</section>
 
 <script src="https://www.youtube.com/iframe_api"></script>
 
@@ -258,51 +640,113 @@
   order    : playlist의 인덱스를 재생 순서대로 나열한 배열.
              드래그 정렬 / 셔플은 이 배열만 바꾸고 playlist 자체는 건드리지 않는다.
   index    : order 안에서 현재 재생 중인 위치
+  repeat   : 'off' | 'all' | 'one'
 */
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
 const App = {
   state:{
     playlist:[],
     order:[],
     index:0,
     shuffle:false,
+    repeat:'off',
+    name:'',
+    hue:160,
+    isPlaying:false,
+    finished:false,
     player:null,
     playerReady:false,
     pendingPlay:null,
-    watchInterval:null,
     lastKnownTime:null,
+    ignoreUntil:0,       // 우리가 직접 이동시킨 직후에는 '사용자 탐색' 감지를 잠깐 쉰다
+    settleUntil:0,       // 새 곡 로딩 직후 재생바가 엉뚱한 값을 보이지 않게 0으로 고정
+    seeking:false,
+    videoTitle:'',
+    videoAuthor:'',
+    duration:0,
   },
 
   els:{
-    intake:document.getElementById('intake'),
-    playerSection:document.getElementById('playerSection'),
-    videoId:document.getElementById('videoId'),
-    timeline:document.getElementById('timeline'),
-    generateBtn:document.getElementById('generateBtn'),
-    list:document.getElementById('list'),
-    trackCount:document.getElementById('trackCount'),
-    now:document.getElementById('now'),
-    nowIndex:document.getElementById('nowIndex'),
-    eq:document.getElementById('eq'),
-    prevBtn:document.getElementById('prevBtn'),
-    nextBtn:document.getElementById('nextBtn'),
-    shuffleBtn:document.getElementById('shuffleBtn'),
+    app:$('app'), intake:$('intake'), intakeClose:$('intakeClose'),
+    videoId:$('videoId'), plName:$('plName'), timeline:$('timeline'), generateBtn:$('generateBtn'),
+    list:$('list'), main:$('main'),
+    plTitle:$('plTitle'), plMeta:$('plMeta'), cover:$('cover'), railThumb:$('railThumb'),
+    panelTitle:$('panelTitle'), nowTitle:$('nowTitle'), nowSub:$('nowSub'), nextList:$('nextList'),
+    bar:$('bar'), barThumb:$('barThumb'), barTitle:$('barTitle'), barSub:$('barSub'),
+    playBtn:$('playBtn'), bigPlay:$('bigPlay'), prevBtn:$('prevBtn'), nextBtn:$('nextBtn'),
+    repeatBtn:$('repeatBtn'), seek:$('seek'), tCur:$('tCur'), tDur:$('tDur'),
+    muteBtn:$('muteBtn'), volume:$('volume'),
+    railNew:$('railNew'), newBtn:$('newBtn'),
   },
 
   init(){
-    this.els.generateBtn.addEventListener('click', () => this.generate());
-    this.els.prevBtn.addEventListener('click', () => this.prev());
-    this.els.nextBtn.addEventListener('click', () => this.next());
-    this.els.shuffleBtn.addEventListener('click', () => this.toggleShuffle());
+    const e = this.els;
+    e.generateBtn.addEventListener('click', () => this.generate());
+    e.intakeClose.addEventListener('click', () => this.closeIntake());
+    e.intake.addEventListener('mousedown', (ev) => { if(ev.target === e.intake) this.closeIntake(); });
+    e.railNew.addEventListener('click', () => this.openIntake());
+    e.newBtn.addEventListener('click', () => this.openIntake());
 
-    this.els.list.addEventListener('click', (e) => this.onListClick(e));
-    this.els.list.addEventListener('dragstart', (e) => this.onDragStart(e));
-    this.els.list.addEventListener('dragover', (e) => this.onDragOver(e));
-    this.els.list.addEventListener('drop', (e) => this.onDrop(e));
-    this.els.list.addEventListener('dragend', (e) => this.onDragEnd(e));
+    e.playBtn.addEventListener('click', () => this.togglePlay());
+    e.bigPlay.addEventListener('click', () => this.togglePlay());
+    e.prevBtn.addEventListener('click', () => this.prev());
+    e.nextBtn.addEventListener('click', () => this.next());
+    e.repeatBtn.addEventListener('click', () => this.cycleRepeat());
+    document.querySelectorAll('.js-shuffle').forEach((b) => b.addEventListener('click', () => this.toggleShuffle()));
+
+    e.seek.addEventListener('input', () => { this.state.seeking = true; this.paintSeek(Number(e.seek.value), Number(e.seek.max)); });
+    e.seek.addEventListener('change', () => this.seekWithinTrack(Number(e.seek.value)));
+    e.volume.addEventListener('input', () => this.setVolume(Number(e.volume.value)));
+    e.muteBtn.addEventListener('click', () => this.toggleMute());
+
+    e.list.addEventListener('click', (ev) => this.onListClick(ev));
+    e.list.addEventListener('dragstart', (ev) => this.onDragStart(ev));
+    e.list.addEventListener('dragover', (ev) => this.onDragOver(ev));
+    e.list.addEventListener('drop', (ev) => this.onDrop(ev));
+    e.list.addEventListener('dragend', (ev) => this.onDragEnd(ev));
+    e.nextList.addEventListener('click', (ev) => {
+      const b = ev.target.closest('[data-pos]');
+      if(b) this.play(Number(b.dataset.pos));
+    });
+
+    document.addEventListener('keydown', (ev) => this.onKey(ev));
 
     // 유튜브 임베드 안의 재생바를 사용자가 직접 움직여도(=구간 이동)
     // 그 시각에 맞는 트랙을 계속 따라가도록 주기적으로 확인한다.
-    this.state.watchInterval = setInterval(() => this.syncToPlaybackTime(), 400);
+    setInterval(() => this.tick(), 250);
+  },
+
+  /* ---------- 유틸 ---------- */
+
+  fmt(sec){
+    sec = Math.max(0, Math.floor(sec));
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    const ss = String(s).padStart(2, '0');
+    return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
+  },
+
+  fmtLong(sec){
+    sec = Math.max(0, Math.floor(sec));
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    if(h > 0) return `${h}시간 ${m}분`;
+    return `${m}분 ${s}초`;
+  },
+
+  hashHue(str){
+    let h = 0;
+    for(let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+    return h % 360;
+  },
+
+  // 곡 길이 = 다음 곡 시작 시각까지. 마지막 곡은 영상 전체 길이를 알아야 계산된다.
+  trackDuration(playlistIndex){
+    const { playlist, duration } = this.state;
+    const t = playlist[playlistIndex];
+    const next = playlist[playlistIndex + 1];
+    if(next) return next.time - t.time;
+    return duration > 0 ? Math.max(0, duration - t.time) : null;
   },
 
   /* ---------- 타임테이블 파싱 ---------- */
@@ -315,24 +759,31 @@ const App = {
   },
 
   parseTimeline(rawText, videoId){
-    const lines = rawText.split('\n');
     const tracks = [];
-
-    for(const line of lines){
+    for(const line of rawText.split('\n')){
       const match = line.trim().match(/(\d{1,2}:\d{2}(?::\d{2})?)\s*(.*)/);
       if(!match) continue;
-
       tracks.push({
         time: this.parseTimeToSeconds(match[1]),
         title: match[2] || '제목 없음',
         videoId,
       });
     }
-
     return tracks.sort((a, b) => a.time - b.time);
   },
 
-  /* ---------- 생성 / 렌더 ---------- */
+  /* ---------- 입력창 ---------- */
+
+  openIntake(){
+    this.els.intake.hidden = false;
+    this.els.intakeClose.hidden = this.state.playlist.length === 0;
+    this.els.videoId.focus();
+  },
+
+  closeIntake(){
+    if(this.state.playlist.length === 0) return;
+    this.els.intake.hidden = true;
+  },
 
   generate(){
     const videoId = this.els.videoId.value.trim();
@@ -342,52 +793,176 @@ const App = {
     const tracks = this.parseTimeline(rawText, videoId);
     if(tracks.length === 0) return;
 
-    this.state.playlist = tracks;
-    this.state.order = tracks.map((_, i) => i);
-    this.state.index = 0;
+    const s = this.state;
+    s.playlist = tracks;
+    s.order = tracks.map((_, i) => i);
+    s.index = 0;
+    s.shuffle = false;
+    s.name = this.els.plName.value.trim();
+    s.hue = this.hashHue(videoId);
+    s.videoTitle = '';
+    s.videoAuthor = '';
+    s.duration = 0;
+    s.finished = false;
 
-    this.els.intake.style.display = 'none';
-    this.els.playerSection.style.display = 'grid';
-    this.render();
+    this.els.intake.hidden = true;
+    this.els.app.hidden = false;
+    this.els.bar.hidden = false;
+    this.els.main.style.setProperty('--hue', s.hue);
+
+    const thumb = `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/mqdefault.jpg`;
+    [this.els.cover, this.els.railThumb, this.els.barThumb].forEach((box) => {
+      box.innerHTML = `<img src="${thumb}" alt="" onerror="this.remove()">`;
+    });
+
     this.play(0);
   },
+
+  /* ---------- 렌더 ---------- */
 
   render(){
     const { playlist, order, index } = this.state;
 
-    this.els.trackCount.textContent = `${playlist.length}곡`;
-    this.els.list.innerHTML = '';
+    this.els.list.innerHTML = order.map((pi, position) => {
+      const track = playlist[pi];
+      const active = position === index;
+      const d = this.trackDuration(pi);
+      return `
+        <div class="track-row${active ? ' active' : ''}" draggable="true" data-position="${position}">
+          <div class="c-num" data-action="play">
+            <span class="num">${position + 1}</span>
+            <i class="fa-solid fa-play hov"></i>
+            ${active ? '<div class="eq"><span></span><span></span><span></span></div>' : ''}
+          </div>
+          <div class="c-title" data-action="play"><span class="t">${esc(track.title)}</span></div>
+          <div class="c-start">${this.fmt(track.time)}</div>
+          <div class="c-len r">${d === null ? '--:--' : this.fmt(d)}</div>
+          <div class="c-act">
+            <button class="mini-btn" data-action="up" aria-label="위로 이동"><i class="fa-solid fa-chevron-up"></i></button>
+            <button class="mini-btn" data-action="down" aria-label="아래로 이동"><i class="fa-solid fa-chevron-down"></i></button>
+          </div>
+        </div>`;
+    }).join('');
 
-    order.forEach((playlistIndex, position) => {
-      const track = playlist[playlistIndex];
-      const isActive = position === index;
+    this.renderNext();
+  },
 
-      const row = document.createElement('div');
-      row.className = 'track-row' + (isActive ? ' active' : '');
-      row.draggable = true;
-      row.dataset.position = position;
+  renderNext(){
+    const { playlist, order, index } = this.state;
+    const upcoming = order.slice(index + 1, index + 6);
+    if(upcoming.length === 0){
+      this.els.nextList.innerHTML = '<div class="next-empty">마지막 곡이에요</div>';
+      return;
+    }
+    this.els.nextList.innerHTML = upcoming.map((pi, i) => {
+      const d = this.trackDuration(pi);
+      return `<button class="next-item" data-pos="${index + 1 + i}">
+        <span class="n">${index + 2 + i}</span>
+        <span class="t">${esc(playlist[pi].title)}</span>
+        <span class="d">${d === null ? '' : this.fmt(d)}</span>
+      </button>`;
+    }).join('');
+  },
 
-      row.innerHTML = `
-        <div class="text-xs text-mute text-right tabular-nums${isActive ? ' text-blue' : ''}">${String(position + 1).padStart(2, '0')}</div>
-        <div class="flex items-center gap-2.5 min-w-0 cursor-pointer" data-action="play">
-          <i class="fa-solid fa-play text-[10px] ${isActive ? 'text-blue' : 'text-mute'}"></i>
-          <span class="text-sm text-ink truncate">${track.title}</span>
-        </div>
-        <div class="flex items-center gap-1.5">
-          <button class="track-icon-btn" data-action="up" aria-label="위로 이동"><i class="fa-solid fa-chevron-up"></i></button>
-          <button class="track-icon-btn" data-action="down" aria-label="아래로 이동"><i class="fa-solid fa-chevron-down"></i></button>
-        </div>
-      `;
+  // 헤더 / 패널 / 재생바의 글자와 버튼 상태를 현재 상태에 맞춘다
+  updateUI(){
+    const s = this.state;
+    if(s.playlist.length === 0) return;
 
-      this.els.list.appendChild(row);
-    });
+    const title = s.name || s.videoTitle || '트랙리스트';
+    this.els.plTitle.textContent = title;
+    this.els.panelTitle.textContent = title;
+
+    const known = s.order.map((pi) => this.trackDuration(pi)).filter((d) => d !== null);
+    const total = known.reduce((a, b) => a + b, 0);
+    const parts = [];
+    if(s.videoAuthor) parts.push(esc(s.videoAuthor));
+    parts.push(`${s.playlist.length}곡${known.length ? ', ' + this.fmtLong(total) : ''}`);
+    this.els.plMeta.innerHTML = parts.join(' · ');
+
+    const pi = s.order[s.index];
+    const track = s.playlist[pi];
+    if(track){
+      const d = this.trackDuration(pi);
+      this.els.nowTitle.textContent = track.title;
+      this.els.nowSub.textContent = `${s.index + 1} / ${s.order.length} · ${this.fmt(track.time)}${d === null ? '' : ' – ' + this.fmt(track.time + d)}`;
+      this.els.barTitle.textContent = track.title;
+      this.els.barSub.textContent = title;
+    }
+
+    const icon = s.isPlaying ? 'fa-pause' : 'fa-play';
+    this.els.playBtn.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+    this.els.bigPlay.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+    document.body.classList.toggle('is-paused', !s.isPlaying);
+
+    document.querySelectorAll('.js-shuffle').forEach((b) => b.setAttribute('aria-pressed', String(s.shuffle)));
+
+    const on = s.repeat !== 'off';
+    this.els.repeatBtn.dataset.mode = s.repeat;
+    this.els.repeatBtn.dataset.on = String(on);
+    this.els.repeatBtn.setAttribute('aria-label', `반복: ${{off:'끔', all:'전체', one:'한 곡'}[s.repeat]}`);
+  },
+
+  /* ---------- 주기적 갱신 ---------- */
+
+  tick(){
+    this.syncToPlaybackTime();
+    this.checkMeta();
+    this.updateProgress();
+  },
+
+  // 유튜브가 영상 제목 / 길이를 알려주는 건 로딩이 끝난 뒤라서, 바뀌면 그때 다시 그린다
+  checkMeta(){
+    const s = this.state;
+    const p = s.player;
+    if(!s.playerReady || !p || s.playlist.length === 0) return;
+    if(typeof p.getDuration !== 'function') return;
+
+    let changed = false;
+    const dur = p.getDuration() || 0;
+    if(dur > 0 && dur !== s.duration){ s.duration = dur; changed = true; }
+
+    const data = typeof p.getVideoData === 'function' ? p.getVideoData() : null;
+    if(data){
+      if(data.title && data.title !== s.videoTitle){ s.videoTitle = data.title; changed = true; }
+      if(data.author && data.author !== s.videoAuthor){ s.videoAuthor = data.author; changed = true; }
+    }
+
+    if(changed){ this.render(); this.updateUI(); }
+  },
+
+  paintSeek(value, max){
+    this.els.seek.style.setProperty('--p', max > 0 ? `${(value / max) * 100}%` : '0%');
+    this.els.tCur.textContent = this.fmt(value);
+  },
+
+  updateProgress(){
+    const s = this.state;
+    const p = s.player;
+    if(!s.playerReady || !p || s.playlist.length === 0 || typeof p.getCurrentTime !== 'function') return;
+    if(s.seeking) return;
+
+    const pi = s.order[s.index];
+    const track = s.playlist[pi];
+    const d = this.trackDuration(pi);
+
+    let elapsed = Date.now() < s.settleUntil ? 0 : Math.max(0, p.getCurrentTime() - track.time);
+    if(d !== null) elapsed = Math.min(elapsed, d);
+
+    const seek = this.els.seek;
+    seek.disabled = d === null || d <= 0;
+    seek.max = d === null ? 0 : Math.floor(d);
+    seek.value = Math.floor(elapsed);
+    this.paintSeek(Math.floor(elapsed), Number(seek.max));
+    this.els.tDur.textContent = d === null ? '--:--' : this.fmt(d);
   },
 
   /* ---------- 재생 시각 ↔ 트랙 동기화 ----------
      한 영상 안에서 시간대로 곡을 나눈 것뿐이라 두 가지를 직접 감지해야 한다.
-     1) 자연스러운 재생이 다음 트랙 구간 시작 시각을 지나갔으면 -> 다음 트랙으로 넘어간다.
+     1) 자연스러운 재생이 '지금 곡이 끝나는 시각'(= 시간순으로 바로 다음 곡의 시작)을 지나갔으면
+        -> 재생 순서상 다음 곡으로 넘어간다. (셔플/순서 변경 상태에서도 올바르게 동작)
      2) 폴링 간격에 비해 시각이 갑자기 크게 뛰거나 되돌아갔으면(=사용자가 재생바를
-        직접 움직인 것) -> 그 시각에 해당하는 트랙으로 스냅해서 재생한다.
+        직접 움직인 것) -> 그 시각에 해당하는 트랙으로 표시가 따라간다.
   */
 
   findPlaylistIndexForTime(t){
@@ -401,78 +976,114 @@ const App = {
   },
 
   syncToPlaybackTime(){
-    const { player, playlist, order } = this.state;
-    if(playlist.length === 0) return;
+    const s = this.state;
+    const { player, playlist, order, index } = s;
+    if(playlist.length === 0 || !s.playerReady) return;
     if(!player || typeof player.getCurrentTime !== 'function') return;
+
+    if(Date.now() < s.ignoreUntil){ s.lastKnownTime = null; return; }
 
     const currentTime = player.getCurrentTime();
 
-    if(this.state.lastKnownTime === null){
-      this.state.lastKnownTime = currentTime;
+    if(s.lastKnownTime === null){
+      s.lastKnownTime = currentTime;
       return;
     }
 
-    const delta = currentTime - this.state.lastKnownTime;
-    this.state.lastKnownTime = currentTime;
+    const delta = currentTime - s.lastKnownTime;
+    s.lastKnownTime = currentTime;
 
-    // 폴링 주기(0.4초)보다 훨씬 크게 튀거나 뒤로 되돌아갔으면 사용자가 직접 탐색한 것
-    const isManualSeek = delta < -0.75 || delta > 1.5;
-
-    if(isManualSeek){
-      const playlistIndex = this.findPlaylistIndexForTime(currentTime);
-      const position = order.indexOf(playlistIndex);
-      if(position !== -1 && position !== this.state.index){
-        this.play(position);
-      }
+    // 폴링 주기보다 훨씬 크게 튀거나 뒤로 되돌아갔으면 사용자가 직접 탐색한 것
+    if(delta < -0.75 || delta > 1.5){
+      const pos = order.indexOf(this.findPlaylistIndexForTime(currentTime));
+      if(pos !== -1 && pos !== index) this.setCurrent(pos);
       return;
     }
 
-    const nextPosition = this.state.index + 1;
-    if(nextPosition >= order.length) return; // 마지막 트랙은 영상 종료 이벤트로 처리
-
-    const nextTrack = playlist[order[nextPosition]];
-    if(currentTime >= nextTrack.time){
-      this.play(nextPosition);
+    const pi = order[index];
+    const nextInTime = playlist[pi + 1];
+    if(nextInTime && currentTime >= nextInTime.time && s.isPlaying){
+      this.advance(true);
     }
+    // 시간순 마지막 곡은 영상 종료 이벤트(onStateChange)에서 처리
   },
 
   /* ---------- 재생 제어 ---------- */
 
-  play(position){
+  // 인덱스와 화면만 바꾸고 영상은 건드리지 않는다
+  setCurrent(position){
     this.state.index = position;
-    const track = this.state.playlist[this.state.order[position]];
+    this.render();
+    this.updateUI();
+  },
+
+  play(position){
+    const s = this.state;
+    const track = s.playlist[s.order[position]];
     if(!track) return;
 
-    // 지금 이 시각으로 우리가 직접 이동시키는 것이므로, 탐색 감지 기준도 같이 맞춰둔다
-    this.state.lastKnownTime = track.time;
+    s.finished = false;
+    s.lastKnownTime = null;
+    s.ignoreUntil = Date.now() + 1500;
+    s.settleUntil = Date.now() + 700;
+    this.setCurrent(position);
 
-    this.els.now.textContent = track.title;
-    this.els.nowIndex.textContent = `${position + 1} / ${this.state.order.length}`;
-    this.els.eq.hidden = false;
-
-    if(!this.state.playerReady || !this.state.player || typeof this.state.player.loadVideoById !== 'function'){
-      this.state.pendingPlay = position;
+    if(!s.playerReady || !s.player || typeof s.player.loadVideoById !== 'function'){
+      s.pendingPlay = position;
       return;
     }
 
     try{
-      this.state.player.stopVideo();
-      this.state.player.loadVideoById({
-        videoId: track.videoId,
-        startSeconds: track.time,
-      });
+      const data = typeof s.player.getVideoData === 'function' ? s.player.getVideoData() : null;
+      if(data && data.video_id === track.videoId){
+        s.player.seekTo(track.time, true);
+        s.player.playVideo();
+      }else{
+        s.player.loadVideoById({ videoId: track.videoId, startSeconds: track.time });
+      }
     }catch(err){
       console.error(err);
     }
-
-    this.render();
   },
 
-  next(){
-    const { order, index } = this.state;
+  togglePlay(){
+    const s = this.state;
+    if(s.playlist.length === 0 || !s.playerReady) return;
+    if(s.finished){ this.play(0); return; }
+    if(s.isPlaying) s.player.pauseVideo();
+    else s.player.playVideo();
+  },
+
+  // 곡이 끝났을 때(auto=true) 반복 설정을 따라 다음으로 간다. 수동 이동은 항상 순환한다.
+  advance(auto){
+    const s = this.state;
+    const { order, index, playlist } = s;
     if(order.length === 0) return;
-    this.play((index + 1) % order.length);
+
+    if(auto && s.repeat === 'one'){ this.play(index); return; }
+
+    let next = index + 1;
+    if(next >= order.length){
+      if(auto && s.repeat === 'off'){ this.finish(); return; }
+      next = 0;
+    }
+
+    // 재생 순서상 다음 곡이 시간순으로도 바로 다음 곡이면 영상은 이미 거기를 지나는 중이라
+    // 다시 이동(=끊김) 없이 표시만 넘긴다.
+    const contiguous = auto && next === index + 1 && order[next] === order[index] + 1 && playlist[order[next]];
+    if(contiguous) this.setCurrent(next);
+    else this.play(next);
   },
+
+  finish(){
+    const s = this.state;
+    s.finished = true;
+    try{ s.player.pauseVideo(); }catch(err){ console.error(err); }
+    s.isPlaying = false;
+    this.updateUI();
+  },
+
+  next(){ if(this.state.order.length) this.advance(false); },
 
   prev(){
     const { order, index } = this.state;
@@ -480,32 +1091,100 @@ const App = {
     this.play((index - 1 + order.length) % order.length);
   },
 
-  toggleShuffle(){
-    this.state.shuffle = !this.state.shuffle;
-    this.els.shuffleBtn.setAttribute('aria-pressed', String(this.state.shuffle));
+  cycleRepeat(){
+    const s = this.state;
+    s.repeat = { off:'all', all:'one', one:'off' }[s.repeat];
+    this.updateUI();
+  },
 
-    if(this.state.shuffle){
-      this.state.order = [...this.state.order].sort(() => Math.random() - 0.5);
+  toggleShuffle(){
+    const s = this.state;
+    if(s.playlist.length === 0) return;
+    s.shuffle = !s.shuffle;
+
+    // 지금 재생 중인 곡은 그대로 맨 앞에 두고 나머지만 섞는다
+    const currentPi = s.order[s.index];
+    if(s.shuffle){
+      const rest = s.order.filter((pi) => pi !== currentPi).sort(() => Math.random() - 0.5);
+      s.order = [currentPi, ...rest];
+      s.index = 0;
     }else{
-      this.state.order = this.state.playlist.map((_, i) => i);
+      s.order = s.playlist.map((_, i) => i);
+      s.index = currentPi;
     }
 
     this.render();
+    this.updateUI();
+  },
+
+  seekWithinTrack(offset){
+    const s = this.state;
+    s.seeking = false;
+    if(!s.playerReady || s.playlist.length === 0) return;
+    const track = s.playlist[s.order[s.index]];
+    s.lastKnownTime = null;
+    s.ignoreUntil = Date.now() + 800;
+    try{ s.player.seekTo(track.time + offset, true); }catch(err){ console.error(err); }
+  },
+
+  /* ---------- 볼륨 ---------- */
+
+  setVolume(v){
+    const p = this.state.player;
+    if(!this.state.playerReady || !p) return;
+    try{
+      p.setVolume(v);
+      if(v > 0 && p.isMuted && p.isMuted()) p.unMute();
+    }catch(err){ console.error(err); }
+    this.paintVolume(v);
+  },
+
+  paintVolume(v){
+    this.els.volume.style.setProperty('--p', `${v}%`);
+    const icon = v === 0 ? 'fa-volume-xmark' : v < 50 ? 'fa-volume-low' : 'fa-volume-high';
+    this.els.muteBtn.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+  },
+
+  toggleMute(){
+    const p = this.state.player;
+    if(!this.state.playerReady || !p) return;
+    try{
+      if(p.isMuted()){ p.unMute(); this.paintVolume(Number(this.els.volume.value)); }
+      else{ p.mute(); this.paintVolume(0); }
+    }catch(err){ console.error(err); }
+  },
+
+  /* ---------- 키보드 ---------- */
+
+  onKey(ev){
+    if(!this.els.intake.hidden){
+      if(ev.key === 'Escape') this.closeIntake();
+      return;
+    }
+    if(this.state.playlist.length === 0) return;
+    const tag = (ev.target.tagName || '').toLowerCase();
+    if(tag === 'input' || tag === 'textarea') return;
+    if(ev.metaKey || ev.ctrlKey || ev.altKey) return;
+
+    if(ev.code === 'Space'){ ev.preventDefault(); this.togglePlay(); }
+    else if(ev.key === 'ArrowRight'){ this.next(); }
+    else if(ev.key === 'ArrowLeft'){ this.prev(); }
   },
 
   /* ---------- 목록 클릭 위임 (재생 / 순서 이동) ---------- */
 
   onListClick(e){
-    const target = e.target.closest('[data-action]');
-    if(!target) return;
+    const row = e.target.closest('.track-row');
+    if(!row) return;
 
-    const row = target.closest('.track-row');
     const position = Number(row.dataset.position);
-    const action = target.dataset.action;
+    const btn = e.target.closest('[data-action]');
+    const action = btn ? btn.dataset.action : 'play';
 
-    if(action === 'play') this.play(position);
     if(action === 'up') this.moveTrack(position, position - 1);
-    if(action === 'down') this.moveTrack(position, position + 1);
+    else if(action === 'down') this.moveTrack(position, position + 1);
+    else if(position === this.state.index && !this.state.finished) this.togglePlay();
+    else this.play(position);
   },
 
   moveTrack(from, to){
@@ -515,6 +1194,7 @@ const App = {
     [order[from], order[to]] = [order[to], order[from]];
     this.reindexAfterMove(from, to);
     this.render();
+    this.updateUI();
   },
 
   reindexAfterMove(from, to){
@@ -557,6 +1237,7 @@ const App = {
     else if(from > index && to <= index) this.state.index++;
 
     this.render();
+    this.updateUI();
   },
 
   onDragEnd(e){
@@ -566,10 +1247,13 @@ const App = {
 };
 
 App.init();
+App.openIntake();
 
 function onYouTubeIframeAPIReady(){
   App.state.player = new YT.Player('player', {
     host:'https://www.youtube-nocookie.com',
+    width:'100%',
+    height:'100%',
     videoId:'',
     playerVars:{
       autoplay:1,
@@ -583,14 +1267,27 @@ function onYouTubeIframeAPIReady(){
     },
     events:{
       onReady:() => {
-        App.state.playerReady = true;
-        if(App.state.pendingPlay !== null){
-          App.play(App.state.pendingPlay);
-          App.state.pendingPlay = null;
+        const s = App.state;
+        s.playerReady = true;
+        try{
+          const v = s.player.getVolume();
+          App.els.volume.value = v;
+          App.paintVolume(s.player.isMuted() ? 0 : v);
+        }catch(err){ App.paintVolume(100); }
+        if(s.pendingPlay !== null){
+          App.play(s.pendingPlay);
+          s.pendingPlay = null;
         }
       },
       onStateChange:(e) => {
-        if(e.data === 0) App.next();
+        const s = App.state;
+        if(e.data === 1) s.isPlaying = true;
+        else if(e.data === 2) s.isPlaying = false;
+        else if(e.data === 0){
+          s.isPlaying = false;
+          App.advance(true);
+        }
+        App.updateUI();
       },
       onError:(e) => {
         console.error('YT Error:', e.data);
