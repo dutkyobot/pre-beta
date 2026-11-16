@@ -1206,7 +1206,7 @@ const App = {
       const d = this.trackDuration(pi);
       const eq = '<span class="eq" aria-hidden="true"><span></span><span></span><span></span></span>';
       const hoverIcon = '<span class="hov" aria-hidden="true"><i class="fa-solid fa-play"></i></span>';
-      return '<div class="track-row' + (active ? ' active' : '') + '" draggable="true" data-position="' + position + '" role="listitem">' +
+      return '<div class="track-row' + (active ? ' active' : '') + '" draggable="' + (!query ? 'true' : 'false') + '" data-position="' + position + '" role="listitem">' +
         '<button class="track-play" type="button" data-action="play" aria-label="' + esc(track.title) + ' 재생" aria-current="' + (active ? 'true' : 'false') + '">' +
           '<span class="c-num"><span class="num">' + (position + 1) + '</span>' + (active ? eq : hoverIcon) + '</span>' +
           '<span class="c-title"><span class="t">' + esc(track.title) + '</span></span>' +
