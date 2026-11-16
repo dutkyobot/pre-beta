@@ -639,27 +639,35 @@
       overflow-y:auto;
     }
     .app{
+      display:flex;
+      align-items:flex-start;
+      gap:var(--desktop-gap);
       height:auto;
-      min-height:100vh;
-      grid-template-rows:auto;
-      align-items:start;
+      min-height:0;
+      padding:var(--desktop-inset);
     }
     .rail{
       position:static;
-      align-self:stretch;
+      display:flex;
+      flex:0 0 var(--rail-width);
+      width:var(--rail-width);
+      align-self:flex-start;
       height:auto;
-      min-height:100%;
+      min-height:0;
       overflow:visible;
-      padding-bottom:18px;
+      padding:18px 0 18px;
     }
     .rail .lib{
-      flex:1;
-      min-height:0;
+      flex:none;
+      min-height:auto;
       overflow:visible;
     }
     .panel{
       position:static;
-      align-self:start;
+      display:block;
+      flex:0 0 var(--player-width);
+      width:var(--player-width);
+      align-self:flex-start;
       height:auto;
       max-height:none;
       overflow:visible;
@@ -668,6 +676,9 @@
       padding-bottom:28px;
     }
     .main{
+      flex:1 1 0;
+      width:0;
+      min-width:0;
       height:auto;
       min-height:0;
       overflow:visible;
