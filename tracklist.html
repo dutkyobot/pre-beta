@@ -66,10 +66,10 @@
     body{ padding-bottom:0; }
     .app{
       display:grid;
-      grid-template-columns:76px 360px minmax(0,1fr);
-      gap:16px;
+      grid-template-columns:var(--rail-width) var(--player-width) minmax(0,1fr);
+      gap:var(--desktop-gap);
       height:100vh;
-      padding:16px;
+      padding:var(--desktop-inset);
     }
     .rail{
       display:flex;
@@ -517,7 +517,16 @@
   }
 
   /* ============================== UX refinement ============================== */
-  :root{ --surface:#15171b; --line:#292d33; --bar-space:128px; }
+  :root{
+    --surface:#15171b;
+    --line:#292d33;
+    --bar-space:128px;
+    --desktop-inset:16px;
+    --desktop-gap:16px;
+    --rail-width:76px;
+    --player-width:360px;
+    --main-start:calc(var(--desktop-inset) + var(--rail-width) + var(--desktop-gap) + var(--player-width) + var(--desktop-gap));
+  }
   .card{ border-radius:24px; }
   .panel-body{ padding-bottom:26px; }
   .hero{ min-height:172px; }
@@ -608,6 +617,18 @@
     .seek span{ width:34px; }
   }
 
+
+  @media (min-width:1024px){
+    .bar{
+      left:var(--main-start);
+      right:var(--desktop-inset);
+      bottom:16px;
+      width:auto;
+      max-width:none;
+      transform:none;
+    }
+  }
+
   /* Desktop: scroll the page, not a clipped inner grid column.
      The playlist can grow to its natural height while the player stays in view. */
   @media (min-width:1024px){
@@ -625,17 +646,24 @@
     }
     .rail{
       position:sticky;
-      top:16px;
+      top:var(--desktop-inset);
+      align-self:start;
       height:calc(100vh - 32px);
+      height:calc(100dvh - 32px);
       padding-bottom:16px;
+      overscroll-behavior:contain;
     }
     .panel{
       position:sticky;
-      top:16px;
+      top:var(--desktop-inset);
       align-self:start;
       height:calc(100vh - 32px);
+      height:calc(100dvh - 32px);
       max-height:calc(100vh - 32px);
+      max-height:calc(100dvh - 32px);
       overflow-y:auto;
+      overscroll-behavior:contain;
+      scrollbar-width:thin;
     }
     .panel-body{
       padding-bottom:28px;
