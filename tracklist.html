@@ -908,7 +908,9 @@ const App = {
     playlist:[],
     order:[],
     index:0,
-    shuffle:false,
+    shuffle:false,       // true면 목록 순서는 그대로 두고 다음 곡만 무작위로 고른다
+    shuffled:new Set(),  // 셔플 중 이번 바퀴에 이미 재생한 곡(playlist 인덱스)
+    shuffleHistory:[],   // 셔플 중 지나온 곡(playlist 인덱스) — 이전 곡 버튼용
     repeat:'off',
     name:'',
     isPlaying:false,
@@ -1197,10 +1199,9 @@ const App = {
     return pl.tracks.map((_, i) => i);
   },
 
-  // 직접 바꾼 순서를 저장한다. 셔플은 임시 상태라 셔플 중에는 저장하지 않는다.
+  // 직접 바꾼 순서를 저장한다.
   persistOrder(){
     const s = this.state;
-    if(s.shuffle) return;
     const pl = s.playlists.find((p) => p.id === s.activeId);
     if(!pl) return;
     pl.order = s.order.slice();
@@ -1217,6 +1218,7 @@ const App = {
     s.order = this.baseOrder(pl);
     s.index = 0;
     s.shuffle = false;
+    s.shuffled = new Set(); s.shuffleHistory = [];
     s.name = pl.name;
     s.videoTitle = (pl.meta && pl.meta.title) || '';
     s.videoAuthor = (pl.meta && pl.meta.author) || '';
@@ -1507,7 +1509,18 @@ const App = {
 
   // 인덱스와 화면만 바꾸고 영상은 건드리지 않는다
   setCurrent(position){
-    this.state.index = position;
+    const s = this.state;
+    if(s.shuffle){
+      // 곡이 바뀌는 모든 경로가 여기를 지나므로, 셔플의 '들은 곡'과 '지나온 곡' 기록을 여기서 남긴다
+      const prevPi = s.order[s.index];
+      const pi = s.order[position];
+      if(pi !== undefined && pi !== prevPi && !s.shuffleGoingBack && prevPi !== undefined){
+        s.shuffleHistory.push(prevPi);
+        if(s.shuffleHistory.length > 200) s.shuffleHistory.shift();
+      }
+      if(pi !== undefined) s.shuffled.add(pi);
+    }
+    s.index = position;
     this.render();
     this.updateUI();
   },
@@ -1518,6 +1531,7 @@ const App = {
     const track = s.playlist[s.order[position]];
     if(!track) return;
 
+    if(s.finished && s.shuffle) s.shuffled = new Set();  // 한 바퀴 끝나고 다시 재생하면 새 바퀴
     s.finished = false;
     s.lastKnownTime = null;
     s.ignoreUntil = Date.now() + 1500;
@@ -1563,14 +1577,24 @@ const App = {
     if(auto && s.repeat === 'one'){ this.play(index); return; }
 
     let next = index + 1;
-    if(next >= order.length){
+    if(s.shuffle && order.length > 1){
+      // 목록 순서는 그대로 두고 아직 안 들은 곡 중에서 무작위로 고른다. 다 들으면 한 바퀴 끝.
+      const cur = order[index];
+      let pool = order.filter((pi) => pi !== cur && !s.shuffled.has(pi));
+      if(pool.length === 0){
+        if(auto && s.repeat === 'off'){ this.finish(); return; }
+        s.shuffled = new Set([cur]);   // 새 바퀴 시작 (방금 들은 곡이 바로 또 나오지 않게)
+        pool = order.filter((pi) => pi !== cur);
+      }
+      next = order.indexOf(pool[Math.floor(Math.random() * pool.length)]);
+    }else if(next >= order.length){
       if(auto && s.repeat === 'off'){ this.finish(); return; }
       next = 0;
     }
 
-    // 재생 순서상 다음 곡이 시간순으로도 바로 다음 곡이면 영상은 이미 거기를 지나는 중이라
-    // 다시 이동(=끊김) 없이 표시만 넘긴다.
-    const contiguous = auto && next === index + 1 && order[next] === order[index] + 1 && playlist[order[next]];
+    // 다음 곡이 시간순으로도 바로 다음 곡이면 영상은 이미 거기를 지나는 중이라
+    // 다시 이동(=끊김) 없이 표시만 넘긴다. (셔플이 아닐 땐 재생 순서상으로도 바로 다음일 때만)
+    const contiguous = auto && (s.shuffle || next === index + 1) && order[next] === order[index] + 1 && playlist[order[next]];
     if(contiguous) this.setCurrent(next);
     else this.play(next);
   },
@@ -1586,8 +1610,18 @@ const App = {
   next(){ if(this.state.order.length) this.advance(false); },
 
   prev(){
-    const { order, index } = this.state;
+    const s = this.state;
+    const { order, index } = s;
     if(order.length === 0) return;
+    if(s.shuffle){
+      // 셔플 중엔 목록상 이전 곡이 아니라 실제로 직전에 들은 곡으로 돌아간다 (없으면 현재 곡 처음부터)
+      let pos = -1;
+      while(s.shuffleHistory.length && pos === -1) pos = order.indexOf(s.shuffleHistory.pop());
+      s.shuffleGoingBack = true;
+      this.play(pos === -1 ? index : pos);
+      s.shuffleGoingBack = false;
+      return;
+    }
     this.play((index - 1 + order.length) % order.length);
   },
 
@@ -1602,19 +1636,10 @@ const App = {
     if(s.playlist.length === 0) return;
     s.shuffle = !s.shuffle;
 
-    // 지금 재생 중인 곡은 그대로 맨 앞에 두고 나머지만 섞는다
-    const currentPi = s.order[s.index];
-    if(s.shuffle){
-      const rest = s.order.filter((pi) => pi !== currentPi).sort(() => Math.random() - 0.5);
-      s.order = [currentPi, ...rest];
-      s.index = 0;
-    }else{
-      const pl = s.playlists.find((p) => p.id === s.activeId);
-      s.order = pl ? this.baseOrder(pl) : s.playlist.map((_, i) => i);
-      s.index = Math.max(0, s.order.indexOf(currentPi));
-    }
+    // 목록 순서는 건드리지 않는다. 지금 곡만 '들은 곡'으로 두고 다음 곡부터 무작위로 고른다.
+    s.shuffled = new Set(s.shuffle ? [s.order[s.index]] : []);
+    s.shuffleHistory = [];
 
-    this.render();
     this.updateUI();
   },
 
