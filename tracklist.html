@@ -449,75 +449,110 @@
   .bar-right input[type=range]{ flex:none; width:96px; }
 
   /* ============================== 플레이리스트 추가 입력창 ============================== */
+  /* 데스크톱: 가운데 작은 대화상자 / 모바일: 아래에서 올라오는 시트 */
   .modal{
     position:fixed; inset:0;
     z-index:50;
-    display:flex; align-items:center; justify-content:center;
-    padding:16px;
-    background:rgba(0,0,0,0.78);
-    -webkit-backdrop-filter:blur(6px);
-    backdrop-filter:blur(6px);
+    display:flex; align-items:flex-end; justify-content:center;
+    padding:0;
+    background:rgba(0,0,0,0.66);
+    -webkit-backdrop-filter:blur(8px);
+    backdrop-filter:blur(8px);
     overflow-y:auto;
+    animation:modal-fade .18s ease-out;
   }
-  .modal-card{
+  .modal .modal-card{
     position:relative;
-    width:100%; max-width:520px;
-    max-height:100%;
+    width:100%; max-width:none;
+    max-height:92vh; max-height:92dvh;
     overflow-y:auto;
-    padding:32px;
+    padding:10px 20px calc(20px + env(safe-area-inset-bottom));
+    border-radius:22px 22px 0 0;
+    border-bottom:0;
+    box-shadow:0 -12px 48px rgba(0,0,0,0.45);
+    animation:modal-rise .24s cubic-bezier(.2,.8,.2,1);
   }
-  @media (min-width:640px){ .modal-card{ padding:40px; } }
-  .modal-close{
-    position:absolute; top:18px; right:18px;
-    width:34px; height:34px;
-    border-radius:9999px;
-    border:1px solid var(--line);
-    color:var(--mute);
-    transition:border-color .15s, color .15s;
+  .modal .modal-card::before{            /* 시트 손잡이 */
+    content:""; display:block;
+    width:36px; height:4px; margin:0 auto 14px;
+    border-radius:9999px; background:var(--line);
   }
-  .modal-close:hover{ border-color:rgba(255,255,255,0.3); color:#fff; }
-  .brand{ display:flex; align-items:center; gap:10px; margin-bottom:26px; }
-  .brand .logo{
-    width:32px; height:32px; border-radius:8px;
+  @media (min-width:640px){
+    .modal{ align-items:center; padding:24px; }
+    .modal .modal-card{
+      max-width:460px;
+      padding:22px 24px 20px;
+      border-radius:20px;
+      border-bottom:1px solid var(--line);
+      box-shadow:0 24px 64px rgba(0,0,0,0.5);
+    }
+    .modal .modal-card::before{ display:none; }
+  }
+  @keyframes modal-fade{ from{ opacity:0; } to{ opacity:1; } }
+  @keyframes modal-rise{ from{ transform:translateY(24px); opacity:.6; } to{ transform:none; opacity:1; } }
+  @media (min-width:640px){
+    @keyframes modal-rise{ from{ transform:translateY(8px) scale(.985); opacity:0; } to{ transform:none; opacity:1; } }
+  }
+
+  .modal-head{ display:flex; align-items:center; gap:10px; }
+  .modal-head .logo{
+    width:26px; height:26px; border-radius:7px; flex:none;
     background:
       linear-gradient(rgba(255,255,255,0.2), rgba(255,255,255,0.2)),
       linear-gradient(135deg, #21D67A 0%, #3B9EFF 100%);
     color:rgba(0,0,0,0.8);
-    display:flex; align-items:center; justify-content:center; font-size:12px;
+    display:flex; align-items:center; justify-content:center; font-size:11px;
   }
-  .brand b{ font-size:18px; letter-spacing:-0.01em; }
-  .modal-card h1{ margin:0; font-size:28px; line-height:1.25; letter-spacing:-0.02em; }
-  .modal-card p.lead{ margin:12px 0 0; color:var(--mute); font-size:15px; line-height:1.6; }
-  .field{ margin-top:22px; }
-  .field label{ display:block; margin-bottom:6px; }
+  .modal-title{ margin:0; flex:1; font-size:17px; font-weight:700; letter-spacing:-0.01em; }
+  .modal-close{
+    width:32px; height:32px; flex:none;
+    border-radius:9999px;
+    color:var(--mute);
+    transition:background .15s, color .15s;
+  }
+  .modal-close:hover{ background:rgba(255,255,255,0.08); color:#fff; }
+  .modal-card p.lead{ margin:8px 0 0; color:var(--mute); font-size:13.5px; line-height:1.55; word-break:keep-all; }
+
+  .modal-card .field{ margin-top:16px; }
+  .modal-card .field label{ display:block; margin-bottom:6px; }
+  .modal-card .field .label{               /* 입력칸 라벨은 대문자 장식 없이 담백하게 */
+    font-size:12.5px; font-weight:600; letter-spacing:0; text-transform:none; color:var(--mute);
+  }
+  .modal-card .field .label em{ font-style:normal; font-weight:400; color:var(--dim); }
   .field-input{
     width:100%;
-    background:#000;
+    background:rgba(0,0,0,0.32);
     border:1px solid var(--line);
-    border-radius:14px;
-    padding:12px 14px;
-    color:#fff; font-size:14px;
+    border-radius:12px;
+    padding:11px 13px;
+    color:#fff; font-size:14.5px;
     outline:none;
-    transition:border-color .15s;
+    transition:border-color .15s, box-shadow .15s;
   }
   .field-input::placeholder{ color:var(--dim); }
-  .field-input:focus{ border-color:var(--blue); }
-  textarea.field-input{ resize:vertical; min-height:180px; line-height:1.6; }
+  .field-input:focus,
+  .field-input:focus-visible{
+    outline:none;
+    border-color:rgba(255,255,255,0.38);
+    box-shadow:0 0 0 3px rgba(165,175,184,0.16);
+  }
+  textarea.field-input{
+    resize:vertical; min-height:132px;
+    line-height:1.7; font-variant-numeric:tabular-nums;
+  }
   .submit{
-    margin-top:26px;
-    padding:12px 24px;
-    border-radius:9999px;
+    display:block; width:100%;
+    margin-top:20px;
+    padding:13px 24px;
+    border-radius:12px;
     background:#E5E8EB; color:#17191C;
-    font-size:14px; font-weight:600;
+    font-size:15px; font-weight:700;
     transition:opacity .2s, transform .1s;
   }
-  .submit:hover{ opacity:.88; }
+  .submit:hover{ opacity:.9; }
   .submit:active{ transform:translateY(1px); }
-  .hint{
-    margin:28px 0 0; padding-top:22px;
-    border-top:1px solid var(--line);
-    font-size:12px; color:var(--mute); line-height:1.7;
-  }
+  .modal-card .field-help, .modal-card .form-feedback{ word-break:keep-all; }
+  .modal-card .copy{ margin-top:14px; text-align:center; }
   .copy{ margin-top:10px; font-size:12px; color:var(--dim); }
   .copy b{ color:var(--mute); }
 
@@ -850,36 +885,32 @@
 <!-- ============================== 입력 화면 (새 플레이리스트) ============================== -->
 <section id="intake" class="modal">
   <div class="modal-card card">
-    <button id="intakeClose" class="modal-close" aria-label="닫기" hidden><i class="fa-solid fa-xmark"></i></button>
-
-    <div class="brand">
+    <div class="modal-head">
       <div class="logo"><i class="fa-solid fa-list-ol"></i></div>
-      <b>트랙리스트</b>
+      <h1 class="modal-title">플레이리스트 추가</h1>
+      <button id="intakeClose" class="modal-close" aria-label="닫기" hidden><i class="fa-solid fa-xmark"></i></button>
     </div>
-
-    <h1>타임테이블로 트랙을 나눠요</h1>
-    <p class="lead">영상 설명란에 있는 타임테이블을 붙여넣으면 곡 단위로 끊어 들을 수 있는 재생목록을 만들어줘요.</p>
+    <p class="lead">영상 설명란의 타임테이블을 붙여넣으면 곡별로 나눠 줘요.</p>
 
     <div class="field">
-      <label class="label" for="videoId">영상 ID</label>
-      <input id="videoId" class="field-input" placeholder="YouTube 영상 주소 또는 ID" autocomplete="off" />
-      <p class="field-help">youtube.com/watch 또는 youtu.be 주소를 그대로 붙여넣어도 돼요.</p>
+      <label class="label" for="videoId">영상 주소 또는 ID</label>
+      <input id="videoId" class="field-input" placeholder="youtube.com/watch?v=… 또는 youtu.be/…" autocomplete="off" />
     </div>
 
     <div class="field">
-      <label class="label" for="plName">플레이리스트 이름 (선택)</label>
+      <label class="label" for="plName">이름 <em>(선택)</em></label>
       <input id="plName" class="field-input" placeholder="비워두면 영상 제목을 써요" autocomplete="off" />
     </div>
 
     <div class="field">
       <label class="label" for="timeline">타임테이블</label>
       <textarea id="timeline" class="field-input" placeholder="00:00 첫 번째 곡&#10;03:24 두 번째 곡&#10;07:10 세 번째 곡"></textarea>
+      <p class="field-help">한 줄에 시간 하나와 곡 제목. 시:분:초, 분:초 모두 인식하고 시간순으로 정렬해요.</p>
     </div>
 
     <button id="generateBtn" class="submit">플레이리스트 추가</button>
     <p id="intakeFeedback" class="form-feedback" role="status" aria-live="polite" hidden></p>
 
-    <p class="hint">한 줄에 시간 하나, 그 뒤에 곡 제목을 붙여넣으면 자동으로 시간순 정렬해요. 시:분:초 또는 분:초 형식 모두 인식해요.</p>
     <div class="copy"><b>Dutkyobot</b> &copy; 2026. All Rights Reserved.</div>
   </div>
 </section>
