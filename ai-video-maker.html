@@ -294,8 +294,9 @@ input[type=range]::-webkit-slider-thumb{width:16px;height:16px;margin-top:-5.5px
     <div class="pane" id="t2">
       <h2>원하는 영상</h2>
       <p class="hint">장면, 분위기, 자막 문구를 편하게 적고 복사 버튼을 눌러요.</p>
+      <select id="mode" title="만들 영상 종류" style="margin-bottom:8px"><option value="video">일반 영상</option><option value="3d">3D 애니메이션</option></select>
       <textarea id="req" placeholder="예) 10초짜리 여행 오프닝. 따뜻한 필터로 천천히 줌인, 제목은 굵은 글씨로 팝!"></textarea>
-      <div class="row"><select id="mode" style="width:auto" title="만들 영상 종류"><option value="video">일반 영상</option><option value="3d">3D 애니메이션</option></select><select id="ratio" style="width:auto"><option>16:9</option><option>9:16</option><option>1:1</option></select>
+      <div class="row"><select id="ratio" style="width:auto"><option>16:9</option><option>9:16</option><option>1:1</option></select>
       <button id="copy" style="flex:1">프롬프트 복사</button></div>
       <div class="links" id="links" hidden><a target="_blank" rel="noopener" href="https://claude.ai/new">Claude</a><a target="_blank" rel="noopener" href="https://chatgpt.com/">ChatGPT</a><a target="_blank" rel="noopener" href="https://gemini.google.com/app">Gemini</a></div>
     </div>
