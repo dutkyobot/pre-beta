@@ -117,7 +117,9 @@ async function genSD(prompt){
  const eps=f32(await (uo.out_sample||Object.values(uo)[0]).getData());
  const pr=new Float32Array(n);
  for(let i=0;i<n;i++)pr[i]=(lat[i]-sig*eps[i])/0.18215;
- const vo=await sd.vae.run({[sd.vae.inputNames[0]]:T_(pr,[1,4,64,64])});
+ // VAE 입력 정밀도가 UNet과 다를 수 있어 실패하면 반대로 재시도
+ const vrun=f=>sd.vae.run({[sd.vae.inputNames[0]]:f?new ort.Tensor('float16',half(pr),[1,4,64,64]):new ort.Tensor('float32',pr,[1,4,64,64])});
+ let vo;try{vo=await vrun(fp16)}catch(e){vo=await vrun(!fp16)}
  const px=f32(await (vo.sample||Object.values(vo)[0]).getData());
  const HW=px.length/3,W=Math.round(Math.sqrt(HW));
  const oc=new OffscreenCanvas(W,W),cx=oc.getContext('2d'),id=cx.createImageData(W,W);
@@ -209,13 +211,13 @@ const MODELS=[
 {id:'janus-13',kind:'image',engine:'janus',name:'Janus 1.3B',repo:'onnx-community/Janus-1.3B-ONNX',gb:2.6,minBuf:2,lang:'영어 프롬프트 권장',desc:'Janus 초기 버전. Pro보다 품질은 낮음',pri:14},
 {id:'sd-turbo',kind:'image',engine:'sd',name:'SD-Turbo',repo:'schmuell/sd-turbo-ort-web',gb:2.5,minBuf:2,lang:'영어 프롬프트 권장',desc:'텍스트→이미지 512×512. 1단계 생성이라 빠름 (실험적)',pri:15},
 // --- 이미지 처리 (WebGPU 없이 CPU로 실행) ---
-{id:'rmbg',kind:'tool',engine:'bg',grp:'배경 제거',name:'RMBG-1.4',repo:'briaai/RMBG-1.4',cpu:true,gb:0.05,minBuf:0,maxIn:1024,desc:'범용 배경 제거. 사람·물건 모두 가능, 품질 우수',best:true,pri:16},
+{id:'rmbg',kind:'tool',engine:'bg',grp:'배경 제거',name:'RMBG-1.4',repo:'briaai/RMBG-1.4',cpu:true,gb:0.18,minBuf:0,maxIn:1024,desc:'범용 배경 제거. 사람·물건 모두 가능, 품질 우수',best:true,pri:16},
 {id:'modnet',kind:'tool',engine:'modnet',grp:'배경 제거',name:'MODNet',repo:'Xenova/modnet',cpu:true,gb:0.03,minBuf:0,maxIn:1024,desc:'인물 사진 전용. 가볍고 빠름',pri:17},
 {id:'swin-x2',kind:'tool',engine:'sr',grp:'업스케일',name:'Swin2SR ×2',repo:'Xenova/swin2SR-classical-sr-x2-64',cpu:true,gb:0.05,minBuf:0,maxIn:384,desc:'2배 확대. 처리 속도 때문에 긴 변 384px까지만 입력',best:true,pri:18},
 {id:'swin-x4',kind:'tool',engine:'sr',grp:'업스케일',name:'Swin2SR ×4 (실사)',repo:'Xenova/swin2SR-realworld-sr-x4-64-bsrgan-psnr',cpu:true,gb:0.06,minBuf:0,maxIn:256,desc:'4배 확대, 실사 사진용. 긴 변 256px까지만 입력',pri:19}
 ];
 const $=(s,r=document)=>r.querySelector(s);const app=$('#app');
-const st={hw:null,kind:null,model:null,worker:null,files:{},hist:[],gal:[],busy:false,sys:'당신은 친절한 한국어 AI 어시스턴트입니다.',max:512};
+const st={hw:null,kind:null,model:null,worker:null,tw:null,files:{},rows:{},hist:[],gal:[],tgal:[],busy:false,sys:'당신은 친절한 한국어 AI 어시스턴트입니다.',max:512};
 const isMobile=/Android|iPhone|iPad|Mobi/i.test(navigator.userAgent)||(navigator.connection&&navigator.connection.type==='cellular');
 const fmt=g=>g<1?Math.round(g*1000)+'MB':g.toFixed(1)+'GB';
 const TITLES={chat:'대화',image:'이미지 생성',tool:'이미지 처리'};
@@ -235,7 +237,7 @@ async function removeModel(m){let n=0;
 try{for(const k of await caches.keys()){const c=await caches.open(k);for(const r of await c.keys())if(r.url.includes('/'+m.repo+'/')){await c.delete(r);n++}}}catch(e){}
 return n}
 function fit(m){if(m.cpu)return 'ok';const h=st.hw;if(!h.ok)return 'no';return h.buf>=m.minBuf?'ok':'low'}
-function killWorker(){if(st.worker){st.worker.terminate();st.worker=null}st.busy=false}
+function killWorker(){if(st.worker){st.worker.terminate();st.worker=null}if(st.tw){st.tw.terminate();st.tw=null}st.busy=false}
 function spawn(){const u=URL.createObjectURL(new Blob([$('#wk').textContent],{type:'text/javascript'}));
 return new Worker(u,{type:'module'})}
 // ===== 화면 =====
@@ -359,12 +361,12 @@ const show=u=>{$('#out').src=u;$('#out').style.display='block';$('#ph').style.di
 const gal=()=>{$('#gl').innerHTML='';$('#ge').style.display=st.gal.length?'none':'block';st.gal.forEach(u=>{const i=new Image();i.src=u;i.onclick=()=>show(u);$('#gl').append(i)})};gal();
 const rel=msg=>{st.busy=false;$('#go').disabled=$('#tr').disabled=false;$('#tm').textContent=msg};
 const tryTr=(list,i,t)=>{if(i>=list.length)return rel('번역 실패: 모델을 불러오지 못했습니다');
-const m=list[i],w=spawn();let out='';$('#tm').textContent=`번역 모델 불러오는 중… (${m.name})`;
+const m=list[i],w=spawn();st.tw=w;let out='';$('#tm').textContent=`번역 모델 불러오는 중… (${m.name})`;
 const next=()=>{w.terminate();tryTr(list,i+1,t)};w.onerror=next;
 w.onmessage=({data:d})=>{
 if(d.type==='ready'){$('#tm').textContent='번역 중…';w.postMessage({type:'chat',max:160,noThink:m.noThink,messages:[{role:'system',content:'Translate the user\'s Korean text into a natural English prompt for an image generator. Output only the English prompt.'},{role:'user',content:t}]})}
 else if(d.type==='tok')out+=d.t;
-else if(d.type==='done'){w.terminate();const r=out.replace(/<think>[\s\S]*?<\/think>/g,'').replace(/<\/?think>/g,'').trim().replace(/^["']+|["']+$/g,'');
+else if(d.type==='done'){w.terminate();st.tw=null;const r=out.replace(/<think>[\s\S]*?<\/think>/g,'').replace(/<\/?think>/g,'').trim().replace(/^["']+|["']+$/g,'');
 if(!r)return next();$('#pr').value=r;rel('번역 완료 · '+m.name)}
 else if(d.type==='err')next()};
 w.postMessage({type:'load',eng:'chat',repo:m.repo,dtype:m.dtype})};
@@ -385,11 +387,10 @@ st.worker.postMessage({type:'image',prompt:p})};
 function toolView(){
 const m=st.model,bg=m.engine!=='sr',lab=bg?'배경 제거':'업스케일';
 const note=bg?'결과는 투명 배경 PNG로 저장됩니다.':`처리 속도 때문에 긴 변 ${m.maxIn}px까지만 입력되고, 결과는 ${m.id==='swin-x4'?4:2}배 크기입니다.`;
-st.tgal=st.tgal||[];
 app.innerHTML=head(lab)+`<div class="two">
 <div class="card pa"><b>원본 이미지</b><div class="sub">${note}</div>
 <label class="ph drop" id="dz" for="fi" style="margin-top:8px">클릭하거나 이미지를 끌어다 놓으세요</label>
-<img id="pv" class="pv" alt="" style="display:none"><input type="file" id="fi" accept="image/*" hidden>
+<img id="pv" class="pv" alt="" title="클릭하면 다른 이미지를 선택합니다" style="display:none"><input type="file" id="fi" accept="image/*" hidden>
 <div class="row" style="margin-top:10px"><button class="btn" id="go" disabled>${lab}</button><span class="sub" id="tm"></span></div></div>
 <div class="card ga"><b>이전 결과</b><div class="gal" id="gl" style="margin-top:8px"></div><div class="sub" id="ge">아직 처리한 이미지가 없습니다</div></div>
 <div class="card ra"><b>처리 결과</b><div class="ph" id="rph">처리된 이미지가 여기에 표시됩니다</div><div class="bar ind" id="gb" style="display:none"><i></i></div><img id="out" alt="" style="display:none"><button class="btn" id="sv" disabled>PNG 저장</button></div></div>`;
