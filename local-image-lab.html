@@ -130,6 +130,121 @@ details summary{cursor:pointer;color:var(--muted);font-size:12px}
 
 @media(max-width:860px){.choices{grid-template-columns:1fr}.imglayout{grid-template-columns:1fr}.result{position:static;min-height:420px;order:-1}.stage{min-height:300px}.settings{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.bar>div{transition:none}}
+
+/* ================= UI polish ================= */
+:root{
+  --bg:#101216;
+  --panel:#181c24;
+  --panel2:#202633;
+  --line:#303846;
+  --muted:#a5adbc;
+  --accent:#cbd5ff;
+  --accentText:#182039;
+}
+body{line-height:1.6}
+button{transition:border-color .16s ease,background-color .16s ease,color .16s ease}
+.app{max-width:1160px;padding:26px 22px 48px}
+.topbar{padding-bottom:16px;margin-bottom:30px;border-bottom:1px solid var(--line)}
+.brand{font-size:19px;letter-spacing:-.55px}
+.pill{padding:6px 11px;background:rgba(255,255,255,.025)}
+.hero{text-align:left;margin:38px 0 24px}
+.hero-kicker{display:inline-block;margin-bottom:10px;color:#aebbf0;font-size:10px;font-weight:800;letter-spacing:1.45px}
+.hero h1{font-size:clamp(28px,4vw,36px);line-height:1.2;margin-bottom:10px;letter-spacing:-1.1px}
+.hero p{max-width:620px;font-size:14px;line-height:1.7}
+.choices{gap:14px}
+.choice{position:relative;min-height:178px;padding:24px 25px;border-radius:18px;gap:10px;background:linear-gradient(145deg,rgba(203,213,255,.045),transparent 60%),var(--panel)}
+.choice:hover{border-color:#7584bd;background:linear-gradient(145deg,rgba(203,213,255,.075),transparent 65%),var(--panel)}
+.choice .ico{font-size:30px}
+.choice strong{font-size:19px;letter-spacing:-.3px}
+.choice span{max-width:430px;line-height:1.65}
+.home-foot{grid-template-columns:minmax(0,.9fr) minmax(0,1.45fr);align-items:stretch;gap:12px}
+.home-foot .hwbox{margin:0;display:flex;flex-direction:column;justify-content:center}
+.notice{display:flex;align-items:center;margin:0;padding:14px 17px;border:1px solid var(--line);border-left:1px solid var(--line);border-radius:14px;background:var(--panel);line-height:1.75}
+.panel,.hwbox,.card{border-color:var(--line)}
+.hwbox{border-radius:14px;line-height:1.6}
+.hwbox .row{gap:7px 14px;margin-top:7px}
+.cards{grid-template-columns:repeat(auto-fit,minmax(min(100%,285px),1fr));gap:14px;align-items:stretch}
+.card{min-width:0;padding:18px;border-radius:15px;gap:10px;background:linear-gradient(160deg,rgba(255,255,255,.018),transparent 45%),var(--panel)}
+.card.rec{border-color:#8796d1;box-shadow:inset 0 0 0 1px rgba(135,150,209,.24)}
+.card h3{font-size:15px;line-height:1.4;letter-spacing:-.2px;overflow-wrap:anywhere}
+.card .meta{line-height:1.6}
+.card p{font-size:13px;line-height:1.65;color:#d7dbe4}
+.card .why{padding:9px 10px;border-radius:9px;background:rgba(255,255,255,.025);line-height:1.55}
+.badges{gap:5px}
+.badge{padding:3px 9px;font-size:10px}
+.card .btns{gap:7px;padding-top:3px}
+.card .btns button{min-height:40px;padding:9px 11px;font-size:12px}
+.loadbox{padding:20px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}
+.bar{height:7px;background:#303744}
+.bar>div{border-radius:10px}
+.status{line-height:1.6}
+.modehead{gap:14px;margin-bottom:18px}
+.modehead h2{font-size:21px;letter-spacing:-.5px}
+.worktop{gap:8px}
+.worktop button{white-space:nowrap}
+details summary{padding:5px 0;font-weight:600}
+.settings{gap:12px}
+.settings label{line-height:1.5}
+.chatbox{height:min(72vh,760px);border-radius:16px;overflow:hidden}
+.msgs{padding:20px;gap:15px}
+.msg{max-width:min(760px,84%);padding:11px 15px;line-height:1.7}
+.msg.user{border-radius:15px 15px 4px 15px}
+.msg.ai{border-radius:15px 15px 15px 4px}
+.composer{gap:9px;padding:13px}
+.composer textarea{flex:1;width:auto;min-width:0;min-height:46px;padding:11px 13px;border-radius:13px}
+.composer button{min-height:46px;white-space:nowrap}
+.imglayout{grid-template-columns:minmax(300px,340px) minmax(0,1fr);gap:14px}
+.controls{gap:14px}
+.controls #prompt{min-height:148px;line-height:1.65}
+.controls .worktop{margin-bottom:0}
+.result{min-height:600px;padding:17px}
+.result-head{min-height:38px}
+.stage{min-height:450px;padding:18px;border-style:solid;background:#11151c}
+.preview{max-height:72vh;object-fit:contain}
+.gallery{gap:9px;padding-bottom:2px}
+.thumb{width:68px;height:68px;border-radius:10px}
+.thumb[aria-current="true"]{box-shadow:0 0 0 2px var(--accent)}
+.log{line-height:1.65}
+@media(max-width:860px){
+  .home-foot{grid-template-columns:1fr}
+  .imglayout{grid-template-columns:1fr}
+  .result{min-height:420px;order:-1}
+  .stage{min-height:320px}
+}
+@media(max-width:560px){
+  .app{padding:17px 14px 32px}
+  .topbar{gap:8px;margin-bottom:24px;padding-bottom:13px}
+  .brand{font-size:17px}
+  .pill{font-size:10px;padding:5px 8px}
+  .hero{margin:28px 0 20px}
+  .hero h1{font-size:29px}
+  .hero p{font-size:13px}
+  .choices{gap:10px}
+  .choice{min-height:150px;padding:19px;border-radius:15px}
+  .choice .ico{font-size:27px}
+  .choice strong{font-size:18px}
+  .home-foot{gap:10px}
+  .notice{padding:12px 14px;font-size:11px}
+  .modehead{gap:10px}
+  .modehead button{padding:8px 11px}
+  .cards{grid-template-columns:1fr}
+  .card{padding:16px}
+  .worktop{gap:7px}
+  .worktop .grow{flex-basis:100%}
+  .chatbox{height:68vh;min-height:380px}
+  .msgs{padding:14px;gap:12px}
+  .msg{max-width:94%;padding:10px 12px}
+  .composer{flex-wrap:wrap;padding:10px}
+  .composer textarea{flex-basis:100%;width:100%}
+  .composer button{flex:1}
+  .result{min-height:360px;padding:13px}
+  .stage{min-height:260px;padding:10px}
+  .settings{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  button{transition:none}
+}
+
 </style>
 </head>
 <body>
@@ -141,7 +256,7 @@ details summary{cursor:pointer;color:var(--muted);font-size:12px}
 
 <!-- ============ 홈 ============ -->
 <section data-view="home">
-  <div class="hero"><h1>무엇을 해볼까요?</h1><p>모델을 골라 내려받으면, 그 뒤로는 내 브라우저 안에서만 돌아갑니다.</p></div>
+  <div class="hero"><span class="hero-kicker">LOCAL AI · ON DEVICE</span><h1>무엇을 해볼까요?</h1><p>모델을 한 번 내려받으면, 대화와 이미지 생성은 내 기기에서 처리됩니다.</p></div>
   <div class="choices">
     <button class="choice" data-go="chat" type="button"><span class="ico">💬</span><strong>대화</strong><span>대화 모델을 고르고 내 컴퓨터에서 채팅합니다. 컴퓨터 사양에 맞는 모델을 추천해 드려요.</span></button>
     <button class="choice" data-go="image" type="button"><span class="ico">🎨</span><strong>이미지 생성</strong><span>이미지 모델을 고르고 내 컴퓨터에서 그림을 만듭니다. 사양에 맞는 모델을 추천해 드려요.</span></button>
