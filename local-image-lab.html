@@ -39,6 +39,7 @@ textarea{resize:none}
 .pa{grid-area:p}.ga{grid-area:g}.ra{grid-area:r;display:flex;flex-direction:column;gap:10px}.ra #out{margin:0;max-width:none}
 .ph{aspect-ratio:1;border:1px dashed var(--ln);border-radius:10px;display:grid;place-items:center;color:var(--sub);font-size:13px;text-align:center;padding:12px}
 @media(max-width:760px){.two{grid-template-columns:1fr;grid-template-areas:"p" "r" "g"}}
+.del{padding:4px 12px;font-size:13px;color:var(--bad)}
 /* 입력창 */
 .comp{display:flex;align-items:flex-end;gap:8px;background:var(--card);border:1px solid var(--ln);border-radius:24px;padding:6px 6px 6px 18px;position:sticky;bottom:12px;margin-top:8px}
 .comp:focus-within{border-color:var(--ac)}
@@ -70,9 +71,13 @@ onmessage=async({data:d})=>{
   }else if(d.type==='chat'){
    stopper=new T.InterruptableStoppingCriteria();
    const inp=tok.apply_chat_template(d.messages,{add_generation_prompt:true,return_dict:true,...(d.noThink?{enable_thinking:false}:{})});
-   const st=new T.TextStreamer(tok,{skip_prompt:true,skip_special_tokens:true,callback_function:t=>postMessage({type:'tok',t})});
+   const pl=inp.input_ids.dims.at(-1);let nn=0;postMessage({type:'n',n:pl});
+   const st=new T.TextStreamer(tok,{skip_prompt:true,skip_special_tokens:true,callback_function:t=>postMessage({type:'tok',t}),token_callback_function:()=>postMessage({type:'n',n:pl+(++nn)})});
    await m.generate({...inp,max_new_tokens:d.max,do_sample:true,temperature:.7,top_p:.9,streamer:st,stopping_criteria:stopper});
    postMessage({type:'done'});
+  }else if(d.type==='count'){
+   const ids=tok.apply_chat_template([...d.messages,...(d.draft?[{role:'user',content:d.draft}]:[])],{add_generation_prompt:!!d.draft,tokenize:true,return_tensor:false,...(d.noThink?{enable_thinking:false}:{})});
+   postMessage({type:'cnt',n:ids.length});
   }else if(d.type==='stop'){stopper&&stopper.interrupt()}
   else if(d.type==='image'){
    const inp=await proc([{role:'<|User|>',content:d.prompt}],{chat_template:'text_to_image'});
@@ -116,9 +121,12 @@ async function detect(){
 }
 async function cached(m){ // 브라우저 캐시에 모델 파일이 있는지 확인
  try{for(const k of await caches.keys()){const c=await caches.open(k);
-  if((await c.keys()).some(r=>r.url.includes(m.repo)))return true}}catch(e){}
+  if((await c.keys()).some(r=>r.url.includes('/'+m.repo+'/')))return true}}catch(e){}
  return false;
 }
+async function removeModel(m){let n=0;
+ try{for(const k of await caches.keys()){const c=await caches.open(k);for(const r of await c.keys())if(r.url.includes('/'+m.repo+'/')){await c.delete(r);n++}}}catch(e){}
+ return n}
 function fit(m){const h=st.hw;if(!h.ok)return 'no';return h.buf>=m.minBuf?'ok':'low'}
 
 function killWorker(){if(st.worker){st.worker.terminate();st.worker=null}st.busy=false}
@@ -149,8 +157,11 @@ async function pick(kind){
  <div><b>${m.name}</b></div><div>${m.id===recId?'<span class="tag rec">추천</span>':''}<span class="tag">${fmt(m.gb)}</span>
  <span class="tag ${f==='ok'?'ok':f==='low'?'warn':'bad'}">${f==='ok'?'실행 가능':f==='low'?'사양 부족 가능':'실행 불가'}</span>
  <span class="tag ${c?'ok':''}">${c?'저장됨':'미다운로드'}</span></div>
- <div class="sub">${m.desc}<br>언어: ${m.lang}<br>권장: WebGPU, 최대 버퍼 ${m.minBuf}GB 이상</div></div>`).join('')}</div>`;
+ <div class="sub">${m.desc}<br>언어: ${m.lang}<br>권장: WebGPU, 최대 버퍼 ${m.minBuf}GB 이상</div>${c?`<div class="row" style="justify-content:flex-end"><button class="btn ghost del" data-id="${m.id}">저장된 모델 삭제</button></div>`:''}</div>`).join('')}</div>`;
  $('#bk').onclick=home;
+ app.querySelectorAll('.del').forEach(b=>b.onclick=async e=>{e.stopPropagation();const m=MODELS.find(x=>x.id===b.dataset.id);
+  if(!confirm(`'${m.name}' 모델을 삭제할까요?\n저장된 파일(약 ${fmt(m.gb)})이 이 브라우저에서 지워지며, 다시 사용하려면 재다운로드해야 합니다.`))return;
+  b.disabled=true;b.textContent='삭제 중…';await removeModel(m);pick(st.kind)});
  app.querySelectorAll('.model').forEach(el=>el.onclick=()=>{const m=MODELS.find(x=>x.id===el.dataset.id);
   if(!st.hw.ok)return alert('WebGPU를 사용할 수 없어 실행할 수 없습니다.');
   if(fit(m)!=='ok'&&!confirm('이 컴퓨터에서는 실행이 어려울 수 있습니다. 계속할까요?'))return;
@@ -191,24 +202,29 @@ function head(t,x=''){return `<div class="top"><button class="btn ghost" id="bk"
 
 function chat(){
  st.hist=[];
- app.innerHTML=head('대화','<button class="btn ghost" id="nw">새 대화</button><button class="btn ghost" id="gr">설정</button>')+`<div id="set" class="card"><label class="sub">시스템 프롬프트</label><textarea id="sy" rows="2"></textarea>
+ app.innerHTML=head('대화','<button class="btn ghost" id="nw">새 대화</button><button class="btn ghost" id="gr">설정</button>')+`<div class="tkw"><div class="sub" id="tkn">토큰 계산 중…</div><div class="bar" style="height:5px;margin:4px 0 8px"><i id="tkb"></i></div></div><div id="set" class="card"><label class="sub">시스템 프롬프트</label><textarea id="sy" rows="2"></textarea>
  <label class="sub">최대 답변 길이(토큰)</label><input type="number" id="mx" min="64" max="2048" step="64"></div>
  <div id="msgs"></div><div class="comp"><textarea id="in" rows="1" placeholder="메시지 입력 (Shift+Enter 줄바꿈)"></textarea><button class="circ" id="sd" title="전송">↑</button></div>`;
  $('#sy').value=st.sys;$('#mx').value=st.max;
  $('#bk').onclick=()=>pick('chat');$('#gr').onclick=()=>$('#set').classList.toggle('on');
- $('#sy').oninput=e=>st.sys=e.target.value;$('#mx').onchange=e=>st.max=Math.min(2048,Math.max(64,+e.target.value||512));
- $('#nw').onclick=()=>{if(st.busy)stop();st.hist=[];$('#msgs').innerHTML=''};
+ $('#sy').oninput=e=>{st.sys=e.target.value;clearTimeout(ct);ct=setTimeout(count,150)};$('#mx').onchange=e=>st.max=Math.min(2048,Math.max(64,+e.target.value||512));
+ $('#nw').onclick=()=>{if(st.busy)stop();st.hist=[];$('#msgs').innerHTML='';count()};
  const send=()=>{if(st.busy)return stop();const t=$('#in').value.trim();if(!t)return;$('#in').value='';$('#in').style.height='auto';
   add('u',t);st.hist.push({role:'user',content:t});const el=mkA();let acc='';st.busy=true;$('#sd').textContent='■';
   const w=st.worker;
   w.onmessage=({data:d})=>{
-   if(d.type==='tok'){acc+=d.t;paint(el,acc)}
+   if(d.type==='n')tk(d.n);
+   else if(d.type==='tok'){acc+=d.t;paint(el,acc)}
    else if(d.type==='done'){fin(el);st.hist.push({role:'assistant',content:parse(acc).an});end()}
    else if(d.type==='err'){el.querySelector('.ans').textContent='오류: '+d.msg;end()}};
   w.postMessage({type:'chat',noThink:st.model.noThink,max:st.max,messages:[{role:'system',content:st.sys},...st.hist]})};
- const end=()=>{st.busy=false;$('#sd').textContent='↑'};
+ const end=()=>{st.busy=false;$('#sd').textContent='↑';st.worker.onmessage=idle;count()};
  const stop=()=>st.worker&&st.worker.postMessage({type:'stop'});
- $('#in').oninput=e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,160)+'px'};$('#sd').onclick=send;$('#in').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();send()}};
+ $('#in').oninput=e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,160)+'px';clearTimeout(ct);ct=setTimeout(count,150)};$('#sd').onclick=send;st.worker.onmessage=idle;count();$('#in').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();send()}};
+ var ct;
+ function idle({data:d}){if(d.type==='cnt')tk(d.n)}
+ function tk(n){const c=st.model.ctx||4096,r=n/c;$('#tkn').textContent=`현재 사용 중 ${n.toLocaleString()} 토큰 / 기준 ${c.toLocaleString()}`;const b=$('#tkb');b.style.width=Math.min(100,r*100)+'%';b.style.background=r>.95?'var(--bad)':r>.8?'var(--warn)':'var(--ac)'}
+ function count(){if(st.busy||!st.worker)return;st.worker.postMessage({type:'count',noThink:st.model.noThink,messages:[{role:'system',content:st.sys},...st.hist],draft:$('#in').value})}
  function mkA(){const d=document.createElement('div');d.className='m a';d.innerHTML='<details class="th" hidden><summary></summary><div class="tb"></div></details><div class="ans">…</div>';$('#msgs').append(d);$('#msgs').scrollTop=1e9;return d}
  function parse(t){let th='',an=t,open=false,has=false;const b0=t.indexOf('<think>');
   if(b0>=0||st.model.think){has=true;const b=b0>=0?b0+7:0,e=t.indexOf('</think>',b);
