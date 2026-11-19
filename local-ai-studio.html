@@ -146,6 +146,7 @@ async function home(){
  app.querySelectorAll('.big').forEach(b=>b.onclick=()=>pick(b.dataset.k));
 }
 async function pick(kind){
+ killWorker(); // 모델 선택 화면에 들어오면 실행 중인 모델을 바로 종료해 GPU 메모리 해제
  st.kind=kind;const list=MODELS.filter(m=>m.kind===kind).sort((a,b)=>a.pri-b.pri);
  const states=await Promise.all(list.map(async m=>({m,f:fit(m),c:await cached(m)})));
  const lim=kind==='chat'?(st.hw.mem&&st.hw.mem<8?1:1.5):99; // 추천은 안정적으로 돌아갈 크기 안에서
