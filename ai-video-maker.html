@@ -2,7 +2,7 @@
 <html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<title>AI 영상 편집기</title>
+<title>AI 영상 제작기</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Gaegu:wght@700&family=Gowun+Batang:wght@700&family=Gowun+Dodum&family=Jua&family=Noto+Sans+KR:wght@400;700;900&family=Nanum+Pen+Script&family=Nanum+Myeongjo:wght@700&family=Noto+Serif+KR:wght@700&family=Gamja+Flower&family=Sunflower:wght@700&family=Hi+Melody&family=Single+Day&family=Yeon+Sung&family=East+Sea+Dokdo&family=Dokdo&family=Gugi&family=Poor+Story&family=Cute+Font&family=Song+Myung&family=Stylish&family=Bebas+Neue&family=Pacifico&display=swap">
 <style>
 :root{color-scheme:dark;--bg:#0e0e11;--p1:#1a1a1f;--p2:#222228;--p3:#2c2c34;--bd:#32323b;--fg:#e8e8ee;--mut:#8d8d9b;--ac:#19d3c5;--acf:#04201e;--red:#ff3b5c;--lw:72px}
@@ -264,11 +264,12 @@ input[type=range]::-webkit-slider-thumb{width:16px;height:16px;margin-top:-5.5px
 .ed small{display:block;color:var(--mut);font-size:11px;line-height:1.5;margin-top:6px}
 .ed small.err{color:#ff6b6b}
 .lane i.sel{filter:brightness(1.25);box-shadow:inset 0 0 0 2px #fff!important;z-index:2}
+.r.d .lane i{background:linear-gradient(#35c2d6,#1a8fa3)}.tl .r.d>span::before{background:#35c2d6}
 </style></head>
 <body><div class="app">
 
 <header class="top">
-  <div class="logo"><b>▶</b><span>AI 영상 편집기</span></div>
+  <div class="logo"><b>▶</b><span>AI 영상 제작기</span></div>
   <div class="sp"></div>
   <select id="qual" title="화질" style="width:auto;min-height:36px;padding:0 8px"><option value="720">720p</option><option value="1080" selected>1080p</option><option value="1440">1440p</option><option value="2160">4K</option></select><select id="fps" title="프레임" style="width:auto;min-height:36px;padding:0 8px"><option value="30" selected>30fps</option><option value="60">60fps</option></select><button id="exp" disabled><svg viewBox="0 0 24 24"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>MP4 저장</button>
   <div class="bar"><div id="prog"></div></div>
@@ -294,7 +295,7 @@ input[type=range]::-webkit-slider-thumb{width:16px;height:16px;margin-top:-5.5px
       <h2>원하는 영상</h2>
       <p class="hint">장면, 분위기, 자막 문구를 편하게 적고 복사 버튼을 눌러요.</p>
       <textarea id="req" placeholder="예) 10초짜리 여행 오프닝. 따뜻한 필터로 천천히 줌인, 제목은 굵은 글씨로 팝!"></textarea>
-      <div class="row"><select id="ratio" style="width:auto"><option>16:9</option><option>9:16</option><option>1:1</option></select>
+      <div class="row"><select id="mode" style="width:auto" title="만들 영상 종류"><option value="video">일반 영상</option><option value="3d">3D 애니메이션</option></select><select id="ratio" style="width:auto"><option>16:9</option><option>9:16</option><option>1:1</option></select>
       <button id="copy" style="flex:1">프롬프트 복사</button></div>
       <div class="links" id="links" hidden><a target="_blank" rel="noopener" href="https://claude.ai/new">Claude</a><a target="_blank" rel="noopener" href="https://chatgpt.com/">ChatGPT</a><a target="_blank" rel="noopener" href="https://gemini.google.com/app">Gemini</a></div>
     </div>
@@ -2287,11 +2288,11 @@ $("#ratio").onchange=e=>{[cv.width,cv.height]=RATIOS[e.target.value];setAR();dra
 
 /* 프롬프트 */
 function buildPrompt(){
-  const r=$("#ratio").value,[w,h]=RATIOS[r];
+  const r=$("#ratio").value,[w,h]=RATIOS[r],is3=$("#mode").value=="3d";
   const list=assets.length?assets.map(a=>`- ${a.id}: ${a.kind=="v"?"영상":a.kind=="i"?"이미지":"오디오"} "${a.name}"${a.dur?` (길이 ${a.dur}초)`:""}${a.w?` ${a.w}x${a.h}`:""}${a.memo.trim()?` — 설명: ${a.memo.trim()}`:""}${a.bpm?` — 분석: 약 ${a.bpm}BPM, 첫 타격 ${a.off}초, 강한 비트 시점(초): ${a.on.join(", ")}`:""}${a.col?` — 분석: 주요색 ${a.col}, 밝기 ${a.lum}`:""}`).join("\n"):"(업로드된 소스 없음 — color 클립과 자막만으로 구성)";
-  return `너는 센스 있는 영상 편집자야. 아래 [요청]에 맞는 편집 계획을 JSON 하나로 만들어줘.
+  return `너는 ${is3?"센스 있는 3D 애니메이터이자 영상 편집자":"센스 있는 영상 편집자"}야. 아래 [요청]에 맞는 ${is3?"3D 애니메이션 영상 제작":"편집"} 계획을 JSON 하나로 만들어줘.
 설명 없이 ${FENCE}json 코드블록 하나만 출력해. JSON에 주석은 쓰지 마.
-이 JSON은 웹 편집기가 읽어서 그대로 영상으로 렌더링해. 규격에 없는 필드나 값은 무시되고, 문법이 틀리면 전체가 실패해. 너는 영상 내용을 볼 수 없으니 [소스 파일]의 길이와 설명만 믿고 계획해.
+이 JSON은 웹 제작기가 읽어서 그대로 영상으로 렌더링해. 규격에 없는 필드나 값은 무시되고, 문법이 틀리면 전체가 실패해. 너는 영상 내용을 볼 수 없으니 [소스 파일]의 길이와 설명만 믿고 계획해.
 
 [캔버스] ${w}x${h}px (${r}). 글자 크기(size)는 이 픽셀 기준이야.
 
@@ -2301,7 +2302,7 @@ ${list}
 [요청]
 ${$("#req").value.trim()||"(자유롭게 재미있게)"}
 
-[JSON 규격] 최상위는 title, bg(배경색), clips, shapes, audio, texts. 시간은 전부 초 단위. 표시한 필수 항목 말고는 모두 생략해도 돼.
+[JSON 규격] 최상위는 title, bg(배경색), clips, shapes, audio, texts${is3?", scene3d":""}. 시간은 전부 초 단위. 표시한 필수 항목 말고는 모두 생략해도 돼.
 
 ■ clips — 화면에 깔리는 층. 배열 뒤쪽이 위에 그려지고, 시간이 겹치면 크로스페이드가 돼.
  - 소스(셋 중 하나, 필수): asset(소스 id) / color(색 하나, 또는 [위색,아래색] 그라데이션) / img(웹에서 찾은 이미지의 직접 링크, label에 설명 한두 단어)
@@ -2335,7 +2336,7 @@ ${$("#req").value.trim()||"(자유롭게 재미있게)"}
 ■ 모션 공통 — clips, shapes, texts 전부 사용 가능
  - anim: none|fade|slideUp|slideDown|slideLeft|slideRight|pop|bounce|zoomIn|spin (등장·퇴장 효과, texts는 typewriter도 가능), animDur(길이)
  - loop: none|shake|pulse|float|wiggle|spin|blink (계속 반복되는 움직임)
- - kf: 키프레임 배열. 항목은 {t, x, y, s, r, o, b, e} — t=0~1(항목 길이 대비 비율), x·y=원래 위치에서의 이동량(화면 비율), s=배율, r=회전(도), o=투명도, b=블러(px), e=직전 키프레임에서 이 키프레임까지의 가속(linear|easeIn|easeOut|easeInOut|back|bounce|elastic). 일부 속성만 써도 되고 개수 제한은 없어. anim, loop, kf를 섞어서 자유롭게 설계해.
+ - kf: 키프레임 배열. 항목은 {t, x, y, s, r, o, b, e} — t=0~1(항목 길이 대비 비율), x·y=원래 위치에서의 이동량(화면 비율), s=배율, r=회전(도), o=투명도, b=블러(px), e=직전 키프레임에서 이 키프레임까지의 가속(linear|easeIn|easeOut|easeInOut|back|bounce|elastic). 일부 속성만 써도 되고 개수 제한은 없어. anim, loop, kf를 섞어서 자유롭게 설계해.${is3?"\n"+spec3d():""}
 
 [사용 가능한 글꼴 — 목록에서만, 분위기에 맞게 골라줘]
 ${FONTS.map(f=>f+(HINT[f]?`(${HINT[f]})`:"")).join(", ")}
@@ -2365,6 +2366,8 @@ ${FONTS.map(f=>f+(HINT[f]?`(${HINT[f]})`:"")).join(", ")}
 
 [출력 예시 — 형식 참고용. 내용은 요청에 맞게 새로 만들어]
 {"title":"예시","bg":"#000000","clips":[{"color":["#1f1c2c","#928dab"],"start":0,"dur":3,"zoom":[1,1.15]},{"color":["#ff6b6b","#4d79ff"],"start":2.6,"dur":2.8,"transition":"wipe","transDur":0.4}],"shapes":[{"type":"star","x":0.82,"y":0.2,"w":0.12,"color":"#ffe66d","start":0.3,"dur":2.5,"loop":"spin"},{"type":"wave","x":0.5,"y":0.53,"w":0.5,"strokeW":8,"color":"#ffe66d","start":2.8,"dur":2.4,"anim":"fade"}],"texts":[{"text":"첫 1초에 눈길","start":0.2,"dur":2.2,"font":"Black Han Sans","size":84,"color":"#ffffff","stroke":"#000000","strokeW":8,"y":0.45,"anim":"pop"},{"text":"짧게 끊어서","start":2.8,"dur":2.4,"font":"Jua","size":64,"gradient":["#ffe66d","#ff4d6d"],"y":0.5,"anim":"slideUp"}]}`}
+const PH={video:$("#req").placeholder,"3d":"예) 10초짜리 3D 애니메이션. 우주 배경에서 행성 3개가 공전하고 카메라가 천천히 한 바퀴 돌아요. 제목 자막은 팝!"};
+$("#mode").onchange=e=>{$("#req").placeholder=PH[e.target.value]};
 $("#copy").onclick=async()=>{
   const p=buildPrompt();$("#links").hidden=false;
   try{await navigator.clipboard.writeText(p);say("프롬프트가 복사됐어요. AI에 붙여넣어 보내고, 받은 답은 '적용' 탭에 붙여넣으세요.")}
@@ -2414,7 +2417,7 @@ function fix(p){
       if(hx<.5){const cx=Math.min(1-hx,Math.max(hx,ox));if(Math.abs(cx-ox)>.005){x.x=+cx.toFixed(3);m.add("화면 밖 자막을 안쪽으로 옮김")}}
       if(hy<.5){const cy=Math.min(1-hy,Math.max(hy,oy));if(Math.abs(cy-oy)>.005){x.y=+cy.toFixed(3);m.add("화면 밖 자막을 안쪽으로 옮김")}}}}
   ctx.letterSpacing="0px";
-  return{msgs:[...m],total:Math.max(0,...[...p.clips,...p.texts,...p.shapes,...p.audio].map(x=>x.start+x.dur))}}
+  return{msgs:[...m],total:Math.max(0,...[...p.clips,...p.texts,...p.shapes,...p.audio,...(p.s3||[])].map(x=>x.start+x.dur))}}
 $("#fixask").onclick=async()=>{
   const t=`아래 편집 JSON에 문제가 있어. 문제만 고쳐서 ${FENCE}json 코드블록 하나로 전체를 다시 줘. 설명은 쓰지 마.\n\n[문제]\n${lastIssues.map(s=>"- "+s).join("\n")}\n\n[현재 JSON]\n${$("#out").value.trim()}`;
   try{await navigator.clipboard.writeText(t);say("수정 요청 문구를 복사했어요. AI에 붙여넣어 보내고, 받은 답을 '적용' 탭에 다시 붙여넣으세요.")}catch(e){say("복사가 막혔어요.",1)}};
@@ -2430,13 +2433,14 @@ $("#apply").onclick=async()=>{
   stop();let p;
   try{p=parse($("#out").value)}catch(e){say(e.message+" — 답변의 코드블록 전체를 붙여넣었는지 확인해 주세요.",1);return}
   p.clips=Array.isArray(p.clips)?p.clips:[];p.texts=Array.isArray(p.texts)?p.texts:[];p.audio=Array.isArray(p.audio)?p.audio:[];p.shapes=Array.isArray(p.shapes)?p.shapes:[];
+  p.s3=(Array.isArray(p.scene3d)?p.scene3d:p.scene3d&&typeof p.scene3d=="object"?[p.scene3d]:[]).filter(s=>s&&typeof s=="object").slice(0,12);
   aiImgs=[];const um={};
   for(const c of p.clips)if(c.img&&!c.asset&&!c.color&&/^https?:\/\//.test(c.img)){let a=um[c.img];if(!a){a=um[c.img]={id:"g"+(aiImgs.length+1),kind:"i",url:c.img,label:c.label||"",el:new Image(),ok:false,dur:0};aiImgs.push(a)}c.a=a}
-  const warn=[],issues=[];
+  const warn=[],issues=[];p.s3.forEach((s,i)=>prep3D(s,issues,i));
   for(const c of [...p.clips,...p.audio]){c.start=+c.start||0;if(c.dur==null&&isFinite(+c.end)&&+c.end>c.start)c.dur=+c.end-c.start;c.dur=+c.dur||3;if(c.asset){c.a=assets.find(a=>a.id==c.asset);if(!c.a){warn.push(c.asset+" 없음");issues.push(`소스 "${c.asset}"가 없음 (사용 가능: ${assets.map(a=>a.id).join(", ")||"없음 — color 클립과 자막만 사용"})`)}}}
   for(const x of [...p.texts,...p.shapes]){x.start=+x.start||0;x.dur=+x.dur||2}
   for(const x of [...p.clips,...p.texts,...p.shapes])if(Array.isArray(x.kf))x.kf.sort((a,b)=>(+a.t||0)-(+b.t||0));
-  const tt=Math.max(0,...[...p.clips,...p.texts,...p.shapes,...p.audio].map(x=>x.start+x.dur));
+  const tt=Math.max(0,...[...p.clips,...p.texts,...p.shapes,...p.audio,...p.s3].map(x=>x.start+x.dur));
   if(!tt){say("편집 내용이 비어 있어요.",1);return}
   await Promise.all([...new Set(p.texts.map(x=>(x.weight||700)+"|"+x.font))].map(k=>{const [w,f]=k.split("|");return FONTS.includes(f)?document.fonts.load(`${w} 32px "${f}"`):0}));
   await Promise.all(aiImgs.map(a=>setAI(a,a.url)));
@@ -2554,6 +2558,237 @@ function sync(t,play){
     else{if(Math.abs(e.currentTime-target)>.04)e.currentTime=target}}
   for(const a of assets)if(a.kind!="i"&&(!act.has(a.el)||!play)&&!a.el.paused)a.el.pause()}
 
+/* ===3D START=== 3D 장면 렌더러 (외부 라이브러리 없이 캔버스에 직접 그려요) */
+const cl01=v=>Math.max(0,Math.min(1,v)),_cc=document.createElement("canvas").getContext("2d"),CC={};
+function rgbOf(c,d){if(Array.isArray(c))c=c[0];if(!c)return d||[200,200,200];let r=CC[c];if(r)return r;
+  try{_cc.fillStyle="#000000";_cc.fillStyle=String(c);const v=_cc.fillStyle,m=v.match(/rgba?\(([^)]+)\)/);
+    r=v[0]=="#"?[1,3,5].map(i=>parseInt(v.slice(i,i+2),16)):m?m[1].split(",").slice(0,3).map(Number):null}catch(e){}
+  return CC[c]=r||d||[200,200,200]}
+const v3=(a,d)=>Array.isArray(a)&&a.length>=3?[+a[0]||0,+a[1]||0,+a[2]||0]:d,
+ vSub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],vDot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2],
+ vCross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],
+ vNorm=a=>{const l=Math.hypot(a[0],a[1],a[2])||1;return[a[0]/l,a[1]/l,a[2]/l]};
+/* 4x4 행렬 (행 우선) */
+const mI=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
+function mMul(a,b){const o=new Array(16);for(let r=0;r<4;r++)for(let c=0;c<4;c++){let s=0;for(let k=0;k<4;k++)s+=a[r*4+k]*b[k*4+c];o[r*4+c]=s}return o}
+function mLocal(p,r,s){
+  const D=Math.PI/180,cx=Math.cos(r[0]*D),sx=Math.sin(r[0]*D),cy=Math.cos(r[1]*D),sy=Math.sin(r[1]*D),cz=Math.cos(r[2]*D),sz=Math.sin(r[2]*D);
+  /* R = Rz*Ry*Rx */
+  const m00=cz*cy,m01=cz*sy*sx-sz*cx,m02=cz*sy*cx+sz*sx,m10=sz*cy,m11=sz*sy*sx+cz*cx,m12=sz*sy*cx-cz*sx,m20=-sy,m21=cy*sx,m22=cy*cx;
+  return[m00*s[0],m01*s[1],m02*s[2],p[0],m10*s[0],m11*s[1],m12*s[2],p[1],m20*s[0],m21*s[1],m22*s[2],p[2],0,0,0,1]}
+const mAp=(m,v)=>[m[0]*v[0]+m[1]*v[1]+m[2]*v[2]+m[3],m[4]*v[0]+m[5]*v[1]+m[6]*v[2]+m[7],m[8]*v[0]+m[9]*v[1]+m[10]*v[2]+m[11]],
+ mLin=(m,v)=>[m[0]*v[0]+m[1]*v[1]+m[2]*v[2],m[4]*v[0]+m[5]*v[1]+m[6]*v[2],m[8]*v[0]+m[9]*v[1]+m[10]*v[2]],
+ mDet=m=>m[0]*(m[5]*m[10]-m[6]*m[9])-m[1]*(m[4]*m[10]-m[6]*m[8])+m[2]*(m[4]*m[9]-m[5]*m[8]);
+/* 메시: v 꼭짓점, f 면(꼭짓점 번호 배열), nv 꼭짓점 법선(부드러운 음영), dbl 양면 */
+function mkMesh(v,f,o){o=o||{};
+  f=f.map(q=>q.filter((x,i)=>x!==q[(i+1)%q.length])).filter(q=>q.length>2);
+  const nrm=q=>{let n=[0,0,0];for(let i=1;i<q.length-1;i++){const c=vCross(vSub(v[q[i]],v[q[0]]),vSub(v[q[i+1]],v[q[0]]));n=[n[0]+c[0],n[1]+c[1],n[2]+c[2]]}return n},
+   cen=q=>{const c=[0,0,0];q.forEach(i=>{c[0]+=v[i][0];c[1]+=v[i][1];c[2]+=v[i][2]});return c.map(x=>x/q.length)};
+  if(o.ref){if(o.glob){let S=0;f.forEach(q=>{const c=cen(q);S+=vDot(nrm(q),vSub(c,o.ref(c)))});if(S<0)f=f.map(q=>q.slice().reverse())}
+    else f=f.map(q=>{const c=cen(q);return vDot(nrm(q),vSub(c,o.ref(c)))<0?q.slice().reverse():q})}
+  let nv=o.nv;
+  if(o.smooth){nv=v.map(()=>[0,0,0]);f.forEach(q=>{const n=vNorm(nrm(q));q.forEach(i=>{nv[i][0]+=n[0];nv[i][1]+=n[1];nv[i][2]+=n[2]})});nv=nv.map(vNorm)}
+  return{v,f,nv,dbl:!!o.dbl,ns:!!o.ns,r:Math.max(.01,...v.map(p=>Math.hypot(p[0],p[1],p[2]))),fc:o.fc}}
+function ringMesh(U,Vn,fn,nfn,ref){ /* 위도/경도 격자 (양 끝은 한 점) */
+  const v=[],nv=[],f=[],idx=(i,j)=>j==0?0:j==Vn?1:2+(j-1)*U+(i%U);
+  v.push(fn(0,0),fn(0,Vn));nv.push(nfn(0,0),nfn(0,Vn));
+  for(let j=1;j<Vn;j++)for(let i=0;i<U;i++){v.push(fn(i/U,j/Vn));nv.push(nfn(i/U,j/Vn))}
+  for(let j=0;j<Vn;j++)for(let i=0;i<U;i++)f.push([idx(i,j),idx(i+1,j),idx(i+1,j+1),idx(i,j+1)]);
+  return mkMesh(v,f,{nv,ref})}
+const MESHC={};
+const PRIM={
+ cube:()=>{const v=[[-.5,-.5,-.5],[.5,-.5,-.5],[.5,.5,-.5],[-.5,.5,-.5],[-.5,-.5,.5],[.5,-.5,.5],[.5,.5,.5],[-.5,.5,.5]];
+   return mkMesh(v,[[0,1,2,3],[4,5,6,7],[0,1,5,4],[3,2,6,7],[0,3,7,4],[1,2,6,5]],{ref:()=>[0,0,0]})},
+ sphere:()=>ringMesh(24,16,(a,b)=>{const t=b*Math.PI,u=a*2*Math.PI;return[Math.sin(t)*Math.cos(u)*.5,Math.cos(t)*.5,Math.sin(t)*Math.sin(u)*.5]},(a,b)=>{const t=b*Math.PI,u=a*2*Math.PI;return[Math.sin(t)*Math.cos(u),Math.cos(t),Math.sin(t)*Math.sin(u)]},()=>[0,0,0]),
+ cylinder:()=>{const n=28,v=[],nv=[],f=[];
+   for(let i=0;i<n;i++){const a=i/n*2*Math.PI,c=Math.cos(a),s=Math.sin(a);v.push([c*.5,.5,s*.5],[c*.5,-.5,s*.5]);nv.push([c,0,s],[c,0,s])}
+   for(let i=0;i<n;i++){const j=(i+1)%n;f.push([i*2,j*2,j*2+1,i*2+1])}
+   const t=[],b=[];for(let i=0;i<n;i++){const a=i/n*2*Math.PI;t.push(v.length);v.push([Math.cos(a)*.5,.5,Math.sin(a)*.5]);nv.push([0,1,0])}
+   for(let i=0;i<n;i++){const a=i/n*2*Math.PI;b.push(v.length);v.push([Math.cos(a)*.5,-.5,Math.sin(a)*.5]);nv.push([0,-1,0])}
+   f.push(t.slice().reverse(),b);return mkMesh(v,f,{nv,ref:c=>[0,c[1],0]})},
+ cone:()=>{const n=28,v=[],nv=[],f=[];
+   for(let i=0;i<n;i++){const a=i/n*2*Math.PI,a2=(i+1)/n*2*Math.PI,am=(a+a2)/2,k=v.length;
+     v.push([0,.5,0],[Math.cos(a)*.5,-.5,Math.sin(a)*.5],[Math.cos(a2)*.5,-.5,Math.sin(a2)*.5]);
+     const nn=vNorm([Math.cos(am),.5,Math.sin(am)]);nv.push(nn,nn,nn);f.push([k,k+2,k+1])}
+   const b=[];for(let i=0;i<n;i++){const a=i/n*2*Math.PI;b.push(v.length);v.push([Math.cos(a)*.5,-.5,Math.sin(a)*.5]);nv.push([0,-1,0])}
+   f.push(b);return mkMesh(v,f,{nv,ref:c=>[0,-.1,0]})},
+ pyramid:()=>mkMesh([[-.5,-.5,-.5],[.5,-.5,-.5],[.5,-.5,.5],[-.5,-.5,.5],[0,.5,0]],[[0,1,2,3],[0,1,4],[1,2,4],[2,3,4],[3,0,4]],{ref:()=>[0,-.1,0]}),
+ diamond:()=>mkMesh([[.5,0,0],[-.5,0,0],[0,.5,0],[0,-.5,0],[0,0,.5],[0,0,-.5]],[[0,2,4],[4,2,1],[1,2,5],[5,2,0],[0,3,4],[4,3,1],[1,3,5],[5,3,0]],{ref:()=>[0,0,0]}),
+ torus:()=>{const R=.35,r=.15,U=32,Vn=16,v=[],nv=[],f=[];
+   for(let i=0;i<U;i++)for(let j=0;j<Vn;j++){const u=i/U*2*Math.PI,w=j/Vn*2*Math.PI;v.push([(R+r*Math.cos(w))*Math.cos(u),r*Math.sin(w),(R+r*Math.cos(w))*Math.sin(u)]);nv.push([Math.cos(w)*Math.cos(u),Math.sin(w),Math.cos(w)*Math.sin(u)])}
+   for(let i=0;i<U;i++)for(let j=0;j<Vn;j++){const a=i*Vn+j,b=((i+1)%U)*Vn+j,c=((i+1)%U)*Vn+(j+1)%Vn,d=i*Vn+(j+1)%Vn;f.push([a,b,c,d])}
+   return mkMesh(v,f,{nv,ref:c=>{const l=Math.hypot(c[0],c[2])||1;return[c[0]/l*R,0,c[2]/l*R]}})},
+ plane:()=>mkMesh([[-.5,0,-.5],[.5,0,-.5],[.5,0,.5],[-.5,0,.5]],[[0,3,2,1]],{dbl:1,ns:1})};
+const SH3=Object.keys(PRIM).concat(["lathe","extrude","mesh"]),SH3A={box:"cube",ball:"sphere",orb:"sphere",tube:"cylinder",pillar:"cylinder",column:"cylinder",donut:"torus",ring:"torus",octahedron:"diamond",gem:"diamond",square:"plane",quad:"plane",wall:"plane",revolve:"lathe",prism:"extrude",custom:"mesh",model:"mesh"};
+const sh3=o=>{let t=String(o.shape||o.type||(o.verts?"mesh":"cube")).toLowerCase().replace(/[\s_-]/g,"");t=SH3A[t]||t;return SH3.includes(t)?t:null};
+function lathe(o){
+  const P=(Array.isArray(o.profile)?o.profile:[]).map(p=>[Math.abs(+p[0])||0,+p[1]||0]).slice(0,60),n=Math.min(48,Math.max(6,Math.round(+o.seg)||24));if(P.length<2)return null;
+  const ys=P.map(p=>p[1]),yc=(Math.min(...ys)+Math.max(...ys))/2,v=[],f=[],id=[];
+  P.forEach((p,j)=>{id[j]=[];for(let i=0;i<n;i++){if(p[0]<1e-6&&i>0){id[j][i]=id[j][0];continue}const a=i/n*2*Math.PI;id[j][i]=v.length;v.push([Math.cos(a)*p[0],p[1]-yc,Math.sin(a)*p[0]])}});
+  for(let j=0;j<P.length-1;j++)for(let i=0;i<n;i++){const k=(i+1)%n;f.push([id[j][i],id[j][k],id[j+1][k],id[j+1][i]])}
+  const open=P[0][0]>1e-6||P[P.length-1][0]>1e-6;return mkMesh(v,f,{ref:c=>[0,c[1],0],glob:1,dbl:open,smooth:o.flat?0:1})}
+function extrude(o){
+  let P=(Array.isArray(o.poly)?o.poly:[]).map(p=>[+p[0]||0,+p[1]||0]).slice(0,80);if(P.length<3)return null;
+  const xs=P.map(p=>p[0]),ys=P.map(p=>p[1]),cx=(Math.min(...xs)+Math.max(...xs))/2,cy=(Math.min(...ys)+Math.max(...ys))/2,d=(+o.depth||.3)/2;
+  P=P.map(p=>[p[0]-cx,p[1]-cy]);let A=0;P.forEach((p,i)=>{const q=P[(i+1)%P.length];A+=p[0]*q[1]-q[0]*p[1]});if(A<0)P.reverse();
+  const n=P.length,v=[],f=[];P.forEach(p=>v.push([p[0],p[1],d]));P.forEach(p=>v.push([p[0],p[1],-d]));
+  f.push([...Array(n).keys()]);f.push([...Array(n).keys()].map(i=>i+n).reverse());
+  for(let i=0;i<n;i++){const j=(i+1)%n;f.push([i,i+n,j+n,j])}
+  /* 앞면(+z) 법선이 바깥을 향하도록 확인: 반시계 도형이면 이미 맞음. 옆면은 전체 부호만 맞춤 */
+  return mkMesh(v,f,{ref:c=>[0,0,0],glob:1})}
+function custom(o){
+  const V=(Array.isArray(o.verts)?o.verts:[]).slice(0,2000).map(p=>v3(p,[0,0,0])),F=(Array.isArray(o.faces)?o.faces:[]).slice(0,4000).map(q=>Array.isArray(q)?q.map(Math.floor):[]).filter(q=>q.length>2&&q.every(i=>i>=0&&i<V.length));
+  if(!V.length||!F.length)return null;return mkMesh(V,F,{dbl:o.double!==false,smooth:!!o.smooth,fc:Array.isArray(o.fc)?o.fc:null})}
+function meshOf(o){const t=sh3(o);if(!t)return null;if(t=="lathe")return lathe(o);if(t=="extrude")return extrude(o);if(t=="mesh")return custom(o);return MESHC[t]||(MESHC[t]=PRIM[t]())}
+/* 장면 준비: 메시·부모 연결, 문제 목록 반환 */
+function prep3D(sc,issues,si){
+  sc.start=+sc.start||0;sc.dur=+sc.dur||5;sc.objects=(Array.isArray(sc.objects)?sc.objects:[]).filter(o=>o&&typeof o=="object").slice(0,120);
+  const ids={};
+  sc.objects.forEach((o,i)=>{o._m=meshOf(o);if(!o._m)issues.push(`scene3d[${si}].objects[${i}]의 shape "${o.shape}"는 만들 수 없어 (사용 가능: ${SH3.join(", ")}. lathe는 profile, extrude는 poly, mesh는 verts·faces 필요)`);
+    if(o.id!=null)ids[o.id]=o;o.start=+o.start||0;o.dur=+o.dur||Math.max(.1,sc.dur-o.start);if(Array.isArray(o.kf))o.kf.sort((a,b)=>(+a.t||0)-(+b.t||0))});
+  sc.objects.forEach(o=>{o._p=o.parent!=null&&ids[o.parent]!==o?ids[o.parent]:null});
+  const c=sc.camera=sc.camera&&typeof sc.camera=="object"?sc.camera:{};if(Array.isArray(c.kf))c.kf.sort((a,b)=>(+a.t||0)-(+b.t||0))}
+function kfa(kf,p,key,def){
+  const L=Array.isArray(kf)?kf.filter(k=>k&&k[key]!=null):[];if(!L.length)return def;
+  let a=null,b=null;for(const k of L){if((+k.t||0)<=p)a=k;else{b=k;break}}
+  if(!a)return L[0][key];if(!b)return a[key];
+  const q=(EASE[b.e]||EASE.easeInOut)(Math.min(1,Math.max(0,(p-(+a.t||0))/Math.max(1e-6,(+b.t||0)-(+a.t||0))))),f=(x,y)=>x+(y-x)*q;
+  if(Array.isArray(a[key])&&Array.isArray(b[key]))return a[key].map((x,i)=>f(+x||0,+b[key][i]||0));
+  if(typeof a[key]=="number"&&typeof b[key]=="number")return f(a[key],b[key]);
+  if(typeof a[key]=="string"&&typeof b[key]=="string"){const x=rgbOf(a[key]),y=rgbOf(b[key]);return"rgb("+x.map((u,i)=>Math.round(f(u,y[i]))).join(",")+")"}
+  return a[key]}
+/* 물체 하나의 현재 상태(위치·회전·크기·색·투명도) */
+function objState(o,lt){
+  const du=o.dur,p=Math.min(1,Math.max(0,lt/du)),A=+o.animDur||.5,k=cl01(Math.min(lt/A,(du-lt)/A)),inw=lt>=0&&lt<=du;
+  let pos=v3(kfa(o.kf,p,"pos",o.pos),[0,0,0]),rot=v3(kfa(o.kf,p,"rot",o.rot),[0,0,0]),sc=kfa(o.kf,p,"scale",o.scale??1);
+  sc=Array.isArray(sc)?v3(sc,[1,1,1]):[+sc||0,+sc||0,+sc||0];
+  let op=(o.opacity??1)*(kfa(o.kf,p,"opacity",1)),col=kfa(o.kf,p,"color",o.color);const t=Math.max(0,lt);
+  if(o.spin!=null){const s=Array.isArray(o.spin)?v3(o.spin,[0,0,0]):[0,+o.spin||0,0];rot=rot.map((x,i)=>x+s[i]*t)}
+  if(+o.bob)pos[1]+=Math.sin(t*2*(+o.bobSpeed||1))*+o.bob;
+  if(+o.pulse){const q=1+o.pulse*Math.sin(t*6);sc=sc.map(x=>x*q)}
+  if(o.orbit&&typeof o.orbit=="object"){const r=+o.orbit.radius||2,a=((+o.orbit.phase||0)+(+o.orbit.speed||40)*t)*Math.PI/180,tl=(+o.orbit.tilt||0)*Math.PI/180,x=Math.cos(a)*r,z=Math.sin(a)*r;pos=[pos[0]+x,pos[1]+Math.sin(tl)*z,pos[2]+Math.cos(tl)*z]}
+  if(inw)switch(o.anim){
+    case"grow":case"pop":sc=sc.map(x=>x*Math.max(0,back(k)));break;
+    case"drop":pos[1]+=(1-EASE.bounce(k))*6;op*=Math.min(1,k*3);break;
+    case"fade":op*=k}
+  return{pos,rot,sc,op,col}}
+function worldM(o,lt,depth){
+  const s=objState(o,lt-o.start);let m=mLocal(s.pos,s.rot,s.sc);
+  if(o._p&&(depth||0)<8)m=mMul(worldM(o._p,lt,(depth||0)+1).m,m);
+  return{m,s}}
+function render3D(sc,loc,W,H){
+  const du=sc.dur,F=+sc.fade||0,A0=cl01((F?Math.min(1,loc/F,(du-loc)/F):1)),p=du?loc/du:0,cam=sc.camera||{};
+  if(A0<=0)return;
+  ctx.save();ctx.globalAlpha=A0;ctx.filter="none";
+  if(sc.sky){let s=sc.sky;if(Array.isArray(s)){const g=ctx.createLinearGradient(0,0,0,H);s.forEach((c,i)=>g.addColorStop(i/Math.max(1,s.length-1),c));s=g}ctx.fillStyle=s;ctx.fillRect(0,0,W,H)}
+  /* 카메라 */
+  let eye=v3(kfa(cam.kf,p,"pos",cam.pos),[0,2,8]),tg=v3(kfa(cam.kf,p,"look",cam.look),[0,1,0]),fov=+kfa(cam.kf,p,"fov",cam.fov)||50;
+  if(cam.orbit&&typeof cam.orbit=="object"){const c=v3(cam.orbit.center,[0,0,0]),r=+cam.orbit.radius||8,a=((+cam.orbit.phase||0)+(+cam.orbit.speed||30)*loc)*Math.PI/180;
+    eye=[c[0]+Math.sin(a)*r,c[1]+(+cam.orbit.height||0),c[2]+Math.cos(a)*r];if(!cam.look&&!(Array.isArray(cam.kf)?cam.kf:[]).some(k=>k.look))tg=c}
+  if(+cam.shake){const a=+cam.shake,t=loc*40;const d=[Math.sin(t*1.3)*a,Math.cos(t*1.7)*a,Math.sin(t*2.1)*a];eye=eye.map((x,i)=>x+d[i]);tg=tg.map((x,i)=>x+d[i])}
+  fov=Math.min(140,Math.max(10,fov));
+  const fw=vNorm(vSub(tg,eye));let up=[0,1,0];if(Math.abs(vDot(fw,up))>.999)up=[0,0,-1];
+  let rt=vNorm(vCross(fw,up)),uu=vCross(rt,fw);const roll=(+cam.roll||0)*Math.PI/180;
+  if(roll){const c=Math.cos(roll),s=Math.sin(roll),r2=rt.map((x,i)=>x*c+uu[i]*s),u2=uu.map((x,i)=>uu[i]*c-rt[i]*s);rt=r2;uu=u2}
+  const foc=(H/2)/Math.tan(fov*Math.PI/360),NEAR=.1;
+  const L=vNorm(v3(sc.light&&sc.light.dir,[.5,1,.7])),amb=sc.light&&sc.light.ambient!=null?+sc.light.ambient:.35,pw=sc.light&&sc.light.power!=null?+sc.light.power:.9;
+  const fog=sc.fog&&typeof sc.fog=="object"?{c:rgbOf(sc.fog.color,[150,160,180]),n:+sc.fog.near||10,f:+sc.fog.far||60}:null;
+  const toV=w=>{const d=vSub(w,eye);return[vDot(d,rt),vDot(d,uu),vDot(d,fw)]};
+  /* 한 다각형을 화면 좌표로 (가까운 면 자르기). 보이면 {pts,z} */
+  const proj=ws=>{let vs=ws.map(toV);if(vs.every(q=>q[2]<NEAR))return null;
+    if(vs.some(q=>q[2]<NEAR)){const o=[];for(let i=0;i<vs.length;i++){const a=vs[i],b=vs[(i+1)%vs.length],ia=a[2]>=NEAR,ib=b[2]>=NEAR;if(ia)o.push(a);if(ia!=ib){const t=(NEAR-a[2])/(b[2]-a[2]);o.push([a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,NEAR])}}vs=o;if(vs.length<3)return null}
+    let z=0,x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;const pts=vs.map(q=>{const x=W/2+q[0]/q[2]*foc,y=H/2-q[1]/q[2]*foc;z+=q[2];x0=Math.min(x0,x);x1=Math.max(x1,x);y0=Math.min(y0,y);y1=Math.max(y1,y);return[x,y]});
+    if(x1<0||x0>W||y1<0||y0>H)return null;return{pts,z:z/vs.length}};
+  const shade=(base,n,c,emis,shiny,z)=>{const V=vNorm(vSub(eye,c)),dl=Math.max(0,vDot(n,L)),lit=Math.min(1.25,amb+pw*dl),e=emis||0;let r=base.map(x=>x*(e+(1-e)*lit));
+    if(shiny>0){const Hh=vNorm([L[0]+V[0],L[1]+V[1],L[2]+V[2]]),s=Math.pow(Math.max(0,vDot(n,Hh)),40)*shiny*255*(1-e);r=r.map(x=>x+s)}
+    if(fog){const f=cl01((z-fog.n)/Math.max(.1,fog.f-fog.n));r=r.map((x,i)=>x+(fog.c[i]-x)*f)}
+    return"rgb("+r.map(x=>Math.max(0,Math.min(255,Math.round(x)))).join(",")+")"};
+  const draws=(list,al)=>{list.sort((a,b)=>b.z-a.z);
+    for(const q of list){ctx.globalAlpha=A0*(q.a??1);ctx.beginPath();q.pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();
+      if(q.wire){ctx.strokeStyle=q.col;ctx.lineWidth=q.w;ctx.stroke()}else{ctx.fillStyle=q.col;ctx.fill();if(q.a==null&&!q.sh){ctx.strokeStyle=q.col;ctx.lineWidth=1;ctx.stroke()}}}};
+  ctx.lineJoin="round";
+  /* 바닥 */
+  const g=sc.ground&&typeof sc.ground=="object"?sc.ground:null,gy=g?+g.y||0:0;
+  if(g){const size=Math.max(4,+g.size||120),tn=Math.min(60,Math.max(4,Math.round(+g.tiles)||30)),ts=size/tn,c1=rgbOf(g.color,[90,110,90]),c2=g.color2?rgbOf(g.color2):null,gl=g.grid?rgbOf(g.grid):null,cx=Math.round(eye[0]/ts)*ts,cz=Math.round(eye[2]/ts)*ts,list=[];
+    const gcol=gl?"rgb("+gl.join(",")+")":null;
+    for(let i=0;i<tn;i++)for(let j=0;j<tn;j++){const x=cx-size/2+i*ts,z=cz-size/2+j*ts,cc=[x+ts/2,gy,z+ts/2],P=proj([[x,gy,z],[x+ts,gy,z],[x+ts,gy,z+ts],[x,gy,z+ts]]);if(!P)continue;
+      const base=c2&&(Math.round((x-cx)/ts)+Math.round((z-cz)/ts))%2?c2:c1;list.push({pts:P.pts,z:P.z,col:shade(base,[0,1,0],[cc[0],gy,cc[2]],0,0,P.z),a:null});}
+    draws(list);
+    if(gcol){ctx.strokeStyle=gcol;ctx.lineWidth=1.5;ctx.globalAlpha=A0*.5;for(let i=0;i<=tn;i++){for(const[a,b]of[[[cx-size/2+i*ts,gy,cz-size/2],[cx-size/2+i*ts,gy,cz+size/2]],[[cx-size/2,gy,cz-size/2+i*ts],[cx+size/2,gy,cz-size/2+i*ts]]]){
+        const A=toV(a),B=toV(b);let a2=A,b2=B;if(a2[2]<NEAR&&b2[2]<NEAR)continue;if(a2[2]<NEAR){const t=(NEAR-a2[2])/(b2[2]-a2[2]);a2=[a2[0]+(b2[0]-a2[0])*t,a2[1]+(b2[1]-a2[1])*t,NEAR]}if(b2[2]<NEAR){const t=(NEAR-b2[2])/(a2[2]-b2[2]);b2=[b2[0]+(a2[0]-b2[0])*t,b2[1]+(a2[1]-b2[1])*t,NEAR]}
+        ctx.beginPath();ctx.moveTo(W/2+a2[0]/a2[2]*foc,H/2-a2[1]/a2[2]*foc);ctx.lineTo(W/2+b2[0]/b2[2]*foc,H/2-b2[1]/b2[2]*foc);ctx.stroke()}}}}
+  /* 물체: 상태 계산 → 그림자 → 면 모으기 */
+  const faces=[],shd=[];
+  for(const o of sc.objects){
+    const lt=loc-o.start;if(!o._m||lt<0||lt>o.dur)continue;
+    const{m,s}=worldM(o,loc),M=o._m;if(s.op<=.01)continue;
+    const base=rgbOf(s.col,[200,200,205]),det=mDet(m)<0?-1:1,al=s.op<1?s.op:null,W3=M.v.map(q=>mAp(m,q)),emis=cl01(+o.emissive||0),shiny=cl01(+o.shiny||0),flat=!!o.flat||!M.nv,wire=!!o.wire;
+    if(g&&o.shadow!==false&&sc.shadow!==false&&!M.ns&&!wire){
+      const c=mAp(m,[0,0,0]),h=Math.max(0,c[1]-gy),rad=M.r*Math.max(Math.hypot(m[0],m[4],m[8]),Math.hypot(m[1],m[5],m[9]),Math.hypot(m[2],m[6],m[10])),k=Math.max(0,1-h/(rad*6+4));
+      if(k>.02&&c[1]>gy-rad){const sx=L[1]>.05?-L[0]/L[1]*h:0,sz=L[1]>.05?-L[2]/L[1]*h:0,pr=[];for(let i=0;i<18;i++){const a=i/18*2*Math.PI;pr.push([c[0]+sx+Math.cos(a)*rad*.9,gy+.01,c[2]+sz+Math.sin(a)*rad*.9])}
+        const P=proj(pr);if(P)shd.push({pts:P.pts,z:P.z,col:"#000",a:.32*k*(al??1),sh:1})}}
+    M.f.forEach((q,fi)=>{
+      const w=q.map(i=>W3[i]);let n=[0,0,0];for(let i=1;i<w.length-1;i++){const t=vCross(vSub(w[i],w[0]),vSub(w[i+1],w[0]));n=[n[0]+t[0],n[1]+t[1],n[2]+t[2]]}n=vNorm(n);if(det<0)n=[-n[0],-n[1],-n[2]];
+      const c=[0,0,0];w.forEach(p=>{c[0]+=p[0];c[1]+=p[1];c[2]+=p[2]});c[0]/=w.length;c[1]/=w.length;c[2]/=w.length;
+      const facing=vDot(n,vSub(eye,c))>0;if(!facing&&!M.dbl&&!wire)return;
+      let ln=n;if(!flat){const a=[0,0,0];q.forEach(i=>{const t=mLin(m,M.nv[i]);a[0]+=t[0];a[1]+=t[1];a[2]+=t[2]});ln=vNorm(a);if(det<0)ln=[-ln[0],-ln[1],-ln[2]]}
+      if(!facing)ln=[-ln[0],-ln[1],-ln[2]];
+      const P=proj(w);if(!P)return;
+      const fb=M.fc&&M.fc[fi]?rgbOf(M.fc[fi],base):base;
+      faces.push({pts:P.pts,z:P.z,col:shade(fb,ln,c,emis,shiny,P.z),a:al,wire,w:+o.wireW||2})})}
+  draws(shd);draws(faces);
+  ctx.restore()}
+const SAMPLE3D={title:"3D 샘플",bg:"#0b1020",clips:[],scene3d:{start:0,dur:8,fade:.4,sky:["#1b2a6b","#f6a5c0"],
+  ground:{color:"#2f6b4f",color2:"#3b8461",y:0,size:120,tiles:40},fog:{color:"#f6a5c0",near:12,far:60},light:{dir:[.6,1,.5],ambient:.4,power:.85},
+  camera:{orbit:{center:[0,1.2,0],radius:9,height:3.2,speed:22},fov:55},
+  objects:[
+   {id:"b",shape:"sphere",pos:[0,1,0],scale:1.6,color:"#ff5d73",shiny:.7,kf:[{t:0,pos:[0,3.5,0],e:"easeIn"},{t:.2,pos:[0,.8,0],e:"easeOut"},{t:.4,pos:[0,3,0],e:"easeIn"},{t:.6,pos:[0,.8,0],e:"easeOut"},{t:.8,pos:[0,2.2,0],e:"easeIn"},{t:1,pos:[0,.8,0]}],anim:"grow"},
+   {shape:"cube",pos:[-3.2,.7,0],scale:1.4,color:"#ffd166",spin:[0,60,0],anim:"drop"},
+   {shape:"torus",pos:[3.2,1.4,0],scale:2.2,color:"#7bdff2",rot:[70,0,0],spin:[0,0,90],shiny:.5,emissive:.15},
+   {shape:"cone",pos:[0,.8,-4],scale:[1.6,1.6,1.6],color:"#8fd694"},
+   {shape:"lathe",profile:[[0,0],[.5,0],[.5,.15],[.2,.5],[.28,1.1],[.45,1.3],[0,1.3]],pos:[-2,.85,3],scale:1.3,color:"#c77dff",shiny:.4},
+   {shape:"diamond",pos:[2.4,1.6,3],scale:1.4,color:"#f72585",emissive:.35,bob:.25,spin:80},
+   {id:"moon",shape:"sphere",parent:"b",pos:[0,0,0],orbit:{radius:1.3,speed:120},scale:.3,color:"#ffffff",emissive:.5}]},
+ texts:[{text:"3D 애니메이션",start:.3,dur:7,font:"Black Han Sans",size:92,color:"#ffffff",stroke:"#1b2a6b",strokeW:8,y:.16,anim:"pop"}]};
+
+function spec3d(){return `
+■ scene3d — 3D 장면. 객체 하나 또는 배열(여러 장면을 start/dur로 이어붙일 수 있어). clips 위, shapes·texts 아래에 그려져. 장면 하나의 구성:
+ - start, dur(필수), fade(페이드 인/아웃 길이)
+ - sky: 하늘/배경색(색 하나 또는 [위색,아래색]). 생략하면 아래의 clips/bg가 비쳐 보여.
+ - ground: 바닥 {"color":"#2f6b4f","color2":"#3b8461"(있으면 체크무늬),"grid":"#ffffff"(격자선),"y":0,"size":120,"tiles":30}. 생략하면 바닥 없음.
+ - fog: {"color":"#f6a5c0","near":12,"far":60} 멀수록 이 색에 묻혀서 깊이감이 생겨.
+ - light: {"dir":[0.6,1,0.5](빛이 오는 쪽),"ambient":0.4(그늘 밝기 0~1),"power":0.85(빛 세기)}
+ - shadow: false면 바닥 그림자를 끔(기본은 켜짐)
+ - camera: {"pos":[0,2,8],"look":[0,1,0],"fov":50,"roll":0,"shake":0,"orbit":{...},"kf":[...]}
+   · 좌표는 x 오른쪽, y 위, z 카메라 쪽. 단위는 임의(사람 키가 약 1.7). 물체는 원점 근처(−8~8)에 두고 카메라는 6~12쯤 떨어뜨려.
+   · orbit: {"center":[0,1,0],"radius":8,"height":3,"speed":30(도/초),"phase":0} — 중심을 빙 도는 카메라(pos는 무시).
+   · kf: [{"t":0~1(장면 길이 대비 비율),"pos":[..],"look":[..],"fov":50,"e":"easeInOut"}] — 다가가기, 올려다보기, 줌 같은 카메라 무빙. 일부 값만 써도 돼.
+   · shake: 화면 흔들림 크기(0.05~0.3). 충격 장면에만 짧게.
+ - objects: 물체 배열(최대 120개). 그리는 순서는 신경 쓰지 마, 깊이로 알아서 정렬돼.
+   · shape: cube | sphere | cylinder | cone | pyramid | torus | diamond(팔면체) | plane(평평한 판, 벽·간판·수면) | lathe | extrude | mesh
+     기본형은 크기 1이고 원점이 중심이야(cube 한 변 1, sphere 지름 1, cylinder·cone 지름 1·높이 1, plane 1×1). 실제 크기는 scale로 정해. 바닥에 올리려면 y를 (높이×scale)/2로.
+   · lathe: profile=[[반지름,높이],...]을 y축 둘레로 돌려 만든 병·꽃병·팽이·체스말·와인잔·기둥. 높이는 아래에서 위로, 양 끝은 반지름 0으로 닫으면 속이 막혀. seg(둘레 분할, 기본 24). 예: {"shape":"lathe","profile":[[0,0],[0.5,0],[0.5,0.15],[0.2,0.5],[0.28,1.1],[0.45,1.3],[0,1.3]]}
+   · extrude: poly=[[x,y],...] 평면 도형(꼭짓점이 겹치지 않게)을 depth만큼 두껍게 뽑은 블록. 별·하트·화살표·로고·간판 모양. 예: {"shape":"extrude","poly":[[0,0],[1,0],[0.5,1]],"depth":0.3}
+   · mesh: 직접 만든 모델 verts=[[x,y,z],...](2000개 이내), faces=[[0,1,2],[0,2,3,4],...](꼭짓점 번호 3개 이상, 4000개 이내). fc=[색,...]로 면마다 색을 줄 수 있어(생략하면 color).
+   · id: 이름. parent: 다른 물체의 id — 부모의 위치·회전·크기를 따라가. 사람·로봇·자동차 같은 구조물은 몸통에 팔다리를 parent로 붙여서 만들어. 행성에 위성도 가능.
+   · pos [x,y,z], rot [x°,y°,z°], scale(숫자 하나 또는 [x,y,z]), color(색 하나), opacity(0~1), emissive(0~1 스스로 빛나는 정도: 네온·태양·전구), shiny(0~1 반짝임), wire(true면 선만), flat(true면 각진 음영), double(true면 양면), shadow(false면 그림자 없음)
+   · start, dur: 이 물체가 보이는 구간(장면 기준 초). 생략하면 장면 전체.
+   · anim: none | grow(커지며 등장) | drop(위에서 떨어지며 등장) | fade, animDur(길이). 퇴장도 같은 방식으로 나타나.
+   · 계속 움직임: spin([x,y,z] 도/초, 숫자 하나면 y축 회전), bob(위아래로 둥실 흔들리는 크기), pulse(숨쉬듯 커졌다 작아지는 크기), orbit({"radius":3,"speed":40,"phase":0,"tilt":0} 자기 pos를 중심으로 도는 공전).
+   · kf: [{"t":0~1(이 물체가 보이는 구간 대비 비율),"pos":[..],"rot":[..],"scale":..,"opacity":1,"color":"#ffffff","e":"easeOut"}] — pos·rot·scale은 기본값을 대신하는 절대값이야. e는 직전 키프레임에서 이 키프레임까지의 가속(linear|easeIn|easeOut|easeInOut|back|bounce|elastic). 공 튀기기: 위(easeIn)↔바닥(easeOut)을 번갈아 키프레임으로.
+ - 글씨는 texts로 화면 위에 얹어(3D 글자는 없어). 도형(shapes)도 그대로 쓸 수 있어.
+
+[3D 연출 가이드]
+- 물체 3개 이상으로 크기·색 대비를 주고, ground와 sky, fog로 깊이를 만들어. 밋밋하면 emissive, shiny를 섞어.
+- 카메라를 가만히 두지 마. camera.orbit이나 camera.kf로 계속 움직여서 3D인 게 느껴지게 해.
+- 단순한 기본형을 parent로 조립해서 캐릭터·탈것·건물·나무 같은 소품을 만들어. 복잡한 형태는 lathe, extrude, mesh로.
+- 물체는 처음부터 다 보이게 두지 말고 anim(grow, drop)이나 start로 시간차를 두고 등장시켜.
+- 면이 많으면 느려져. 물체는 60개 안쪽, lathe seg는 24 이하로.
+
+[3D 출력 예시 — 형식 참고용. 내용은 요청에 맞게 새로 만들어]
+`+JSON.stringify(SAMPLE3D)}
+/* ===3D END=== */
+
 /* 그리기 */
 function wrap(s,max){const out=[];for(const p of s.split("\n")){let l="";for(const ch of p){if(ctx.measureText(l+ch).width>max&&l){out.push(l);l=ch.trimStart()}else l+=ch}out.push(l)}return out}
 const EASE={linear:x=>x,easeIn:x=>x*x*x,easeOut:ease,easeInOut:x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2,back,bounce:x=>{const n=7.5625,d=2.75;if(x<1/d)return n*x*x;if(x<2/d)return n*(x-=1.5/d)*x+.75;if(x<2.5/d)return n*(x-=2.25/d)*x+.9375;return n*(x-=2.625/d)*x+.984375},elastic:x=>x<=0||x>=1?x:Math.pow(2,-10*x)*Math.sin((x*10-.75)*2.0944)+1};
@@ -2603,6 +2838,7 @@ function draw(t){
     else if(exportSafe&&c.a?.tainted){ctx.fillStyle="#2a2a30";ctx.fillRect(-W/2,-H/2,W,H)}else{const e=c.a?.el;if(e&&c.a.kind!="a"){const sw=e.videoWidth||e.naturalWidth,sh=e.videoHeight||e.naturalHeight;
       if(sw){const z=Array.isArray(c.zoom)?c.zoom[0]+(c.zoom[1]-c.zoom[0])*loc/c.dur:1,s=(c.fit=="contain"?Math.min(W/sw,H/sh):Math.max(W/sw,H/sh))*z;ctx.drawImage(e,-sw*s/2,-sh*s/2,sw*s,sh*s)}}}
     ctx.restore();if(tr=="flash"&&k<1){ctx.save();ctx.globalAlpha=(1-k)*.9;ctx.fillStyle="#fff";ctx.fillRect(0,0,W,H);ctx.restore()}}
+  for(const sc of plan.s3||[])if(on(sc))render3D(sc,t-sc.start,W,H);
   for(const s of plan.shapes){
     if(!on(s))continue;
     const m=mo(s,t-s.start,s.dur),ty=shapeType(s)||"rect";let w=(+s.w||.3)*W,h=(+s.h||+s.w||.3)*(s.h?H:W);
@@ -2647,7 +2883,7 @@ function calcLW(){LWd=Math.max(50,$("#tl").clientWidth-LW-14)}
 function renderTL(){
   if(rtPlan!==plan){rtPlan=plan;TZ=1;$("#zs").value=0;$("#zv").textContent="1×";$("#tl").scrollLeft=0}
   calcLW();$("#tl").style.setProperty("--z",TZ);
-  const R=[["영상","v",plan.clips,c=>c.asset||c.label||(c.img?"이미지":Array.isArray(c.color)?"그라데이션":c.color)],["자막","t",plan.texts,x=>x.text],["도형","s",plan.shapes,s=>s.type||"rect"],["소리","a",plan.audio,c=>c.asset]];
+  const R=[["영상","v",plan.clips,c=>c.asset||c.label||(c.img?"이미지":Array.isArray(c.color)?"그라데이션":c.color)],["3D","d",plan.s3||[],s=>"3D "+(s.objects||[]).length+"개"],["자막","t",plan.texts,x=>x.text],["도형","s",plan.shapes,s=>s.type||"rect"],["소리","a",plan.audio,c=>c.asset]];
   const step=TSTEP.find(v=>v*LWd*TZ/total>=70)||300;let ticks="";
   for(let i=0;i*step<=total+1e-6;i++){const v=Math.round(i*step*10)/10;ticks+=`<b style="left:${v/total*100}%">${step<1?v.toFixed(1):v}s</b>`}
   $("#tl").innerHTML=`<div class="r rr"><span></span><div class="rl">${ticks}</div></div>`+R.filter(r=>r[2].length).map(([n,k,l,f])=>`<div class="r ${k}"><span>${n}</span><div class="lane">${l.map((c,n)=>`<i data-k="${k}" data-i="${n}"${SEL&&SEL.k==k&&SEL.i==n?' class="sel"':""} style="left:${c.start/total*100}%;width:${c.dur/total*100}%">${esc(String(f(c)).slice(0,14))}</i>`).join("")}</div></div>`).join("")+'<div id="ph"></div>'}
@@ -2665,10 +2901,10 @@ window.addEventListener("resize",()=>{if(plan){renderTL();ui(tNow)}});
 function phVis(){const h=$("#ph");if(h)h.style.visibility=parseFloat(h.style.left)<$("#tl").scrollLeft+LW?"hidden":"visible"}
 $("#tl").addEventListener("scroll",phVis);
 $("#tl").onclick=e=>{if(!plan)return;const tl=$("#tl"),px=e.clientX-tl.getBoundingClientRect().left;if(px<LW)return;const q=Math.min(1,Math.max(0,(px+tl.scrollLeft-LW)/(LWd*TZ)));stop();tNow=q*total;sync(tNow,false);draw(tNow);ui(tNow);
-  const b=e.target.closest&&e.target.closest("i[data-k]");if(b&&/^[tsa]$/.test(b.dataset.k))pick(b.dataset.k,+b.dataset.i)};
+  const b=e.target.closest&&e.target.closest("i[data-k]");if(b&&/^[tsad]$/.test(b.dataset.k))pick(b.dataset.k,+b.dataset.i)};
 
 /* ===== 요소 편집: 자막(내용·글꼴·크기·색 등) / 도형(색·크기·위치) / SVG(코드 원본) ===== */
-const edItem=()=>SEL&&plan?({t:plan.texts,s:plan.shapes,a:plan.audio}[SEL.k]||[])[SEL.i]:null;
+const edItem=()=>SEL&&plan?({t:plan.texts,s:plan.shapes,a:plan.audio,d:plan.s3}[SEL.k]||[])[SEL.i]:null;
 const er=s=>`<div class="er">${s}</div>`,fld=(l,s)=>`<div class="ef"><label>${l}</label>${s}</div>`;
 const rng=(f,v,a,b,st,u)=>`<input type="range" data-f="${f}" min="${a}" max="${b}" step="${st}" value="${v}"><input type="number" data-f="${f}" min="${a}" max="${b}" step="${st}" value="${v}"><span>${u||""}</span>`;
 const edPair=(f,v,skip)=>$("#edBox").querySelectorAll(`[data-f="${f}"]`).forEach(n=>{if(n!==skip&&(n.type=="range"||n.type=="number"))n.value=v});
@@ -2679,6 +2915,7 @@ function edRender(){
   const box=$("#edBox"),it=edItem();
   if(!it){box.hidden=true;box.innerHTML="";return}
   if(SEL.k=="a"){box.innerHTML=audHtml(it);box.hidden=false;return}
+  if(SEL.k=="d"){box.innerHTML=sc3Html(it);box.hidden=false;return}
   const [W,H]=RATIOS[$("#ratio").value],isT=SEL.k=="t",ty=isT?"":shapeType(it)||"rect",isS=ty=="svg",P=v=>+(v*100).toFixed(1);
   let h=`<div class="eh"><b>${isT?"자막 편집":isS?"SVG 편집":"도형 편집"}</b><button class="g x" id="edGo" title="이 요소가 보이는 시간으로 이동" aria-label="이 요소가 보이는 시간으로 이동">⏱</button><button class="g x" id="edClose" aria-label="닫기">✕</button></div>`;
   if(isT){
@@ -2700,6 +2937,12 @@ function edRender(){
     if(!isS&&ty!="line")h+=`<div class="ef"><label class="ck"><input type="checkbox" data-f="hOn"${it.h?" checked":""}>세로 크기 따로 조절</label>${it.h?er(rng("h",P(it.h),1,150,1,"%")):""}</div>`;
     h+=fld("가로 위치",er(rng("x",P(it.x??.5),0,100,.5,"%")))+fld("세로 위치",er(rng("y",P(it.y??.5),0,100,.5,"%")))}
   box.innerHTML=h;box.hidden=false}
+/* 3D 장면 정보 */
+function sc3Html(it){const ob=it.objects||[],c={};ob.forEach(o=>{const t=sh3(o)||"?";c[t]=(c[t]||0)+1});
+  return `<div class="eh"><b>3D 장면</b><button class="g x" id="edGo" title="이 장면이 나오는 시간으로 이동" aria-label="이 장면이 나오는 시간으로 이동">⏱</button><button class="g x" id="edClose" aria-label="닫기">✕</button></div>`
+   +`<p class="hint" style="margin-bottom:10px">${r2(+it.start||0)}초 ~ ${r2((+it.start||0)+it.dur)}초 · 물체 ${ob.length}개</p>`
+   +`<small>${Object.entries(c).map(([k,n])=>k+" "+n).join(" · ")||"물체 없음"}</small>`
+   +`<small>3D 장면은 AI가 준 값으로 움직여요. 바꾸고 싶으면 '적용' 탭의 JSON을 고치거나 AI에게 다시 요청해 주세요.</small>`}
 /* 소리: 시작/끝 시각, 원본 시작 지점, 크기 */
 const r2=x=>+(+x).toFixed(2);
 function audHtml(it){
@@ -2712,7 +2955,7 @@ function audHtml(it){
    +fld("소리 크기",er(rng("a_vol",Math.round((it.vol??1)*100),0,100,1,"%")))
    +`<small id="edAudMsg">소리는 재생(▶)할 때만 들려요.</small>`}
 function recalcTotal(){
-  total=Math.max(.1,...[...plan.clips,...plan.texts,...plan.shapes,...plan.audio].map(x=>x.start+x.dur));
+  total=Math.max(.1,...[...plan.clips,...plan.texts,...plan.shapes,...plan.audio,...(plan.s3||[])].map(x=>x.start+x.dur));
   $("#sl").max=Math.round(total*100);if(tNow>total)tNow=total;renderTL();sync(tNow,playing);draw(tNow);ui(tNow)}
 function audSet(it,f,v,el){
   const a=it.a,sp=+it.speed||1,srcDur=a&&a.dur?a.dur:Infinity;let st=+it.start||0,en=st+(+it.dur||3),inn=+it.in||0,note="";
@@ -2867,7 +3110,7 @@ async function exportMp4(){
   finally{Q=1;exportSafe=false;saving=false;[cv.width,cv.height]=RATIOS[$("#ratio").value];tNow=0;if(plan){draw(0);ui(0)}$("#prog").style.width="0";$("#exp").disabled=false}}
 $("#exp").onclick=exportMp4;
 
-$("#sample").onclick=()=>{$("#out").value=JSON.stringify({title:"샘플",bg:"#111111",clips:[{color:"#ff4d6d",start:0,dur:3.5,fade:.4},{color:"#4d79ff",start:3,dur:3.5,fade:.4}],texts:[{text:"안녕하세요!",start:.2,dur:2.6,font:"Black Han Sans",size:96,color:"#ffffff",stroke:"#000000",strokeW:8,x:.5,y:.4,anim:"pop"},{text:"AI가 편집해준 영상",start:3.2,dur:3,font:"Jua",size:64,color:"#ffe66d",x:.5,y:.45,anim:"typewriter"},{text:"자막은 이렇게 들어가요",start:1,dur:5,font:"Gowun Batang",size:40,color:"#ffffff",bg:"rgba(0,0,0,0.5)",x:.5,y:.85,anim:"slideUp"}]},null,1);$("#out").dispatchEvent(new Event("input"))};
+$("#sample").onclick=()=>{if($("#mode").value=="3d"){$("#out").value=JSON.stringify(SAMPLE3D);$("#out").dispatchEvent(new Event("input"));return}$("#out").value=JSON.stringify({title:"샘플",bg:"#111111",clips:[{color:"#ff4d6d",start:0,dur:3.5,fade:.4},{color:"#4d79ff",start:3,dur:3.5,fade:.4}],texts:[{text:"안녕하세요!",start:.2,dur:2.6,font:"Black Han Sans",size:96,color:"#ffffff",stroke:"#000000",strokeW:8,x:.5,y:.4,anim:"pop"},{text:"AI가 편집해준 영상",start:3.2,dur:3,font:"Jua",size:64,color:"#ffe66d",x:.5,y:.45,anim:"typewriter"},{text:"자막은 이렇게 들어가요",start:1,dur:5,font:"Gowun Batang",size:40,color:"#ffffff",bg:"rgba(0,0,0,0.5)",x:.5,y:.85,anim:"slideUp"}]},null,1);$("#out").dispatchEvent(new Event("input"))};
 try{["req","out"].forEach(i=>$("#"+i).value=localStorage.getItem("ave_"+i)||"")}catch(e){}
 ["req","out"].forEach(i=>$("#"+i).addEventListener("input",()=>{try{localStorage.setItem("ave_"+i,$("#"+i).value)}catch(e){}}));
 $("#big").onclick=()=>{const b=$(".pv").classList.toggle("big");$("#big").textContent=b?"작게 보기":"크게 보기";document.body.style.overflow=b?"hidden":""};
