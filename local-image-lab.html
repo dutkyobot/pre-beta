@@ -2,52 +2,271 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<!-- 네트워크 허용 목록: 라이브러리(jsDelivr)와 모델(Hugging Face) 외 어떤 곳으로도 페이지/Worker가 요청을 보낼 수 없게 막습니다. -->
+<meta http-equiv="Content-Security-Policy" content="connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net; worker-src blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#101114">
+<meta name="referrer" content="no-referrer">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://huggingface.co" crossorigin>
 <title>Local Image Lab</title>
 <style>
-:root{color-scheme:dark;--bg:#101114;--panel:#191b20;--line:#30343d;--text:#f2f3f6;--muted:#a3a9b5;--accent:#cbd5ff;--accentText:#182039;--green:#a9e6c0;--red:#ffb5ab}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
-button,textarea{font:inherit}button{border:1px solid var(--line);border-radius:11px;padding:11px 14px;background:#252932;color:var(--text);cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}.primary{background:var(--accent);color:var(--accentText);border-color:transparent;font-weight:700}.danger{color:#ffd0c9;border-color:#71443f}
-.app{max-width:1100px;margin:auto;padding:26px 18px 40px}header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:22px}h1{font-size:23px;letter-spacing:-.5px;margin:0}.eyebrow,.muted,.small{color:var(--muted);font-size:12px}.pill{border:1px solid var(--line);border-radius:99px;padding:5px 10px;font-size:11px;color:var(--muted);white-space:nowrap}
-.layout{display:grid;grid-template-columns:350px minmax(0,1fr);gap:16px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:18px}.controls{display:flex;flex-direction:column;gap:15px;min-width:0}
-.status{padding:12px;border:1px solid var(--line);background:#12151a;border-radius:11px;font-size:12px;overflow-wrap:anywhere}.status.ok{border-color:#365d49;color:var(--green)}.status.bad{border-color:#70423d;color:var(--red)}
-.field label{display:block;margin-bottom:7px;font-size:13px}textarea{width:100%;min-height:145px;resize:vertical;background:#101216;border:1px solid var(--line);border-radius:11px;color:var(--text);padding:12px;outline:none}textarea:focus{border-color:#8796d1}
-.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.actions .wide{grid-column:1/-1}.progress{height:6px;background:#30343d;border-radius:10px;overflow:hidden;margin-top:8px}.progress>div{height:100%;width:0;background:var(--accent);transition:width .2s}
-.files{display:flex;flex-direction:column;gap:7px;max-height:150px;overflow:auto}.file-row{font-size:11px;color:var(--muted);overflow-wrap:anywhere}.file-row .track{height:4px;background:#30343d;border-radius:9px;overflow:hidden;margin-top:3px}.file-row .track span{display:block;height:100%;background:#91a0df;width:0}
-.log{max-height:120px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;background:#12151a;border:1px solid var(--line);border-radius:10px;padding:10px;font:11px/1.5 ui-monospace,monospace;color:var(--muted)}
-.result{min-height:620px;display:flex;flex-direction:column}.result-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.stage{flex:1;min-height:480px;display:grid;place-items:center;padding:22px}.placeholder{max-width:360px;text-align:center;color:var(--muted);font-size:13px}.placeholder .symbol{font-size:48px;opacity:.45;margin-bottom:10px}.preview{max-width:100%;max-height:68vh;object-fit:contain;border-radius:12px;box-shadow:0 10px 35px #0006}.notice{margin-top:13px;color:var(--muted);font-size:11px}
-@media(max-width:820px){.layout{grid-template-columns:1fr}.result{min-height:440px}.stage{min-height:340px}header{align-items:flex-start;flex-direction:column}}
+:root{color-scheme:dark;--bg:#101114;--panel:#191b20;--line:#30343d;--text:#f2f3f6;--muted:#a3a9b5;--accent:#cbd5ff;--accentText:#182039;--green:#a9e6c0;--red:#ffb5ab;--amber:#ffd88a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 system-ui,-apple-system,"Segoe UI","Noto Sans KR",sans-serif}
+button,textarea,select{font:inherit;color:inherit}
+button{border:1px solid var(--line);border-radius:11px;padding:11px 14px;background:#252932;cursor:pointer}
+button:hover:not(:disabled){border-color:#4a5062}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.primary{background:var(--accent);color:var(--accentText);border-color:transparent;font-weight:700}
+.danger{color:#ffd0c9;border-color:#71443f}
+select{width:100%;background:#101216;border:1px solid var(--line);border-radius:10px;padding:9px 10px}
+.app{max-width:1100px;margin:auto;padding:24px 18px 40px}
+header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}
+h1{font-size:23px;letter-spacing:-.5px;margin:0}
+.eyebrow,.muted,.small{color:var(--muted);font-size:12px}
+.pill{border:1px solid var(--line);border-radius:99px;padding:5px 10px;font-size:11px;color:var(--muted);white-space:nowrap}
+.layout{display:grid;grid-template-columns:360px minmax(0,1fr);gap:16px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:18px}
+.controls{display:flex;flex-direction:column;gap:16px;min-width:0}
+.step{display:flex;flex-direction:column;gap:9px}
+.step-title{display:flex;align-items:center;gap:8px;font-weight:700}
+.step-title i{font-style:normal;display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--accentText);font-size:12px}
+.status{padding:11px 12px;border:1px solid var(--line);background:#12151a;border-radius:11px;font-size:12px;overflow-wrap:anywhere}
+.status.ok{border-color:#365d49;color:var(--green)}
+.status.bad{border-color:#70423d;color:var(--red)}
+.status.warn{border-color:#6b5a30;color:var(--amber)}
+.sysinfo{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:12px;margin:0}
+.sysinfo dt{color:var(--muted)}.sysinfo dd{margin:0;overflow-wrap:anywhere}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.actions .wide{grid-column:1/-1}
+.bar{height:6px;background:#30343d;border-radius:10px;overflow:hidden}
+.bar>div{height:100%;width:0;background:var(--accent);transition:width .25s}
+.files{display:flex;flex-direction:column;gap:7px;max-height:130px;overflow:auto}
+.files:empty{display:none}
+.file-row{font-size:11px;color:var(--muted);overflow-wrap:anywhere}
+.file-row .track{height:3px;background:#30343d;border-radius:9px;overflow:hidden;margin-top:3px}
+.file-row .track span{display:block;height:100%;background:#91a0df;width:0}
+textarea{width:100%;min-height:120px;resize:vertical;background:#101216;border:1px solid var(--line);border-radius:11px;padding:12px;outline:none}
+textarea:focus{border-color:#8796d1}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:5px 10px;font-size:12px;border-radius:99px;background:#1f232b;color:var(--muted)}
+.notice{font-size:11.5px;color:var(--muted);border-left:2px solid var(--line);padding-left:10px}
+details summary{cursor:pointer;color:var(--muted);font-size:12px}
+.log{max-height:140px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;background:#12151a;border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:8px;font:11px/1.5 ui-monospace,monospace;color:var(--muted)}
+.result{min-height:620px;display:flex;flex-direction:column;gap:12px;position:sticky;top:12px}
+.result-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.stage{flex:1;min-height:440px;display:grid;place-items:center;padding:14px;background:#12151a;border:1px dashed var(--line);border-radius:13px}
+.placeholder{max-width:340px;text-align:center;color:var(--muted);font-size:13px}
+.placeholder .symbol{font-size:48px;opacity:.4;margin-bottom:8px}
+.preview{max-width:100%;max-height:70vh;border-radius:10px;display:block}
+.gallery{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.gallery:empty{display:none}
+.thumb{flex:0 0 auto;width:64px;height:64px;padding:0;border-radius:9px;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb[aria-current="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+@media(max-width:860px){.layout{grid-template-columns:1fr}.result{position:static;min-height:420px;order:-1}.stage{min-height:300px}header{align-items:flex-start;flex-direction:column}}
+@media(prefers-reduced-motion:reduce){.bar>div{transition:none}}
 </style>
 </head>
 <body>
 <div class="app">
-<header><div><h1>✳ Local Image Lab</h1><div class="eyebrow">JANUS-PRO-1B · BROWSER IMAGE GENERATION</div></div><span class="pill">WebGPU · On-device inference</span></header>
+<header>
+  <div><h1>✳ Local Image Lab</h1><div class="eyebrow">JANUS-PRO-1B · BROWSER IMAGE GENERATION</div></div>
+  <span class="pill">WebGPU · On-device inference</span>
+</header>
+
 <div class="layout">
 <section class="panel controls">
-  <div><strong>모델</strong><div class="muted">Janus-Pro-1B · ONNX / Transformers.js</div><div class="small" style="margin-top:4px">예상 모델 다운로드 약 2.25GB · 설정에 따라 달라질 수 있음</div></div>
-  <div id="envStatus" class="status">브라우저와 GPU 확인 중...</div>
-  <div><div class="actions"><button id="loadBtn" class="primary wide" disabled>모델 다운로드 및 실행</button><button id="unloadBtn" disabled>메모리 해제</button><button id="clearBtn" class="danger" disabled>모델 캐시 삭제</button></div><div id="loadStatus" class="small" style="margin-top:9px">최초 실행 시 모델 파일을 다운로드합니다.</div><div class="progress"><div id="loadBar"></div></div></div>
-  <div id="fileProgress" class="files"></div>
-  <div class="field"><label for="prompt">무엇을 그릴까요?</label><textarea id="prompt" placeholder="A realistic portrait of a person standing in a sunlit street, natural lighting, detailed photography.">A realistic portrait of a person standing in a sunlit street, natural lighting, detailed photography.</textarea><div class="small" style="margin-top:6px">영어 프롬프트 권장 · 한 번에 한 장씩 생성</div></div>
-  <button id="generateBtn" class="primary" disabled>이미지 생성</button>
-  <div id="genStatus" class="small">모델을 불러오면 이미지 생성이 활성화됩니다.</div><div class="progress"><div id="genBar"></div></div>
-  <div class="log" id="log">시작 준비 중...</div>
-  <div class="notice">이미지 생성 연산은 브라우저 안에서 수행됩니다. 실행 라이브러리는 jsDelivr, 모델은 Hugging Face에서 내려받습니다. 프롬프트는 외부 AI 추론 서버로 전송하지 않습니다.</div>
-  <div class="notice">Intel Iris Xe에서는 생성 시간이 길거나 메모리 부족으로 실패할 수 있습니다.</div>
+
+  <div class="step">
+    <div class="step-title"><i>1</i>내 컴퓨터 확인</div>
+    <div id="envStatus" class="status" role="status" aria-live="polite">브라우저와 GPU 확인 중...</div>
+    <dl class="sysinfo" id="sysinfo" hidden></dl>
+    <label class="small" for="paceSelect">속도 / 쾌적도 (생성 중 화면 버벅임 조절)</label>
+    <select id="paceSelect">
+      <option value="fast">최대 속도 — 가장 빠름, GPU를 꽉 씀</option>
+      <option value="balanced">균형 — 약간 여유를 둠</option>
+      <option value="smooth">쾌적 — 느려지지만 화면이 부드러움</option>
+    </select>
+    <div id="paceHint" class="small"></div>
+  </div>
+
+  <div class="step">
+    <div class="step-title"><i>2</i>모델 준비</div>
+    <div class="muted">Janus-Pro-1B · ONNX / Transformers.js · 약 2.25GB</div>
+    <div class="actions">
+      <button id="loadBtn" class="primary wide" disabled>모델 불러오기</button>
+      <button id="unloadBtn" disabled>메모리 해제</button>
+      <button id="clearBtn" class="danger">모델 캐시 삭제</button>
+    </div>
+    <div id="loadStatus" class="small" role="status" aria-live="polite">최초 1회는 모델 파일을 다운로드하고, 이후에는 브라우저 캐시에서 불러옵니다.</div>
+    <div class="bar"><div id="loadBar"></div></div>
+    <div id="fileProgress" class="files"></div>
+  </div>
+
+  <div class="step">
+    <div class="step-title"><i>3</i>그리기</div>
+    <label class="small" for="prompt">영어 프롬프트 권장 · Ctrl/⌘+Enter로 생성</label>
+    <textarea id="prompt" maxlength="600">A realistic portrait of a person standing in a sunlit street, natural lighting, detailed photography.</textarea>
+    <div class="chips" id="chips"></div>
+    <button id="generateBtn" class="primary" disabled>이미지 생성</button>
+    <div id="genStatus" class="small" role="status" aria-live="polite">모델을 불러오면 생성이 활성화됩니다.</div>
+    <div class="bar"><div id="genBar"></div></div>
+  </div>
+
+  <div class="notice">프롬프트와 생성된 이미지는 이 브라우저를 벗어나지 않습니다. 외부로 나가는 요청은 라이브러리(jsDelivr)와 모델 파일(Hugging Face) 다운로드뿐이며, 그 외 주소로의 연결은 보안 정책(CSP)으로 차단됩니다.</div>
+
+  <details><summary>로그</summary><div class="log" id="log" aria-live="off"></div></details>
 </section>
-<section class="panel result"><div class="result-head"><strong>생성 결과</strong><button id="saveBtn" disabled>PNG 저장</button></div><div class="stage"><div id="placeholder" class="placeholder"><div class="symbol">▧</div><div>모델을 불러온 다음 프롬프트를 입력해 보세요.</div></div><img id="preview" class="preview" alt="생성된 이미지" hidden></div><div id="resultMeta" class="small"></div></section>
+
+<section class="panel result">
+  <div class="result-head"><strong>생성 결과</strong><button id="saveBtn" disabled>PNG 저장</button></div>
+  <div class="stage">
+    <div id="placeholder" class="placeholder"><div class="symbol">▧</div><div>모델을 불러온 다음 프롬프트를 입력해 보세요.</div></div>
+    <img id="preview" class="preview" alt="생성된 이미지" hidden>
+  </div>
+  <div id="resultMeta" class="small"></div>
+  <div id="gallery" class="gallery" aria-label="이번 세션에서 생성한 이미지"></div>
+</section>
 </div>
 </div>
+
+<!-- Worker 코드: 실행되지 않는 텍스트 블록으로 보관했다가 Blob Worker로 띄웁니다. -->
+<script type="text/plain" id="workerSrc">
+import { AutoProcessor, MultiModalityCausalLM, BaseStreamer, env } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.1";
+const MODEL_ID = "onnx-community/Janus-Pro-1B-ONNX";
+let processor = null, model = null, busy = false, shaderF16 = false;
+env.allowRemoteModels = true;
+env.allowLocalModels = false;
+env.useBrowserCache = true;
+
+function post(type, extra = {}) { self.postMessage({ type, ...extra }); }
+self.addEventListener("securitypolicyviolation", (e) => post("blocked", { uri: e.blockedURI, directive: e.violatedDirective }));
+
+// 토큰 사이에 짧게 쉬어서 GPU가 화면(컴포지터)에 시간을 내줄 수 있게 합니다.
+// Worker 스레드에서만 대기하므로 페이지 UI 스레드는 막히지 않습니다.
+let sleepBuf = null;
+function pause(ms) {
+  if (ms <= 0) return;
+  if (self.crossOriginIsolated && typeof SharedArrayBuffer !== "undefined") {
+    sleepBuf = sleepBuf || new Int32Array(new SharedArrayBuffer(4));
+    Atomics.wait(sleepBuf, 0, 0, ms);
+  } else {
+    const end = performance.now() + ms;
+    while (performance.now() < end) {}
+  }
+}
+
+async function checkGpu() {
+  if (!self.navigator.gpu) throw new Error("Worker에서 WebGPU를 사용할 수 없습니다.");
+  const adapter = await self.navigator.gpu.requestAdapter();
+  if (!adapter) throw new Error("사용 가능한 GPU 어댑터가 없습니다.");
+  shaderF16 = adapter.features.has("shader-f16");
+}
+
+async function loadModel() {
+  if (model && processor) { post("model-ready", { shaderF16 }); return; }
+  if (busy) return;
+  busy = true; post("load-start");
+  try {
+    await checkGpu();
+    const progress_callback = (event) => post("model-progress", { event });
+    const dtype = shaderF16
+      ? { prepare_inputs_embeds:"q4", language_model:"q4f16", lm_head:"fp16", gen_head:"fp16", gen_img_embeds:"fp16", image_decode:"fp32" }
+      : { prepare_inputs_embeds:"fp32", language_model:"q4", lm_head:"fp32", gen_head:"fp32", gen_img_embeds:"fp32", image_decode:"fp32" };
+    const device = {
+      prepare_inputs_embeds:"wasm", language_model:"webgpu", lm_head:"webgpu",
+      gen_head:"webgpu", gen_img_embeds:"webgpu", image_decode:"webgpu"
+    };
+    const [p, m] = await Promise.all([
+      AutoProcessor.from_pretrained(MODEL_ID, { progress_callback }),
+      MultiModalityCausalLM.from_pretrained(MODEL_ID, { dtype, device, progress_callback })
+    ]);
+    processor = p; model = m;
+    post("model-ready", { shaderF16 });
+  } catch (error) {
+    post("error", { stage:"load", message: error && (error.message || String(error)) || String(error) });
+  } finally { busy = false; }
+}
+
+class ImageProgressStreamer extends BaseStreamer {
+  constructor(total, paceMs) {
+    super();
+    this.total = total || 1; this.paceMs = paceMs || 0;
+    this.count = null; this.startedAt = null;
+    this.every = Math.max(1, Math.floor(this.total / 60)); // 진행률 메시지는 약 60번만 전송
+  }
+  put() {
+    if (this.count === null) { this.count = 0; this.startedAt = performance.now(); return; }
+    this.count++;
+    if (this.count % this.every === 0 || this.count === this.total) {
+      post("generation-progress", {
+        progress: Math.min(1, this.count / this.total),
+        elapsedMs: performance.now() - this.startedAt
+      });
+    }
+    pause(this.paceMs);
+  }
+  end() {}
+}
+
+async function generateImage(prompt, paceMs) {
+  if (!processor || !model) throw new Error("먼저 모델을 불러와 주세요.");
+  if (busy) throw new Error("모델이 다른 작업을 처리 중입니다.");
+  if (!prompt || !prompt.trim()) throw new Error("이미지 설명을 입력해 주세요.");
+  busy = true; const startedAt = performance.now(); post("generation-start");
+  try {
+    const inputs = await processor([{ role:"<|User|>", content: prompt.trim() }], { chat_template:"text_to_image" });
+    const tokenCount = processor.num_image_tokens;
+    const streamer = new ImageProgressStreamer(tokenCount, paceMs);
+    const outputs = await model.generate_images({
+      ...inputs, min_new_tokens: tokenCount, max_new_tokens: tokenCount, do_sample: true, streamer
+    });
+    const blob = await outputs[0].toBlob();
+    post("image-ready", { blob, timeMs: performance.now() - startedAt });
+  } catch (error) {
+    post("error", { stage:"generate", message: error && (error.message || String(error)) || String(error) });
+  } finally { busy = false; post("generation-end"); }
+}
+
+self.addEventListener("message", (event) => {
+  const data = event.data || {};
+  if (data.type === "load") loadModel();
+  if (data.type === "generate") generateImage(data.prompt, data.paceMs);
+});
+</script>
+
 <script>
 "use strict";
 const $ = (id) => document.getElementById(id);
-const state = { worker:null, workerUrl:null, ready:false, available:false, imageUrl:null, loading:false, generating:false };
-const WORKER_SOURCE = "\nimport { AutoProcessor, MultiModalityCausalLM, BaseStreamer, env } from \"https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.1\";\nconst MODEL_ID = \"onnx-community/Janus-Pro-1B-ONNX\";\nlet processor = null, model = null, busy = false, shaderF16 = false;\nenv.allowRemoteModels = true;\nenv.allowLocalModels = false;\nenv.useBrowserCache = true;\nfunction post(type, extra = {}) { self.postMessage({ type, ...extra }); }\nasync function checkGpu() {\n  if (!self.navigator.gpu) throw new Error(\"Worker에서 WebGPU를 사용할 수 없습니다.\");\n  const adapter = await self.navigator.gpu.requestAdapter();\n  if (!adapter) throw new Error(\"사용 가능한 GPU 어댑터가 없습니다.\");\n  shaderF16 = adapter.features.has(\"shader-f16\");\n  const info = adapter.info || {};\n  post(\"gpu-ready\", { shaderF16, gpuName:info.device || info.description || \"WebGPU adapter\" });\n}\nasync function loadModel() {\n  if (model && processor) { post(\"model-ready\"); return; }\n  if (busy) return;\n  busy = true; post(\"load-start\");\n  try {\n    await checkGpu();\n    const progress_callback = (event) => post(\"model-progress\", { event });\n    const dtype = shaderF16\n      ? { prepare_inputs_embeds:\"q4\", language_model:\"q4f16\", lm_head:\"fp16\", gen_head:\"fp16\", gen_img_embeds:\"fp16\", image_decode:\"fp32\" }\n      : { prepare_inputs_embeds:\"fp32\", language_model:\"q4\", lm_head:\"fp32\", gen_head:\"fp32\", gen_img_embeds:\"fp32\", image_decode:\"fp32\" };\n    const device = {\n      prepare_inputs_embeds:\"wasm\", language_model:\"webgpu\", lm_head:\"webgpu\",\n      gen_head:\"webgpu\", gen_img_embeds:\"webgpu\", image_decode:\"webgpu\"\n    };\n    const processorPromise = AutoProcessor.from_pretrained(MODEL_ID, { progress_callback });\n    const modelPromise = MultiModalityCausalLM.from_pretrained(MODEL_ID, { dtype, device, progress_callback });\n    const loaded = await Promise.all([processorPromise, modelPromise]);\n    processor = loaded[0]; model = loaded[1];\n    post(\"model-ready\", { shaderF16 });\n  } catch (error) {\n    post(\"error\", { stage:\"load\", message:error && (error.stack || error.message) || String(error) });\n  } finally { busy = false; }\n}\nclass ImageProgressStreamer extends BaseStreamer {\n  constructor(total) { super(); this.total = total || 1; this.count = null; this.startedAt = null; }\n  put() {\n    if (this.count === null) { this.count = 0; this.startedAt = performance.now(); return; }\n    this.count++;\n    post(\"generation-progress\", {\n      progress:Math.min(1, this.count / this.total),\n      elapsedMs:performance.now() - this.startedAt, count:this.count, total:this.total\n    });\n  }\n  end() {}\n}\nasync function generateImage(prompt) {\n  if (!processor || !model) throw new Error(\"먼저 모델을 불러와 주세요.\");\n  if (busy) throw new Error(\"모델이 다른 작업을 처리 중입니다.\");\n  if (!prompt || !prompt.trim()) throw new Error(\"이미지 설명을 입력해 주세요.\");\n  busy = true; const startedAt = performance.now(); post(\"generation-start\");\n  try {\n    const inputs = await processor([{ role:\"<|User|>\", content:prompt.trim() }], { chat_template:\"text_to_image\" });\n    const tokenCount = processor.num_image_tokens;\n    const streamer = new ImageProgressStreamer(tokenCount);\n    const outputs = await model.generate_images({\n      ...inputs, min_new_tokens:tokenCount, max_new_tokens:tokenCount, do_sample:true, streamer\n    });\n    const blob = await outputs[0].toBlob();\n    post(\"image-ready\", { blob, timeMs:performance.now() - startedAt });\n  } catch (error) {\n    post(\"error\", { stage:\"generate\", message:error && (error.stack || error.message) || String(error) });\n  } finally { busy = false; post(\"generation-end\"); }\n}\nself.addEventListener(\"message\", (event) => {\n  const data = event.data || {};\n  if (data.type === \"load\") loadModel();\n  if (data.type === \"generate\") generateImage(data.prompt);\n});\n";
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} }
+};
+const PACE_MS = { fast: 0, balanced: 6, smooth: 16 };
+const PACE_LABEL = { fast: "최대 속도", balanced: "균형", smooth: "쾌적" };
+const MODEL_MATCH = "Janus-Pro-1B-ONNX";
+const EXAMPLES = [
+  ["풍경", "A misty mountain lake at sunrise, soft light, ultra detailed, photography."],
+  ["인물", "A realistic portrait of an elderly fisherman, warm natural light, 85mm lens."],
+  ["일러스트", "A cozy cabin in a snowy forest, watercolor illustration, warm window light."],
+  ["제품", "A minimalist ceramic coffee cup on a wooden table, studio lighting, product photo."]
+];
 
+const state = {
+  worker: null, workerUrl: null, ready: false, available: false, loading: false, generating: false,
+  hw: null, cached: false, gallery: [], current: null, tierPace: "balanced"
+};
+
+/* ---------- 로그 / 상태 ---------- */
+const logLines = [];
 function log(message) {
+  logLines.push("[" + new Date().toLocaleTimeString() + "] " + message);
+  if (logLines.length > 200) logLines.splice(0, logLines.length - 200);
   const el = $("log");
-  el.textContent += "\n[" + new Date().toLocaleTimeString() + "] " + message;
+  el.textContent = logLines.join("\n");
   el.scrollTop = el.scrollHeight;
 }
 function setStatus(message, kind) {
@@ -57,124 +276,289 @@ function setStatus(message, kind) {
 }
 function setBar(id, value) { $(id).style.width = Math.max(0, Math.min(100, value || 0)) + "%"; }
 function syncButtons() {
-  $("loadBtn").disabled = !state.available || state.loading || state.generating || state.ready;
+  const busy = state.loading || state.generating;
+  $("loadBtn").disabled = !state.available || busy || state.ready;
   $("generateBtn").disabled = !state.ready || state.generating;
-  $("unloadBtn").disabled = !state.worker || state.loading || state.generating;
-  $("clearBtn").disabled = state.loading || state.generating;
+  $("unloadBtn").disabled = !state.worker || busy;
+  $("clearBtn").disabled = busy;
+  $("paceSelect").disabled = state.generating;
+  $("saveBtn").disabled = !state.current;
+}
+function updateLoadLabel() {
+  $("loadBtn").textContent = state.ready ? "모델 준비 완료" : (state.cached ? "모델 불러오기 (캐시됨 · 다운로드 없음)" : "모델 다운로드 및 불러오기");
+}
+
+/* ---------- 보안 정책 위반 로그 ---------- */
+document.addEventListener("securitypolicyviolation", (e) => {
+  log("차단된 연결: " + e.blockedURI + " (" + e.violatedDirective + ")");
+});
+
+/* ---------- 하드웨어 확인 ---------- */
+const fmtGB = (n) => (n / 1073741824).toFixed(n >= 10737418240 ? 0 : 1) + "GB";
+async function detectHardware() {
+  const adapter = await navigator.gpu.requestAdapter();
+  if (!adapter) throw new Error("GPU adapter가 반환되지 않았습니다.");
+  let info = adapter.info || {};
+  if (!adapter.info && adapter.requestAdapterInfo) { try { info = await adapter.requestAdapterInfo(); } catch {} }
+  const hw = {
+    vendor: info.vendor || "", arch: info.architecture || "", device: info.device || "", desc: info.description || "",
+    f16: adapter.features.has("shader-f16"),
+    maxBuf: adapter.limits ? adapter.limits.maxBufferSize : 0,
+    fallback: !!(adapter.isFallbackAdapter ?? info.isFallbackAdapter),
+    threads: navigator.hardwareConcurrency || 0,
+    mem: navigator.deviceMemory || 0
+  };
+  const v = hw.vendor.toLowerCase();
+  let tier = "balanced";
+  if (hw.fallback || v.includes("intel") || (hw.mem && hw.mem <= 4)) tier = "smooth";
+  else if (v.includes("nvidia") || v.includes("apple")) tier = "fast";
+  hw.tier = tier;
+  return hw;
+}
+function renderSysinfo(hw) {
+  const rows = [
+    ["GPU", [hw.vendor, hw.arch, hw.device || hw.desc].filter(Boolean).join(" · ") || "정보 비공개 (브라우저가 숨김)"],
+    ["FP16", hw.f16 ? "지원 (더 가벼운 모델 경로 사용)" : "미지원 (메모리를 더 씀)"],
+    ["최대 GPU 버퍼", hw.maxBuf ? fmtGB(hw.maxBuf) : "알 수 없음"],
+    ["CPU 스레드", hw.threads ? hw.threads + "개" : "알 수 없음"],
+    ["메모리(대략)", hw.mem ? "≥" + hw.mem + "GB" : "알 수 없음"]
+  ];
+  const dl = $("sysinfo"); dl.replaceChildren();
+  for (const [k, val] of rows) {
+    const dt = document.createElement("dt"); dt.textContent = k;
+    const dd = document.createElement("dd"); dd.textContent = val;
+    dl.append(dt, dd);
+  }
+  dl.hidden = false;
+}
+function applyPace(value) {
+  $("paceSelect").value = value;
+  const rec = state.hw ? PACE_LABEL[state.hw.tier] : "균형";
+  $("paceHint").textContent = "이 컴퓨터 추천: " + rec + " · 생성 중 화면이 끊기면 한 단계 낮춰 보세요.";
 }
 async function checkEnvironment() {
-  if (location.protocol === "file:") { setStatus("file:// 직접 실행에서는 WebGPU가 차단될 수 있습니다. GitHub Pages HTTPS 주소로 열어 주세요.", "bad"); return; }
+  if (location.protocol === "file:") { setStatus("file:// 직접 실행에서는 WebGPU가 차단될 수 있습니다. HTTPS 주소(GitHub Pages)로 열어 주세요.", "bad"); return; }
   if (!window.isSecureContext) { setStatus("HTTPS 또는 localhost 보안 컨텍스트가 필요합니다.", "bad"); return; }
   if (!navigator.gpu) { setStatus("WebGPU를 사용할 수 없습니다. Chrome 하드웨어 가속과 chrome://gpu를 확인해 주세요.", "bad"); log("navigator.gpu unavailable"); return; }
   try {
-    const adapter = await navigator.gpu.requestAdapter();
-    if (!adapter) throw new Error("GPU adapter가 반환되지 않았습니다.");
-    const info = adapter.info || {};
-    const name = info.device || info.description || "GPU adapter";
-    const f16 = adapter.features.has("shader-f16");
-    setStatus("WebGPU 사용 가능 · " + name + " · FP16: " + (f16 ? "지원" : "미지원"), "ok");
+    const hw = await detectHardware();
+    state.hw = hw;
+    renderSysinfo(hw);
+    const saved = store.get("lil.pace", "");
+    applyPace(PACE_MS[saved] !== undefined ? saved : hw.tier);
+    if (hw.fallback) setStatus("소프트웨어 렌더러(그래픽 가속 꺼짐)로 감지됐습니다. 매우 느릴 수 있어요.", "warn");
+    else if (hw.tier === "smooth") setStatus("WebGPU 사용 가능 · 내장 GPU/저사양으로 판단해 '쾌적' 모드를 추천합니다.", "ok");
+    else setStatus("WebGPU 사용 가능 · 준비 완료", "ok");
     state.available = true;
-    $("loadStatus").textContent = "모델을 다운로드하고 브라우저에서 실행할 준비가 됐습니다.";
-    log("WebGPU detected: " + name);
-    syncButtons();
-  } catch (error) { setStatus("GPU 확인 실패: " + (error.message || String(error)), "bad"); log(error.stack || error.message || String(error)); }
+    log("GPU: " + [hw.vendor, hw.arch, hw.device].filter(Boolean).join(" / ") + " · f16=" + hw.f16 + " · tier=" + hw.tier);
+  } catch (error) {
+    setStatus("GPU 확인 실패: " + (error.message || String(error)), "bad");
+    log(error.message || String(error));
+  }
+  await refreshCacheState();
+  syncButtons();
 }
+
+/* ---------- 캐시 상태 ---------- */
+async function refreshCacheState() {
+  try {
+    if ("caches" in window && (await caches.keys()).includes("transformers-cache")) {
+      const cache = await caches.open("transformers-cache");
+      const keys = await cache.keys();
+      state.cached = keys.some((r) => r.url.includes(MODEL_MATCH));
+    } else state.cached = false;
+  } catch { state.cached = false; }
+  if (state.cached) $("loadStatus").textContent = "모델이 이 브라우저에 저장돼 있어요. 다운로드 없이 바로 불러옵니다.";
+  updateLoadLabel();
+}
+
+/* ---------- Worker ---------- */
 function createWorker() {
-  const blob = new Blob([WORKER_SOURCE], { type:"text/javascript" });
+  const blob = new Blob([$("workerSrc").textContent], { type: "text/javascript" });
   state.workerUrl = URL.createObjectURL(blob);
-  state.worker = new Worker(state.workerUrl, { type:"module", name:"local-image-lab-worker" });
+  state.worker = new Worker(state.workerUrl, { type: "module", name: "local-image-lab-worker" });
   state.worker.addEventListener("message", (event) => handleWorkerMessage(event.data || {}));
   state.worker.addEventListener("error", (event) => {
-    const msg = [event.message,event.filename,event.lineno].filter(Boolean).join(" · ");
-    setStatus("Worker 오류: " + (msg || "모듈 실행 실패"), "bad");
+    const msg = [event.message, event.filename, event.lineno].filter(Boolean).join(" · ");
+    setStatus("Worker 오류: " + (msg || "모듈 실행 실패 (네트워크/보안 정책 확인)"), "bad");
     log("Worker error: " + (msg || "unknown"));
     state.loading = false; state.generating = false; syncButtons();
   });
 }
-const progressMap = new Map();
-function renderProgressFiles() {
-  const container = $("fileProgress"); container.replaceChildren();
-  for (const [name,pct] of progressMap.entries()) {
+function killWorker() {
+  if (state.worker) state.worker.terminate();
+  state.worker = null;
+  if (state.workerUrl) URL.revokeObjectURL(state.workerUrl);
+  state.workerUrl = null;
+  state.ready = false; state.loading = false; state.generating = false;
+  document.title = "Local Image Lab";
+}
+
+/* ---------- 다운로드 진행률 (DOM 갱신을 묶어서 처리) ---------- */
+const fileMap = new Map();
+let renderTimer = 0, overallMax = 0;
+function onModelProgress(e) {
+  const name = e.file || e.name;
+  if (!name) return;
+  let f = fileMap.get(name);
+  if (!f) {
     const row = document.createElement("div"); row.className = "file-row";
-    const label = document.createElement("div"); label.textContent = name + " · " + pct.toFixed(1) + "%";
+    const label = document.createElement("div");
     const track = document.createElement("div"); track.className = "track";
-    const fill = document.createElement("span"); fill.style.width = pct + "%";
-    track.append(fill); row.append(label,track); container.append(row);
+    const fill = document.createElement("span"); track.append(fill);
+    row.append(label, track); $("fileProgress").append(row);
+    f = { loaded: 0, total: 0, label, fill, name }; fileMap.set(name, f);
+  }
+  if (e.status === "progress") { f.loaded = e.loaded || f.loaded; f.total = e.total || f.total; }
+  if (e.status === "done") f.loaded = f.total = Math.max(f.total, f.loaded, 1);
+  if (!renderTimer) renderTimer = setTimeout(flushProgress, 150);
+}
+function flushProgress() {
+  renderTimer = 0;
+  let loaded = 0, total = 0;
+  for (const f of fileMap.values()) {
+    const pct = f.total ? (f.loaded / f.total) * 100 : 0;
+    f.label.textContent = f.name + " · " + pct.toFixed(0) + "%";
+    f.fill.style.width = pct + "%";
+    loaded += f.loaded; total += f.total;
+  }
+  if (total) {
+    overallMax = Math.max(overallMax, (loaded / total) * 100);
+    setBar("loadBar", overallMax);
+    $("loadStatus").textContent = "모델 파일 받는 중 · " + fmtGB(loaded) + " / " + fmtGB(total) + " (" + overallMax.toFixed(0) + "%)";
   }
 }
-function handleModelProgress(event) {
-  const name = event.file || event.name || event.status || "model asset";
-  let pct = Number(event.progress ?? event.pct ?? 0); if (pct <= 1) pct *= 100;
-  if (event.status === "done") pct = 100;
-  progressMap.set(name, Math.max(0,Math.min(100,pct))); renderProgressFiles();
-  const values = [...progressMap.values()];
-  if (values.length) setBar("loadBar", values.reduce((a,b)=>a+b,0)/values.length);
-  $("loadStatus").textContent = "모델 파일 다운로드 및 초기화 중 · " + progressMap.size + "개 항목";
+
+/* ---------- 결과 / 갤러리 ---------- */
+function showCurrent(item) {
+  state.current = item;
+  $("preview").src = item.url; $("preview").hidden = false; $("placeholder").hidden = true;
+  $("resultMeta").textContent = "생성 " + (item.timeMs / 1000).toFixed(1) + "초 · " + item.prompt.slice(0, 80);
+  for (const b of $("gallery").children) b.setAttribute("aria-current", String(b._item === item));
+  syncButtons();
 }
+function addToGallery(blob, timeMs, prompt) {
+  const item = { url: URL.createObjectURL(blob), timeMs, prompt };
+  state.gallery.unshift(item);
+  const btn = document.createElement("button"); btn.className = "thumb"; btn._item = item; btn.title = prompt;
+  const img = document.createElement("img"); img.src = item.url; img.alt = "생성 이미지 미리보기";
+  btn.append(img); btn.addEventListener("click", () => showCurrent(item));
+  $("gallery").prepend(btn);
+  while (state.gallery.length > 8) {
+    const old = state.gallery.pop();
+    $("gallery").lastElementChild.remove();
+    if (old !== state.current) URL.revokeObjectURL(old.url);
+  }
+  showCurrent(item);
+}
+
+/* ---------- Worker 메시지 ---------- */
+let lastPrompt = "";
 function handleWorkerMessage(m) {
-  switch(m.type) {
-    case "gpu-ready": setStatus("Worker GPU 확인 완료 · FP16: " + (m.shaderF16?"지원":"미지원"),"ok"); log("Worker GPU: "+m.gpuName); break;
-    case "load-start": state.loading=true; $("loadStatus").textContent="모델과 실행 구성요소를 불러오는 중..."; syncButtons(); break;
-    case "model-progress": handleModelProgress(m.event || {}); break;
+  switch (m.type) {
+    case "load-start":
+      state.loading = true; overallMax = 0; setBar("loadBar", 0);
+      $("loadStatus").textContent = state.cached ? "캐시에서 모델을 GPU로 올리는 중..." : "모델 다운로드 및 초기화 중..."; syncButtons(); break;
+    case "model-progress": onModelProgress(m.event || {}); break;
     case "model-ready":
-      state.ready=true; state.loading=false; setBar("loadBar",100);
-      $("loadStatus").textContent="모델 준비 완료. 이미지를 생성할 수 있습니다.";
-      setStatus("모델 로딩 완료 · 브라우저 내 추론 준비됨","ok"); log("Janus-Pro-1B loaded"); syncButtons(); break;
-    case "generation-start": state.generating=true; $("genStatus").textContent="이미지 생성 중..."; setBar("genBar",0); syncButtons(); break;
-    case "generation-progress": setBar("genBar",(m.progress||0)*100); $("genStatus").textContent="이미지 토큰 생성 중 · "+Math.round((m.progress||0)*100)+"%"; break;
+      state.ready = true; state.loading = false; setBar("loadBar", 100); flushProgress();
+      $("fileProgress").replaceChildren(); fileMap.clear();
+      $("loadStatus").textContent = "모델 준비 완료. 이미지를 생성할 수 있습니다.";
+      setStatus("준비 완료 · 브라우저 안에서 실행 중" + (m.shaderF16 ? " (FP16)" : ""), "ok");
+      state.cached = true; updateLoadLabel(); syncButtons();
+      if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+      log("Janus-Pro-1B loaded"); break;
+    case "generation-start":
+      state.generating = true; setBar("genBar", 0); $("genStatus").textContent = "생성 시작..."; syncButtons(); break;
+    case "generation-progress": {
+      const p = m.progress || 0, pct = Math.round(p * 100);
+      const eta = p > 0.02 ? Math.max(0, Math.round((m.elapsedMs / p - m.elapsedMs) / 1000)) : null;
+      setBar("genBar", pct);
+      $("genStatus").textContent = "생성 중 · " + pct + "%" + (eta !== null ? " · 약 " + eta + "초 남음" : "");
+      document.title = "(" + pct + "%) Local Image Lab"; break;
+    }
     case "image-ready":
-      if (state.imageUrl) URL.revokeObjectURL(state.imageUrl);
-      state.imageUrl=URL.createObjectURL(m.blob); $("preview").src=state.imageUrl;
-      $("preview").hidden=false; $("placeholder").hidden=true; $("saveBtn").disabled=false;
-      $("resultMeta").textContent="생성 완료 · "+(m.timeMs/1000).toFixed(1)+"초"; setBar("genBar",100);
-      log("Image generated in "+(m.timeMs/1000).toFixed(1)+"s"); break;
-    case "generation-end": state.generating=false; syncButtons(); break;
+      addToGallery(m.blob, m.timeMs, lastPrompt); setBar("genBar", 100);
+      $("genStatus").textContent = "완료 · " + (m.timeMs / 1000).toFixed(1) + "초";
+      log("Image generated in " + (m.timeMs / 1000).toFixed(1) + "s (" + PACE_LABEL[$("paceSelect").value] + ")"); break;
+    case "generation-end":
+      state.generating = false; document.title = "Local Image Lab"; syncButtons(); break;
+    case "blocked":
+      log("Worker 차단된 연결: " + m.uri + " (" + m.directive + ")"); break;
     case "error":
-      if (m.stage==="load") { state.loading=false; state.ready=false; $("loadStatus").textContent="모델 로드 실패: "+m.message; }
-      else $("genStatus").textContent="생성 실패: "+m.message;
-      setStatus("오류가 발생했습니다. 로그에서 세부 내용을 확인해 주세요.","bad"); log(m.stage+" error: "+m.message); syncButtons(); break;
+      if (m.stage === "load") { state.loading = false; state.ready = false; $("loadStatus").textContent = "모델 로드 실패: " + m.message; }
+      else $("genStatus").textContent = "생성 실패: " + m.message;
+      setStatus("오류가 발생했습니다. 로그에서 세부 내용을 확인해 주세요.", "bad");
+      log(m.stage + " error: " + m.message); syncButtons(); break;
   }
 }
-$("loadBtn").addEventListener("click",()=>{
-  if (state.loading||state.ready) return;
-  progressMap.clear(); renderProgressFiles(); setBar("loadBar",0);
-  try { createWorker(); state.loading=true; syncButtons(); $("loadStatus").textContent="모델 초기화 요청 중..."; state.worker.postMessage({type:"load"}); }
-  catch(error) { setStatus("Worker 생성 실패: "+(error.message||String(error)),"bad"); log(error.stack||String(error)); state.loading=false; syncButtons(); }
+
+/* ---------- 이벤트 ---------- */
+$("loadBtn").addEventListener("click", () => {
+  if (state.loading || state.ready) return;
+  fileMap.clear(); $("fileProgress").replaceChildren(); setBar("loadBar", 0);
+  try {
+    createWorker(); state.loading = true; syncButtons();
+    $("loadStatus").textContent = "모델 초기화 요청 중...";
+    state.worker.postMessage({ type: "load" });
+  } catch (error) {
+    setStatus("Worker 생성 실패: " + (error.message || String(error)), "bad");
+    log(error.message || String(error)); state.loading = false; syncButtons();
+  }
 });
-$("generateBtn").addEventListener("click",()=>{
-  const prompt=$("prompt").value.trim(); if (!prompt||!state.ready||state.generating) return;
-  $("genStatus").textContent="생성 요청 전송 중..."; state.worker.postMessage({type:"generate",prompt});
+function generate() {
+  const prompt = $("prompt").value.trim();
+  if (!prompt || !state.ready || state.generating) return;
+  lastPrompt = prompt;
+  state.generating = true; syncButtons();
+  $("genStatus").textContent = "생성 요청 전송 중...";
+  state.worker.postMessage({ type: "generate", prompt, paceMs: PACE_MS[$("paceSelect").value] || 0 });
+}
+$("generateBtn").addEventListener("click", generate);
+$("prompt").addEventListener("keydown", (e) => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") { e.preventDefault(); generate(); } });
+$("paceSelect").addEventListener("change", (e) => { store.set("lil.pace", e.target.value); applyPace(e.target.value); });
+$("unloadBtn").addEventListener("click", () => {
+  killWorker();
+  $("loadStatus").textContent = "모델을 GPU 메모리에서 내렸습니다. 저장된 파일은 그대로라 다시 불러오면 빠릅니다.";
+  setStatus("메모리 해제 완료", "ok"); setBar("loadBar", 0); updateLoadLabel(); syncButtons(); log("Worker terminated; cache retained");
 });
-$("unloadBtn").addEventListener("click",()=>{
-  if (state.worker) state.worker.terminate(); state.worker=null;
-  if (state.workerUrl) URL.revokeObjectURL(state.workerUrl); state.workerUrl=null;
-  state.ready=false; state.loading=false; state.generating=false;
-  $("loadStatus").textContent="Worker를 종료해 모델 메모리를 해제했습니다. 브라우저 캐시는 유지됩니다.";
-  setStatus("메모리 해제 완료","ok"); log("Worker terminated; browser cache retained"); syncButtons();
-});
-$("clearBtn").addEventListener("click",async()=>{
-  if (!confirm("이 사이트의 Transformers.js 모델 캐시를 삭제할까요? 다음 실행 시 다시 다운로드합니다.")) return;
-  if (state.worker) state.worker.terminate(); state.worker=null;
-  if (state.workerUrl) URL.revokeObjectURL(state.workerUrl); state.workerUrl=null;
-  state.ready=false; state.loading=false; state.generating=false;
+$("clearBtn").addEventListener("click", async () => {
+  if (!confirm("이 사이트에 저장된 모델 파일(약 2GB)을 삭제할까요? 다음 실행 때 다시 다운로드합니다.")) return;
+  killWorker();
   try {
     if (!("caches" in window)) throw new Error("Cache Storage를 사용할 수 없습니다.");
-    const deleted=await caches.delete("transformers-cache");
-    $("loadStatus").textContent=deleted?"Transformers.js 모델 캐시를 삭제했습니다.":"transformers-cache가 없습니다. 브라우저 사이트 데이터도 확인해 주세요.";
-    setStatus("캐시 삭제 작업 완료","ok"); log("Cache delete result: "+deleted);
-  } catch(error) { $("loadStatus").textContent="캐시 삭제 실패: "+(error.message||String(error)); setStatus("캐시 삭제 실패","bad"); log(error.stack||String(error)); }
-  syncButtons();
+    const deleted = await caches.delete("transformers-cache");
+    $("loadStatus").textContent = deleted ? "저장된 모델 파일을 삭제했습니다." : "삭제할 모델 캐시가 없습니다.";
+    setStatus("캐시 삭제 완료", "ok"); log("Cache delete: " + deleted);
+  } catch (error) {
+    $("loadStatus").textContent = "캐시 삭제 실패: " + (error.message || String(error)); setStatus("캐시 삭제 실패", "bad");
+  }
+  setBar("loadBar", 0); await refreshCacheState(); syncButtons();
 });
-$("saveBtn").addEventListener("click",()=>{
-  if(!state.imageUrl)return;
-  const link=document.createElement("a"); link.href=state.imageUrl; link.download="local-ai-image.png"; link.click();
+$("saveBtn").addEventListener("click", () => {
+  if (!state.current) return;
+  const a = document.createElement("a");
+  a.href = state.current.url;
+  a.download = "local-ai-image-" + new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19) + ".png";
+  a.click();
 });
-window.addEventListener("beforeunload",()=>{
-  if(state.worker)state.worker.terminate();
-  if(state.workerUrl)URL.revokeObjectURL(state.workerUrl);
-  if(state.imageUrl)URL.revokeObjectURL(state.imageUrl);
+window.addEventListener("beforeunload", () => {
+  killWorker();
+  for (const g of state.gallery) URL.revokeObjectURL(g.url);
 });
-checkEnvironment();
+
+/* ---------- 초기화 ---------- */
+(function init() {
+  const chips = $("chips");
+  for (const [label, text] of EXAMPLES) {
+    const b = document.createElement("button"); b.className = "chip"; b.type = "button"; b.textContent = label;
+    b.addEventListener("click", () => { $("prompt").value = text; $("prompt").focus(); });
+    chips.append(b);
+  }
+  applyPace(store.get("lil.pace", "balanced"));
+  updateLoadLabel(); syncButtons();
+  checkEnvironment();
+})();
 </script>
 </body>
 </html>
