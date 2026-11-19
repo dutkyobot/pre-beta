@@ -92,13 +92,13 @@ onmessage=async({data:d})=>{
 <script>
 // ===== 모델 레지스트리: 새 모델은 여기에 항목만 추가 =====
 const MODELS=[
- {id:'smollm2-360',kind:'chat',name:'SmolLM2 360M Instruct',repo:'onnx-community/SmolLM2-360M-Instruct',dtype:'q4f16',gb:0.25,minBuf:1,lang:'영어 중심',desc:'초경량·초고속. 답변 품질은 낮음',pri:1},
+ {id:'smollm2-360',kind:'chat',name:'SmolLM2 360M Instruct',repo:'HuggingFaceTB/SmolLM2-360M-Instruct',dtype:'q4f16',gb:0.25,minBuf:1,lang:'영어 중심',desc:'초경량·초고속. 답변 품질은 낮음',pri:1},
  {id:'qwen25-05',kind:'chat',name:'Qwen2.5 0.5B Instruct',repo:'onnx-community/Qwen2.5-0.5B-Instruct',dtype:'q4f16',gb:0.4,minBuf:1,lang:'다국어(한국어 약함)',desc:'가볍고 빠름. 저사양·모바일용',pri:2},
  {id:'qwen3-06',kind:'chat',name:'Qwen3 0.6B',repo:'onnx-community/Qwen3-0.6B-ONNX',dtype:'q4f16',gb:0.5,minBuf:1,lang:'다국어(한국어 보통)',desc:'최신 소형 모델 (사고 모드 끔)',noThink:true,pri:3},
  {id:'tinyllama',kind:'chat',name:'TinyLlama 1.1B Chat',repo:'onnx-community/TinyLlama-1.1B-Chat-v1.0-ONNX',dtype:'q4f16',gb:0.7,minBuf:1,lang:'영어 중심',desc:'가벼운 영어 대화용',pri:4},
  {id:'gemma3-1',kind:'chat',name:'Gemma 3 1B IT',repo:'onnx-community/gemma-3-1b-it-ONNX',dtype:'q4',gb:0.8,minBuf:1,lang:'다국어(한국어 양호)',desc:'구글 소형 모델, 소형 중 다국어 강점',pri:5},
  {id:'llama32-1',kind:'chat',name:'Llama 3.2 1B Instruct',repo:'onnx-community/Llama-3.2-1B-Instruct-q4f16',dtype:'q4f16',gb:0.95,minBuf:2,lang:'영어 중심, 일부 다국어',desc:'균형형 소형 모델',pri:6},
- {id:'smollm2-17',kind:'chat',name:'SmolLM2 1.7B Instruct',repo:'onnx-community/SmolLM2-1.7B-Instruct',dtype:'q4f16',gb:1.1,minBuf:2,lang:'영어 중심',desc:'영어 위주 작업에 적합',pri:7},
+ {id:'smollm2-17',kind:'chat',name:'SmolLM2 1.7B Instruct',repo:'HuggingFaceTB/SmolLM2-1.7B-Instruct',dtype:'q4f16',gb:1.1,minBuf:2,lang:'영어 중심',desc:'영어 위주 작업에 적합',pri:7},
  {id:'qwen25-15',kind:'chat',name:'Qwen2.5 1.5B Instruct',repo:'onnx-community/Qwen2.5-1.5B-Instruct',dtype:'q4f16',gb:1.2,minBuf:2,lang:'다국어(한국어 보통)',desc:'소형 중 답변 품질이 좋은 편',pri:8},
  {id:'qwen3-17',kind:'chat',name:'Qwen3 1.7B',repo:'onnx-community/Qwen3-1.7B-ONNX',dtype:'q4f16',gb:1.3,minBuf:2,lang:'다국어(한국어 보통)',desc:'Qwen2.5보다 새로운 세대 (사고 모드 끔)',noThink:true,pri:9},
  {id:'deepseek-r1',kind:'chat',name:'DeepSeek-R1 Distill Qwen 1.5B',repo:'onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX',dtype:'q4f16',gb:1.3,minBuf:2,think:true,lang:'영어·중국어 중심',desc:'추론 특화. 생각 과정을 접어서 표시',pri:10},
@@ -243,12 +243,28 @@ function chat(){
 function imgView(){
  app.innerHTML=head('이미지 생성')+`<div class="two">
  <div class="card pa"><b>프롬프트</b><textarea id="pr" rows="4" style="margin-top:8px" placeholder="만들 이미지를 영어로 설명하세요. 예: a cute baby fox in a forest, watercolor"></textarea>
- <div class="row" style="margin-top:10px"><button class="btn" id="go">이미지 생성</button><span class="sub" id="tm"></span></div></div>
+ <div class="row" style="margin-top:10px"><button class="btn" id="go">이미지 생성</button><button class="btn ghost" id="tr">영어로 번역</button><span class="sub" id="tm"></span></div></div>
  <div class="card ga"><b>이전 이미지</b><div class="gal" id="gl" style="margin-top:8px"></div><div class="sub" id="ge">아직 생성한 이미지가 없습니다</div></div>
  <div class="card ra"><b>생성 결과</b><div class="ph" id="ph">생성된 이미지가 여기에 표시됩니다</div><div class="bar ind" id="gb" style="display:none"><i></i></div><img id="out" alt="" style="display:none"><button class="btn" id="sv" disabled>PNG 저장</button></div></div>`;
  $('#bk').onclick=()=>pick('image');
  const show=u=>{$('#out').src=u;$('#out').style.display='block';$('#ph').style.display='none';$('#sv').disabled=false};
  const gal=()=>{$('#gl').innerHTML='';$('#ge').style.display=st.gal.length?'none':'block';st.gal.forEach(u=>{const i=new Image();i.src=u;i.onclick=()=>show(u);$('#gl').append(i)})};gal();
+ const rel=msg=>{st.busy=false;$('#go').disabled=$('#tr').disabled=false;$('#tm').textContent=msg};
+ const tryTr=(list,i,t)=>{if(i>=list.length)return rel('번역 실패: 모델을 불러오지 못했습니다');
+  const m=list[i],w=spawn();let out='';$('#tm').textContent=`번역 모델 불러오는 중… (${m.name})`;
+  const next=()=>{w.terminate();tryTr(list,i+1,t)};w.onerror=next;
+  w.onmessage=({data:d})=>{
+   if(d.type==='ready'){$('#tm').textContent='번역 중…';w.postMessage({type:'chat',max:160,noThink:m.noThink,messages:[{role:'system',content:'Translate the user\'s Korean text into a natural English prompt for an image generator. Output only the English prompt.'},{role:'user',content:t}]})}
+   else if(d.type==='tok')out+=d.t;
+   else if(d.type==='done'){w.terminate();const r=out.replace(/<think>[\s\S]*?<\/think>/g,'').replace(/<\/?think>/g,'').trim().replace(/^["']+|["']+$/g,'');
+    if(!r)return next();$('#pr').value=r;rel('번역 완료 · '+m.name)}
+   else if(d.type==='err')next()};
+  w.postMessage({type:'load',kind:'chat',repo:m.repo,dtype:m.dtype})};
+ $('#tr').onclick=async()=>{const t=$('#pr').value.trim();if(!t||st.busy)return;
+  if(!/[가-힣]/.test(t)){$('#tm').textContent='한글이 없어 번역할 내용이 없습니다';return}
+  const list=[];for(const id of ['qwen3-17','qwen25-15','gemma3-1','qwen3-06','qwen25-05']){const x=MODELS.find(v=>v.id===id);if(x.gb<=1.5&&fit(x)==='ok'&&await cached(x))list.push(x)}
+  if(!list.length)return alert('번역에 쓸 수 있는 다운로드된 대화 모델이 없습니다. 대화 모델(예: Qwen2.5 0.5B)을 먼저 받아 주세요.');
+  st.busy=true;$('#go').disabled=$('#tr').disabled=true;tryTr(list,0,t)};
  $('#sv').onclick=()=>{const a=document.createElement('a');a.href=$('#out').src;a.download='image-'+Date.now()+'.png';a.click()};
  $('#go').onclick=()=>{const p=$('#pr').value.trim();if(!p||st.busy)return;st.busy=true;$('#go').disabled=true;$('#gb').style.display='block';
   const t0=Date.now(),iv=setInterval(()=>$('#tm').textContent='생성 중… '+Math.round((Date.now()-t0)/1000)+'초',1000);
