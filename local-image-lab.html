@@ -28,6 +28,11 @@ textarea{resize:none}
 #set{display:none;margin-bottom:10px}#set.on{display:block}
 #out{width:100%;max-width:512px;border-radius:10px;display:block;margin:12px 0}
 .gal{display:flex;gap:8px;flex-wrap:wrap}.gal img{width:84px;height:84px;object-fit:cover;border-radius:8px;border:1px solid var(--ln);cursor:pointer}
+/* 입력창 */
+.comp{display:flex;align-items:flex-end;gap:8px;background:var(--card);border:1px solid var(--ln);border-radius:24px;padding:6px 6px 6px 18px;position:sticky;bottom:12px;margin-top:8px}
+.comp:focus-within{border-color:var(--ac)}
+.comp textarea{border:0;background:none;outline:0;border-radius:0;padding:8px 0;max-height:160px;line-height:1.45}
+.circ{flex:none;width:38px;height:38px;border-radius:50%;border:0;background:var(--ac);color:#fff;font-size:18px;line-height:1;cursor:pointer}
 dialog{border:1px solid var(--ln);border-radius:12px;background:var(--card);color:var(--tx);max-width:420px}
 </style></head><body><div id="app"></div>
 
@@ -53,7 +58,7 @@ onmessage=async({data:d})=>{
    postMessage({type:'ready'});
   }else if(d.type==='chat'){
    stopper=new T.InterruptableStoppingCriteria();
-   const inp=tok.apply_chat_template(d.messages,{add_generation_prompt:true,return_dict:true});
+   const inp=tok.apply_chat_template(d.messages,{add_generation_prompt:true,return_dict:true,...(d.noThink?{enable_thinking:false}:{})});
    const st=new T.TextStreamer(tok,{skip_prompt:true,skip_special_tokens:true,callback_function:t=>postMessage({type:'tok',t})});
    await m.generate({...inp,max_new_tokens:d.max,do_sample:true,temperature:.7,top_p:.9,streamer:st,stopping_criteria:stopper});
    postMessage({type:'done'});
@@ -71,10 +76,20 @@ onmessage=async({data:d})=>{
 <script>
 // ===== 모델 레지스트리: 새 모델은 여기에 항목만 추가 =====
 const MODELS=[
- {id:'qwen25-05',kind:'chat',name:'Qwen2.5 0.5B Instruct',repo:'onnx-community/Qwen2.5-0.5B-Instruct',dtype:'q4f16',gb:.4,minBuf:1,lang:'다국어(한국어 약함)',desc:'가장 가볍고 빠름. 저사양·모바일용',pri:1},
- {id:'llama32-1',kind:'chat',name:'Llama 3.2 1B Instruct',repo:'onnx-community/Llama-3.2-1B-Instruct-q4f16',dtype:'q4f16',gb:.95,minBuf:2,lang:'영어 중심, 일부 다국어',desc:'균형형 소형 모델',pri:2},
- {id:'qwen25-15',kind:'chat',name:'Qwen2.5 1.5B Instruct',repo:'onnx-community/Qwen2.5-1.5B-Instruct',dtype:'q4f16',gb:1.2,minBuf:2,lang:'다국어(한국어 보통)',desc:'소형 중 답변 품질이 좋은 편',pri:3},
- {id:'janus-pro',kind:'image',name:'Janus-Pro 1B',repo:'onnx-community/Janus-Pro-1B-ONNX',gb:2.3,minBuf:2,lang:'영어 프롬프트 권장',desc:'텍스트→이미지, 384×384. 생성에 수 분 걸릴 수 있음',pri:1}
+ {id:'smollm2-360',kind:'chat',name:'SmolLM2 360M Instruct',repo:'onnx-community/SmolLM2-360M-Instruct',dtype:'q4f16',gb:0.25,minBuf:1,lang:'영어 중심',desc:'초경량·초고속. 답변 품질은 낮음',pri:1},
+ {id:'qwen25-05',kind:'chat',name:'Qwen2.5 0.5B Instruct',repo:'onnx-community/Qwen2.5-0.5B-Instruct',dtype:'q4f16',gb:0.4,minBuf:1,lang:'다국어(한국어 약함)',desc:'가볍고 빠름. 저사양·모바일용',pri:2},
+ {id:'qwen3-06',kind:'chat',name:'Qwen3 0.6B',repo:'onnx-community/Qwen3-0.6B-ONNX',dtype:'q4f16',gb:0.5,minBuf:1,lang:'다국어(한국어 보통)',desc:'최신 소형 모델 (사고 모드 끔)',noThink:true,pri:3},
+ {id:'tinyllama',kind:'chat',name:'TinyLlama 1.1B Chat',repo:'onnx-community/TinyLlama-1.1B-Chat-v1.0-ONNX',dtype:'q4f16',gb:0.7,minBuf:1,lang:'영어 중심',desc:'가벼운 영어 대화용',pri:4},
+ {id:'gemma3-1',kind:'chat',name:'Gemma 3 1B IT',repo:'onnx-community/gemma-3-1b-it-ONNX',dtype:'q4',gb:0.8,minBuf:1,lang:'다국어(한국어 양호)',desc:'구글 소형 모델, 소형 중 다국어 강점',pri:5},
+ {id:'llama32-1',kind:'chat',name:'Llama 3.2 1B Instruct',repo:'onnx-community/Llama-3.2-1B-Instruct-q4f16',dtype:'q4f16',gb:0.95,minBuf:2,lang:'영어 중심, 일부 다국어',desc:'균형형 소형 모델',pri:6},
+ {id:'smollm2-17',kind:'chat',name:'SmolLM2 1.7B Instruct',repo:'onnx-community/SmolLM2-1.7B-Instruct',dtype:'q4f16',gb:1.1,minBuf:2,lang:'영어 중심',desc:'영어 위주 작업에 적합',pri:7},
+ {id:'qwen25-15',kind:'chat',name:'Qwen2.5 1.5B Instruct',repo:'onnx-community/Qwen2.5-1.5B-Instruct',dtype:'q4f16',gb:1.2,minBuf:2,lang:'다국어(한국어 보통)',desc:'소형 중 답변 품질이 좋은 편',pri:8},
+ {id:'qwen3-17',kind:'chat',name:'Qwen3 1.7B',repo:'onnx-community/Qwen3-1.7B-ONNX',dtype:'q4f16',gb:1.3,minBuf:2,lang:'다국어(한국어 보통)',desc:'Qwen2.5보다 새로운 세대 (사고 모드 끔)',noThink:true,pri:9},
+ {id:'deepseek-r1',kind:'chat',name:'DeepSeek-R1 Distill Qwen 1.5B',repo:'onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX',dtype:'q4f16',gb:1.3,minBuf:2,lang:'영어·중국어 중심',desc:'추론 특화. 생각 과정(&lt;think&gt;)을 함께 출력',pri:10},
+ {id:'phi35',kind:'chat',name:'Phi-3.5 mini Instruct',repo:'onnx-community/Phi-3.5-mini-instruct-onnx-web',dtype:'q4f16',gb:2.2,minBuf:2,lang:'영어 중심',desc:'3.8B급 고품질. 높은 사양 필요',pri:11},
+ {id:'qwen3-4',kind:'chat',name:'Qwen3 4B',repo:'onnx-community/Qwen3-4B-ONNX',dtype:'q4f16',gb:2.8,minBuf:2,lang:'다국어(한국어 양호)',desc:'가장 큰 대화 모델. 고성능 GPU 권장',noThink:true,pri:12},
+ {id:'janus-pro',kind:'image',name:'Janus-Pro 1B',repo:'onnx-community/Janus-Pro-1B-ONNX',gb:2.3,minBuf:2,lang:'영어 프롬프트 권장',desc:'텍스트→이미지 384×384. 생성에 수 분 걸릴 수 있음',pri:13},
+ {id:'janus-13',kind:'image',name:'Janus 1.3B',repo:'onnx-community/Janus-1.3B-ONNX',gb:2.6,minBuf:2,lang:'영어 프롬프트 권장',desc:'Janus 초기 버전. Pro보다 품질은 낮음',pri:14}
 ];
 const $=(s,r=document)=>r.querySelector(s);const app=$('#app');
 const st={hw:null,kind:null,model:null,worker:null,files:{},hist:[],gal:[],busy:false,sys:'당신은 친절한 한국어 AI 어시스턴트입니다.',max:512};
@@ -114,7 +129,8 @@ async function home(){
 async function pick(kind){
  st.kind=kind;const list=MODELS.filter(m=>m.kind===kind).sort((a,b)=>a.pri-b.pri);
  const states=await Promise.all(list.map(async m=>({m,f:fit(m),c:await cached(m)})));
- const rec=[...states].filter(s=>s.f==='ok').pop(); // 실행 가능한 것 중 가장 큰 모델 추천
+ const lim=kind==='chat'?(st.hw.mem&&st.hw.mem<8?1:1.5):99; // 추천은 안정적으로 돌아갈 크기 안에서
+ const rec=[...states].filter(s=>s.f==='ok'&&s.m.gb<=lim).pop();
  const mob=isMobile&&kind==='chat'?states.find(s=>s.f==='ok'):null;
  const recId=(isMobile&&mob?mob:rec)?.m.id;
  app.innerHTML=`<div class="top"><button class="btn ghost" id="bk">← 처음으로</button><h2>${kind==='chat'?'대화':'이미지 생성'} 모델 선택</h2></div>
@@ -153,29 +169,28 @@ async function load(m){
 }
 function fail(msg){killWorker();app.innerHTML=`<div class="card"><b>오류</b><p class="sub">${msg.replace(/</g,'&lt;')}</p><button class="btn" id="bk">모델 선택으로</button></div>`;$('#bk').onclick=()=>pick(st.kind)}
 
-function head(t){return `<div class="top"><button class="btn ghost" id="bk">← 모델 변경</button><h2 class="grow">${t}</h2><span class="tag ok">${st.model.name}</span></div>`}
+function head(t,x=''){return `<div class="top"><button class="btn ghost" id="bk">← 모델 변경</button><h2 class="grow">${t}</h2><span class="tag ok">${st.model.name}</span>${x}</div>`}
 
 function chat(){
  st.hist=[];
- app.innerHTML=head('대화')+`<div id="set" class="card"><label class="sub">시스템 프롬프트</label><textarea id="sy" rows="2"></textarea>
+ app.innerHTML=head('대화','<button class="btn ghost" id="nw">새 대화</button><button class="btn ghost" id="gr">설정</button>')+`<div id="set" class="card"><label class="sub">시스템 프롬프트</label><textarea id="sy" rows="2"></textarea>
  <label class="sub">최대 답변 길이(토큰)</label><input type="number" id="mx" min="64" max="2048" step="64"></div>
- <div id="msgs"></div><div class="row" style="align-items:flex-end"><textarea id="in" rows="2" placeholder="메시지를 입력하세요 (Enter 전송, Shift+Enter 줄바꿈)"></textarea>
- <div style="display:grid;gap:6px"><button class="btn" id="sd">전송</button><button class="btn ghost" id="nw">새 대화</button><button class="btn ghost" id="gr">설정</button></div></div>`;
+ <div id="msgs"></div><div class="comp"><textarea id="in" rows="1" placeholder="메시지 입력 (Shift+Enter 줄바꿈)"></textarea><button class="circ" id="sd" title="전송">↑</button></div>`;
  $('#sy').value=st.sys;$('#mx').value=st.max;
  $('#bk').onclick=()=>pick('chat');$('#gr').onclick=()=>$('#set').classList.toggle('on');
  $('#sy').oninput=e=>st.sys=e.target.value;$('#mx').onchange=e=>st.max=Math.min(2048,Math.max(64,+e.target.value||512));
  $('#nw').onclick=()=>{if(st.busy)stop();st.hist=[];$('#msgs').innerHTML=''};
- const send=()=>{if(st.busy)return stop();const t=$('#in').value.trim();if(!t)return;$('#in').value='';
-  add('u',t);st.hist.push({role:'user',content:t});const el=add('a','…');let acc='';st.busy=true;$('#sd').textContent='중지';
+ const send=()=>{if(st.busy)return stop();const t=$('#in').value.trim();if(!t)return;$('#in').value='';$('#in').style.height='auto';
+  add('u',t);st.hist.push({role:'user',content:t});const el=add('a','…');let acc='';st.busy=true;$('#sd').textContent='■';
   const w=st.worker;
   w.onmessage=({data:d})=>{
    if(d.type==='tok'){acc+=d.t;el.textContent=acc;$('#msgs').scrollTop=1e9}
    else if(d.type==='done'){st.hist.push({role:'assistant',content:acc});end()}
    else if(d.type==='err'){el.textContent='오류: '+d.msg;end()}};
-  w.postMessage({type:'chat',max:st.max,messages:[{role:'system',content:st.sys},...st.hist]})};
- const end=()=>{st.busy=false;$('#sd').textContent='전송'};
+  w.postMessage({type:'chat',noThink:st.model.noThink,max:st.max,messages:[{role:'system',content:st.sys},...st.hist]})};
+ const end=()=>{st.busy=false;$('#sd').textContent='↑'};
  const stop=()=>st.worker&&st.worker.postMessage({type:'stop'});
- $('#sd').onclick=send;$('#in').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();send()}};
+ $('#in').oninput=e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,160)+'px'};$('#sd').onclick=send;$('#in').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();send()}};
  function add(c,t){const d=document.createElement('div');d.className='m '+c;d.textContent=t;$('#msgs').append(d);$('#msgs').scrollTop=1e9;return d}
 }
 
