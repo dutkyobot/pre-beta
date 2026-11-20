@@ -342,14 +342,15 @@ app.innerHTML=head('대화','<button class="btn ghost" id="nw">새 대화</butto
 $('#sy').value=st.sys;$('#mx').value=st.max;
 $('#bk').onclick=()=>pick('chat');$('#gr').onclick=()=>$('#set').classList.toggle('on');
 $('#sy').oninput=e=>{st.sys=e.target.value;clearTimeout(ct);ct=setTimeout(count,150)};$('#mx').onchange=e=>st.max=Math.min(2048,Math.max(64,+e.target.value||512));
-$('#nw').onclick=()=>{if(st.busy)stop();st.hist=[];$('#msgs').innerHTML='';count()};
+$('#nw').onclick=()=>{if(st.busy)stop();st.gen=(st.gen||0)+1;st.hist=[];$('#msgs').innerHTML='';count()};
 const send=()=>{if(st.busy)return stop();const t=$('#in').value.trim();if(!t)return;$('#in').value='';$('#in').style.height='auto';
-add('u',t);st.hist.push({role:'user',content:t});const el=mkA();let acc='';st.busy=true;$('#sd').textContent='■';
+add('u',t);st.hist.push({role:'user',content:t});const el=mkA(),g=st.gen||0;let acc='';st.busy=true;$('#sd').textContent='■';
 const w=st.worker;
 w.onmessage=({data:d})=>{
 if(d.type==='n')tk(d.n);
 else if(d.type==='tok'){acc+=d.t;paint(el,acc)}
-else if(d.type==='done'){fin(el);st.hist.push({role:'assistant',content:parse(acc).an});end()}
+else if(d.type==='done'){fin(el);if(g===(st.gen||0))st.hist.push({role:'assistant',content:parse(acc).an}); // 생성 중 '새 대화'를 눌렀다면 이전 답변을 새 대화에 넣지 않음
+end()}
 else if(d.type==='err'){el.querySelector('.ans').textContent='오류: '+d.msg;end()}};
 w.postMessage({type:'chat',noThink:st.model.noThink,max:st.max,messages:[{role:'system',content:st.sys},...st.hist]})};
 const end=()=>{st.busy=false;$('#sd').textContent='↑';st.worker.onmessage=idle;count()};
