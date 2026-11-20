@@ -144,7 +144,7 @@ T=await import(d.lib===4?LIB4:LIB);eng=d.eng;
 const pc=p=>postMessage({type:'prog',p});
 if(eng==='chat'){
 tok=await T.AutoTokenizer.from_pretrained(d.repo,{progress_callback:pc});
-m=await T.AutoModelForCausalLM.from_pretrained(d.repo,{dtype:d.dtype,device:'webgpu',progress_callback:pc});
+m=await (d.cls?T[d.cls]:T.AutoModelForCausalLM).from_pretrained(d.repo,{dtype:d.dtype,device:'webgpu',progress_callback:pc});
 await m.generate({...tok('hi'),max_new_tokens:1}); // 워밍업(GPU 초기화)
 }else if(eng==='janus'){
 proc=await T.AutoProcessor.from_pretrained(d.repo,{progress_callback:pc});
@@ -203,18 +203,13 @@ postMessage({type:'tres',mask:mk.data,w:mk.dims.at(-1),h:mk.dims.at(-2)});
 // engine: Worker가 모델을 돌리는 방식 (chat, janus, sd, bg, modnet, sr). 생략하면 kind와 같음
 // cpu:true = WebGPU 없이 실행 / best:true = 해당 섹션(그룹)의 추천 표시 / grp = 섹션 안 소제목 / maxIn = 처리 모델 입력 긴 변 제한(px)
 const MODELS=[
-{id:'smollm2-360',kind:'chat',name:'SmolLM2 360M Instruct',repo:'HuggingFaceTB/SmolLM2-360M-Instruct',dtype:'q4f16',gb:0.25,minBuf:1,lang:'영어 중심',desc:'초경량·초고속. 답변 품질은 낮음',pri:1},
-{id:'qwen25-05',kind:'chat',name:'Qwen2.5 0.5B Instruct',repo:'onnx-community/Qwen2.5-0.5B-Instruct',dtype:'q4f16',gb:0.4,minBuf:1,lang:'다국어(한국어 약함)',desc:'가볍고 빠름. 저사양·모바일용',pri:2},
-{id:'qwen3-06',kind:'chat',name:'Qwen3 0.6B',repo:'onnx-community/Qwen3-0.6B-ONNX',dtype:'q4f16',gb:0.5,minBuf:1,lang:'다국어(한국어 보통)',desc:'최신 소형 모델 (사고 모드 끔)',noThink:true,pri:3},
-{id:'tinyllama',kind:'chat',name:'TinyLlama 1.1B Chat',repo:'onnx-community/TinyLlama-1.1B-Chat-v1.0-ONNX',dtype:'q4f16',gb:0.7,minBuf:1,lang:'영어 중심',desc:'가벼운 영어 대화용',pri:4},
-{id:'gemma3-1',kind:'chat',name:'Gemma 3 1B IT',repo:'onnx-community/gemma-3-1b-it-ONNX',dtype:'q4',gb:0.8,minBuf:1,lang:'다국어(한국어 양호)',desc:'구글 소형 모델, 소형 중 다국어 강점',pri:5},
-{id:'llama32-1',kind:'chat',name:'Llama 3.2 1B Instruct',repo:'onnx-community/Llama-3.2-1B-Instruct-q4f16',dtype:'q4f16',gb:0.95,minBuf:2,lang:'영어 중심, 일부 다국어',desc:'균형형 소형 모델',pri:6},
-{id:'smollm2-17',kind:'chat',name:'SmolLM2 1.7B Instruct',repo:'HuggingFaceTB/SmolLM2-1.7B-Instruct',dtype:'q4f16',gb:1.1,minBuf:2,lang:'영어 중심',desc:'영어 위주 작업에 적합',pri:7},
-{id:'qwen25-15',kind:'chat',name:'Qwen2.5 1.5B Instruct',repo:'onnx-community/Qwen2.5-1.5B-Instruct',dtype:'q4f16',gb:1.2,minBuf:2,lang:'다국어(한국어 보통)',desc:'소형 중 답변 품질이 좋은 편',pri:8},
-{id:'qwen3-17',kind:'chat',name:'Qwen3 1.7B',repo:'onnx-community/Qwen3-1.7B-ONNX',dtype:'q4f16',gb:1.3,minBuf:2,lang:'다국어(한국어 보통)',desc:'Qwen2.5보다 새로운 세대 (사고 모드 끔)',noThink:true,pri:9},
-{id:'deepseek-r1',kind:'chat',name:'DeepSeek-R1 Distill Qwen 1.5B',repo:'onnx-community/DeepSeek-R1-Distill-Qwen-1.5B-ONNX',dtype:'q4f16',gb:1.3,minBuf:2,think:true,lang:'영어·중국어 중심',desc:'추론 특화. 생각 과정을 접어서 표시',pri:10},
-{id:'phi35',kind:'chat',name:'Phi-3.5 mini Instruct',repo:'onnx-community/Phi-3.5-mini-instruct-onnx-web',dtype:'q4f16',gb:2.2,minBuf:2,lang:'영어 중심',desc:'3.8B급 고품질. 높은 사양 필요',pri:11},
-{id:'qwen3-4',kind:'chat',name:'Qwen3 4B',repo:'onnx-community/Qwen3-4B-ONNX',dtype:'q4f16',gb:2.8,minBuf:2,lang:'다국어(한국어 양호)',desc:'가장 큰 대화 모델. 고성능 GPU 권장',noThink:true,pri:12},
+{id:'qwen3-06',kind:'chat',name:'Qwen3 0.6B',repo:'onnx-community/Qwen3-0.6B-ONNX',dtype:'q4f16',gb:0.5,minBuf:1,lang:'다국어(한국어 보통)',desc:'저사양·모바일용. 가볍고 빠른 기본 모델 (사고 모드 끔)',noThink:true,pri:1},
+{id:'qwen35-08',kind:'chat',cls:'Qwen3_5ForConditionalGeneration',name:'Qwen3.5 0.8B',repo:'onnx-community/Qwen3.5-0.8B-ONNX',dtype:{embed_tokens:'q4',vision_encoder:'fp16',decoder_model_merged:'q4'},gb:0.9,minBuf:1,lang:'다국어(한국어 양호)',desc:'저사양용 최신 세대. 0.6B급 크기에 더 나은 품질 (실험적)',noThink:true,pri:2},
+{id:'gemma3-1',kind:'chat',name:'Gemma 3 1B IT',repo:'onnx-community/gemma-3-1b-it-ONNX',dtype:'q4',gb:0.8,minBuf:1,lang:'다국어(한국어 양호)',desc:'구글 소형 모델. 일반 사양의 한국어 대화용',pri:3},
+{id:'qwen3-17',kind:'chat',name:'Qwen3 1.7B',repo:'onnx-community/Qwen3-1.7B-ONNX',dtype:'q4f16',gb:1.3,minBuf:2,lang:'다국어(한국어 보통)',desc:'중간 사양용. 속도와 품질의 균형 (사고 모드 끔)',noThink:true,pri:4},
+{id:'qwen3-4',kind:'chat',name:'Qwen3 4B',repo:'onnx-community/Qwen3-4B-ONNX',dtype:'q4f16',gb:2.8,minBuf:2,lang:'다국어(한국어 양호)',desc:'고성능 GPU용. 검증된 큰 모델',noThink:true,pri:5},
+{id:'gemma4-e2b',kind:'chat',cls:'Gemma4ForConditionalGeneration',name:'Gemma 4 E2B',repo:'onnx-community/gemma-4-E2B-it-ONNX',dtype:{embed_tokens:'q4f16',decoder_model_merged:'q4f16',vision_encoder:'q4f16',audio_encoder:'q4f16'},gb:3.4,minBuf:2,lang:'다국어(한국어 양호)',desc:'고성능용 최신 구글 모델. 큰 다운로드 (실험적)',pri:6},
+{id:'qwen35-4',kind:'chat',cls:'Qwen3_5ForConditionalGeneration',name:'Qwen3.5 4B',repo:'onnx-community/Qwen3.5-4B-ONNX',dtype:{embed_tokens:'q4',vision_encoder:'fp16',decoder_model_merged:'q4'},gb:3.2,minBuf:2,lang:'다국어(한국어 양호)',desc:'가장 큰 대화 모델. 고성능 GPU 권장 (실험적)',noThink:true,pri:7},
 // --- 텍스트 → 이미지 ---
 {id:'janus-pro',kind:'image',engine:'janus',name:'Janus-Pro 1B',repo:'onnx-community/Janus-Pro-1B-ONNX',gb:2.3,minBuf:2,lang:'영어 프롬프트 권장',desc:'텍스트→이미지 384×384. 생성에 수 분 걸릴 수 있음',best:true,pri:13},
 {id:'janus-13',kind:'image',engine:'janus',name:'Janus 1.3B',repo:'onnx-community/Janus-1.3B-ONNX',gb:2.6,minBuf:2,lang:'영어 프롬프트 권장',desc:'Janus 초기 버전. Pro보다 품질은 낮음',pri:14},
@@ -268,9 +263,11 @@ st.kind=kind;const list=MODELS.filter(m=>m.kind===kind).sort((a,b)=>a.pri-b.pri)
 const states=await Promise.all(list.map(async m=>({m,f:fit(m),c:await cached(m)})));
 let recIds=[];
 if(kind==='chat'){
-const lim=st.hw.mem&&st.hw.mem<8?1:1.5; // 추천은 안정적으로 돌아갈 크기 안에서
-const rec=[...states].filter(s=>s.f==='ok'&&s.m.gb<=lim).pop();
-const mob=isMobile?states.find(s=>s.f==='ok'):null;
+// 사양별 자동 추천: 메모리·GPU 최대 버퍼·모바일 여부로 안정적으로 돌아갈 최대 크기를 정함
+const h=st.hw,mem=h.mem||4; // deviceMemory가 없으면 4GB로 가정
+const lim=isMobile?0.9:mem<=4?0.9:mem<8?1.5:h.buf>=4?3.5:2.8;
+const rec=[...states].filter(s=>s.f==='ok'&&s.m.gb<=lim&&!/실험적/.test(s.m.desc)).pop(); // 추천은 검증된 모델 중에서
+const mob=null;
 const r=(mob||rec)?.m.id;if(r)recIds=[r];
 }else recIds=states.filter(s=>s.f==='ok'&&s.m.best).map(s=>s.m.id);
 const cardH=({m,f,c})=>`<div class="card model ${recIds.includes(m.id)?'rec':''} ${f!=='ok'?'no':''}" data-id="${m.id}">
@@ -281,7 +278,7 @@ const cardH=({m,f,c})=>`<div class="card model ${recIds.includes(m.id)?'rec':''}
 const groups=[...new Set(states.map(s=>s.m.grp||''))];
 // 필터(대화 모델 전용): 태그는 모델 정보에서 자동 계산
 const TAGS=[['ko','한국어 가능'],['big','고성능 (큰 모델)'],['think','생각 과정(think)'],['light','가벼움'],['saved','저장됨'],['run','실행 가능']];
-const has=(s,t)=>t==='ko'?/한국어/.test(s.m.lang)&&!/약함/.test(s.m.lang):t==='big'?s.m.gb>=1.1:t==='think'?!!s.m.think:t==='light'?s.m.gb<=0.8:t==='saved'?s.c:s.f==='ok';
+const has=(s,t)=>t==='ko'?/한국어/.test(s.m.lang)&&!/약함/.test(s.m.lang):t==='big'?s.m.gb>=2:t==='think'?!!s.m.think:t==='light'?s.m.gb<=0.8:t==='saved'?s.c:s.f==='ok';
 const mkBody=()=>{const sel=kind==='chat'?[...st.flt]:[],vis=states.filter(s=>sel.every(t=>has(s,t)));
 if(!vis.length)return '<div class="sub" style="margin-top:12px">조건에 맞는 모델이 없습니다.</div>';
 return groups.map(g=>{const a=vis.filter(s=>(s.m.grp||'')===g);return a.length?(g?`<h3 class="gh">${g}</h3>`:'')+`<div class="grid">${a.map(cardH).join('')}</div>`:''}).join('')};
@@ -324,7 +321,7 @@ else if(p.status==='ready'||p.status==='done'){}}
 else if(d.type==='ready')m.kind==='chat'?chat():m.kind==='tool'?toolView():imgView();
 else if(d.type==='err'){if(alt&&!tried){tried=1;w.terminate();st.files={};st.rows={};$('#fl').innerHTML='';$('#br i').style.width='0';$('#br').classList.add('ind');$('#ph').textContent='이전 버전 라이브러리로 다시 시도하는 중…';go(3)}else fail(d.msg)}
 };
-w.postMessage({type:'load',eng:m.engine||m.kind,repo:m.repo,dtype:m.dtype,lib});
+w.postMessage({type:'load',eng:m.engine||m.kind,repo:m.repo,dtype:m.dtype,cls:m.cls,lib});
 setTimeout(()=>{if(st.worker===w&&!Object.keys(st.files).length)$('#ph').textContent+=' (GPU 초기화 중일 수 있음)'},8000)};
 go(m.kind==='chat'?4:3);$('#br').classList.add('ind');
 }
@@ -394,11 +391,11 @@ else if(d.type==='tok')out+=d.t;
 else if(d.type==='done'){w.terminate();st.tw=null;const r=out.replace(/<think>[\s\S]*?<\/think>/g,'').replace(/<\/?think>/g,'').trim().replace(/^["']+|["']+$/g,'');
 if(!r)return next();$('#pr').value=r;rel('번역 완료 · '+m.name)}
 else if(d.type==='err')next()};
-w.postMessage({type:'load',eng:'chat',repo:m.repo,dtype:m.dtype,lib:4})};
+w.postMessage({type:'load',eng:'chat',repo:m.repo,dtype:m.dtype,cls:m.cls,lib:4})};
 $('#tr').onclick=async()=>{const t=$('#pr').value.trim();if(!t||st.busy)return;
 if(!/[가-힣]/.test(t)){$('#tm').textContent='한글이 없어 번역할 내용이 없습니다';return}
-const list=[];for(const id of ['qwen3-17','qwen25-15','gemma3-1','qwen3-06','qwen25-05']){const x=MODELS.find(v=>v.id===id);if(x.gb<=1.5&&fit(x)==='ok'&&await cached(x))list.push(x)}
-if(!list.length)return alert('번역에 쓸 수 있는 다운로드된 대화 모델이 없습니다. 대화 모델(예: Qwen2.5 0.5B)을 먼저 받아 주세요.');
+const list=[];for(const id of ['qwen3-17','gemma3-1','qwen35-08','qwen3-06']){const x=MODELS.find(v=>v.id===id);if(x.gb<=1.5&&fit(x)==='ok'&&await cached(x))list.push(x)}
+if(!list.length)return alert('번역에 쓸 수 있는 다운로드된 대화 모델이 없습니다. 대화 모델(예: Qwen3 0.6B)을 먼저 받아 주세요.');
 st.busy=true;$('#go').disabled=$('#tr').disabled=true;tryTr(list,0,t)};
 $('#sv').onclick=()=>{const a=document.createElement('a');a.href=$('#out').src;a.download='image-'+Date.now()+'.png';a.click()};
 $('#go').onclick=()=>{const p=$('#pr').value.trim();if(!p||st.busy)return;st.busy=true;$('#go').disabled=true;$('#gb').style.display='block';
