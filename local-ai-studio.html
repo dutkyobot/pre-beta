@@ -308,7 +308,7 @@ st.model=m;st.files={};st.rows={};killWorker();
 app.innerHTML=`<div class="top"><h2>${m.name} 준비 중</h2></div><div class="card"><div id="ph">${c?'저장된 모델을 불러오는 중…':'다운로드 중…'}</div>
 <div class="bar" id="br"><i></i></div><div class="sub" id="pf">연결 중…</div><div class="fl" id="fl"></div><div class="row" style="margin-top:12px"><button class="btn ghost" id="cn">취소</button></div></div>`;
 $('#cn').onclick=()=>pick(m.kind);
-let tried=0;const alt=m.kind==='chat'; // 대화 모델은 v4 라이브러리로 먼저 시도하고, 실패하면 v3로 한 번 재시도
+let tried=0;const alt=m.kind==='chat'&&!m.cls; // 대화 모델은 v4 라이브러리로 먼저 시도하고, 실패하면 v3로 한 번 재시도 (v4 전용 신형 모델은 재시도 없이 원래 오류를 표시)
 const go=lib=>{const w=st.worker=spawn();
 w.onerror=e=>fail('Worker 오류: '+(e.message||'불러오기 실패'));
 w.onmessage=({data:d})=>{
