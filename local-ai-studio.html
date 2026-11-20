@@ -44,6 +44,7 @@ textarea{resize:none}
 .pv{width:100%;max-height:360px;object-fit:contain;border:1px solid var(--ln);border-radius:10px;margin-top:8px;display:block;cursor:pointer}
 .drop{cursor:pointer}.drop:hover,.drop.on{border-color:var(--ac);color:var(--tx)}
 .chk{background:conic-gradient(#d4d4d0 25%,#fff 0 50%,#d4d4d0 0 75%,#fff 0) 0 0/16px 16px}
+input[type=checkbox]{accent-color:var(--ac);margin-right:6px}
 .del{padding:4px 12px;font-size:13px;color:var(--bad)}
 /* 입력창 */
 .comp{display:flex;align-items:flex-end;gap:8px;background:var(--card);border:1px solid var(--ln);border-radius:24px;padding:6px 6px 6px 18px;position:sticky;bottom:12px;margin-top:8px}
@@ -217,7 +218,7 @@ const MODELS=[
 {id:'swin-x4',kind:'tool',engine:'sr',grp:'업스케일',name:'Swin2SR ×4 (실사)',repo:'Xenova/swin2SR-realworld-sr-x4-64-bsrgan-psnr',cpu:true,gb:0.06,minBuf:0,maxIn:256,desc:'4배 확대, 실사 사진용. 긴 변 256px까지만 입력',pri:19}
 ];
 const $=(s,r=document)=>r.querySelector(s);const app=$('#app');
-const st={hw:null,kind:null,model:null,worker:null,tw:null,files:{},rows:{},hist:[],gal:[],tgal:[],busy:false,sys:'당신은 친절한 한국어 AI 어시스턴트입니다.',max:512};
+const st={hw:null,kind:null,model:null,worker:null,tw:null,flt:new Set(),files:{},rows:{},hist:[],gal:[],tgal:[],busy:false,sys:'당신은 친절한 한국어 AI 어시스턴트입니다.',max:512};
 const isMobile=/Android|iPhone|iPad|Mobi/i.test(navigator.userAgent)||(navigator.connection&&navigator.connection.type==='cellular');
 const fmt=g=>g<1?Math.round(g*1000)+'MB':g.toFixed(1)+'GB';
 const TITLES={chat:'대화',image:'이미지 생성',tool:'이미지 처리'};
@@ -270,16 +271,27 @@ const cardH=({m,f,c})=>`<div class="card model ${recIds.includes(m.id)?'rec':''}
 <span class="tag ${c?'ok':''}">${c?'저장됨':'미다운로드'}</span></div>
 <div class="sub">${m.desc}<br>${m.kind==='tool'?'':`언어: ${m.lang}<br>`}권장: ${m.cpu?'WebGPU 불필요 (CPU 실행)':`WebGPU, 최대 버퍼 ${m.minBuf}GB 이상`}</div>${c?`<div class="row" style="justify-content:flex-end"><button class="btn ghost del" data-id="${m.id}">저장된 모델 삭제</button></div>`:''}</div>`;
 const groups=[...new Set(states.map(s=>s.m.grp||''))];
-const body=groups.map(g=>(g?`<h3 class="gh">${g}</h3>`:'')+`<div class="grid">${states.filter(s=>(s.m.grp||'')===g).map(cardH).join('')}</div>`).join('');
-app.innerHTML=`<div class="top"><button class="btn ghost" id="bk">← 처음으로</button><h2>${TITLES[kind]} 모델 선택</h2></div>${body}`;
+// 필터(대화 모델 전용): 태그는 모델 정보에서 자동 계산
+const TAGS=[['ko','한국어 가능'],['big','고성능 (큰 모델)'],['think','생각 과정(think)'],['light','가벼움'],['saved','저장됨'],['run','실행 가능']];
+const has=(s,t)=>t==='ko'?/한국어/.test(s.m.lang)&&!/약함/.test(s.m.lang):t==='big'?s.m.gb>=1.1:t==='think'?!!s.m.think:t==='light'?s.m.gb<=0.8:t==='saved'?s.c:s.f==='ok';
+const mkBody=()=>{const sel=kind==='chat'?[...st.flt]:[],vis=states.filter(s=>sel.every(t=>has(s,t)));
+if(!vis.length)return '<div class="sub" style="margin-top:12px">조건에 맞는 모델이 없습니다.</div>';
+return groups.map(g=>{const a=vis.filter(s=>(s.m.grp||'')===g);return a.length?(g?`<h3 class="gh">${g}</h3>`:'')+`<div class="grid">${a.map(cardH).join('')}</div>`:''}).join('')};
+const fbar=kind==='chat'?`<div class="row" style="margin-top:14px"><button class="btn ghost" id="fb"></button><button class="btn ghost" id="fr" style="display:none">초기화</button></div><div class="card" id="fp" style="display:none;margin-top:8px"><label style="display:block"><input type="checkbox" id="fall">전체</label>${TAGS.map(([k,l])=>`<label style="display:block"><input type="checkbox" data-t="${k}">${l}</label>`).join('')}</div>`:'';
+app.innerHTML=`<div class="top"><button class="btn ghost" id="bk">← 처음으로</button><h2>${TITLES[kind]} 모델 선택</h2></div>${fbar}<div id="mg">${mkBody()}</div>`;
 $('#bk').onclick=home;
-app.querySelectorAll('.del').forEach(b=>b.onclick=async e=>{e.stopPropagation();const m=MODELS.find(x=>x.id===b.dataset.id);
+const bind=()=>{$('#mg').querySelectorAll('.del').forEach(b=>b.onclick=async e=>{e.stopPropagation();const m=MODELS.find(x=>x.id===b.dataset.id);
 if(!confirm(`'${m.name}' 모델을 삭제할까요?\n저장된 파일(약 ${fmt(m.gb)})이 이 브라우저에서 지워지며, 다시 사용하려면 재다운로드해야 합니다.`))return;
 b.disabled=true;b.textContent='삭제 중…';await removeModel(m);pick(st.kind)});
-app.querySelectorAll('.model').forEach(el=>el.onclick=()=>{const m=MODELS.find(x=>x.id===el.dataset.id);
+$('#mg').querySelectorAll('.model').forEach(el=>el.onclick=()=>{const m=MODELS.find(x=>x.id===el.dataset.id);
 if(!st.hw.ok&&!m.cpu)return alert('WebGPU를 사용할 수 없어 실행할 수 없습니다.');
 if(fit(m)!=='ok'&&!confirm('이 컴퓨터에서는 실행이 어려울 수 있습니다. 계속할까요?'))return;
-load(m)});
+load(m)})};bind();
+if($('#fb')){const upd=()=>{const n=st.flt.size;$('#fb').textContent='필터 ▾'+(n?` (${n})`:' · 전체');$('#fr').style.display=n?'':'none';$('#fall').checked=!n;
+$('#fp').querySelectorAll('[data-t]').forEach(c=>c.checked=st.flt.has(c.dataset.t));$('#mg').innerHTML=mkBody();bind()};
+$('#fb').onclick=()=>{const q=$('#fp');q.style.display=q.style.display==='none'?'block':'none'};
+$('#fr').onclick=()=>{st.flt.clear();upd()};$('#fall').onchange=()=>{st.flt.clear();upd()};
+$('#fp').querySelectorAll('[data-t]').forEach(c=>c.onchange=()=>{c.checked?st.flt.add(c.dataset.t):st.flt.delete(c.dataset.t);upd()});upd()}
 }
 async function load(m){
 const c=await cached(m);
