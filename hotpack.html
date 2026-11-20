@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>핫팩 모드 | Dutkyobot</title>
+<style>
+:root{--bg:#0f0b09;--card:rgba(255,255,255,.045);--line:rgba(255,255,255,.09);--tx:#f6ece2;--mut:#a89684;--hot:#ff6a2b;--hot2:#ffb347;--heat:0}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{background:var(--bg)}
+body{color:var(--tx);font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;min-height:100vh;display:flex;justify-content:center;padding:calc(18px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom));position:relative;overflow-x:hidden}
+/* 가열될수록 배경이 따뜻해지는 글로우 */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;transition:opacity 1.5s;opacity:calc(.15 + var(--heat)*.85);
+ background:radial-gradient(ellipse 80% 55% at 50% 22%,rgba(255,106,43,.55),rgba(255,106,43,0) 70%),radial-gradient(ellipse 70% 40% at 50% 100%,rgba(255,179,71,.22),transparent 70%)}
+main{width:100%;max-width:460px;display:flex;flex-direction:column;gap:14px}
+header{text-align:center}
+h1{font-size:21px;letter-spacing:-.3px}
+.sub{color:var(--mut);font-size:13px;margin-top:4px}
+
+/* 링 + 버튼 */
+.ring-wrap{position:relative;width:250px;height:250px;margin:6px auto}
+.ring-wrap svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:rgba(255,255,255,.08);stroke-width:8}
+.ring-fg{fill:none;stroke:url(#g);stroke-width:8;stroke-linecap:round;stroke-dasharray:691;stroke-dashoffset:691;transition:stroke-dashoffset .5s linear}
+.orb{position:absolute;inset:22px;border-radius:50%;border:none;cursor:pointer;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+ background:radial-gradient(circle at 35% 28%,#5a4637,#251b15 70%);box-shadow:inset 0 0 0 1px var(--line);transition:background .6s,box-shadow .6s}
+.orb .big{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums}
+.orb .mid{font-size:14px;opacity:.9}
+.orb small{font-size:12px;opacity:.7}
+.orb.on{background:radial-gradient(circle at 35% 28%,var(--hot2),var(--hot) 52%,#a82c07);animation:pulse 2.4s ease-in-out infinite}
+.orb.hold{background:radial-gradient(circle at 35% 28%,#ffd08a,#ff9a3d 52%,#c4520f)}
+@keyframes pulse{0%,100%{box-shadow:0 0 30px 4px rgba(255,106,43,.4)}50%{box-shadow:0 0 70px 18px rgba(255,106,43,.7)}}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 16px;backdrop-filter:blur(6px)}
+.card h2{font-size:12px;color:var(--mut);font-weight:600;margin-bottom:10px;letter-spacing:.3px}
+.seg{display:grid;gap:8px}
+.seg.c3{grid-template-columns:repeat(3,1fr)}.seg.c4{grid-template-columns:repeat(4,1fr)}
+.seg button{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--tx);border-radius:11px;padding:10px 2px;font-size:13.5px;cursor:pointer;transition:.15s}
+.seg button.sel{background:linear-gradient(135deg,var(--hot2),var(--hot));border-color:transparent;color:#fff;font-weight:700}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:6px 0}
+.row span{color:var(--mut)}.row b{font-variant-numeric:tabular-nums;font-weight:600}
+input[type=range]{width:100%;accent-color:var(--hot);margin-top:4px}
+.tog{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:14px;padding:7px 0}
+.tog small{display:block;color:var(--mut);font-size:11.5px;margin-top:2px;line-height:1.4}
+.sw{position:relative;flex:none;width:44px;height:26px}
+.sw input{opacity:0;width:100%;height:100%;position:absolute;cursor:pointer;z-index:1}
+.sw i{position:absolute;inset:0;background:rgba(255,255,255,.14);border-radius:13px;transition:.2s}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s}
+.sw input:checked+i{background:var(--hot)}.sw input:checked+i::after{transform:translateX(18px)}
+.meter{height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;margin:4px 0 2px}
+.meter i{display:block;height:100%;width:0;border-radius:4px;background:linear-gradient(90deg,#5ec8ff,var(--hot2),var(--hot));transition:width .6s}
+.hint{font-size:12px;color:var(--mut);line-height:1.55}
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;background:rgba(255,255,255,.08);color:var(--mut)}
+.badge.hot{background:rgba(255,106,43,.2);color:var(--hot2)}
+.warn{font-size:12px;color:var(--mut);line-height:1.65;padding:0 4px}
+.warn b{color:var(--hot2)}
+canvas{position:fixed;width:1px;height:1px;opacity:0;pointer-events:none}
+</style>
+</head>
+<body>
+<main>
+ <header>
+  <h1>🔥 핫팩 모드</h1>
+  <p class="sub">기기에 적당한 부하를 줘서 따뜻하게 만들어요</p>
+ </header>
+
+ <div class="ring-wrap">
+  <svg viewBox="0 0 250 250"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb347"/><stop offset="1" stop-color="#ff6a2b"/></linearGradient></defs>
+   <circle class="ring-bg" cx="125" cy="125" r="110"/><circle class="ring-fg" id="ring" cx="125" cy="125" r="110"/></svg>
+  <button class="orb" id="orb" aria-label="시작 또는 정지">
+   <span class="big" id="orbBig">시작</span>
+   <span class="mid" id="orbMid">탭해서 켜기</span>
+   <small id="orbSm"></small>
+  </button>
+ </div>
+
+ <div class="card">
+  <h2>세기</h2>
+  <div class="seg c4" id="level">
+   <button data-v="0.3">약하게</button>
+   <button data-v="0.55" class="sel">보통</button>
+   <button data-v="0.8">강하게</button>
+   <button data-v="0.97">최대</button>
+  </div>
+  <div class="row" style="margin-top:8px"><span>CPU 스레드</span><b id="thV">-</b></div>
+  <input type="range" id="th" min="1" max="8" value="2">
+ </div>
+
+ <div class="card">
+  <h2>가열 방식</h2>
+  <div class="tog"><div>점진 가열<small>세기를 처음 3분 동안 천천히 올려요 (갑자기 뜨거워지지 않음)</small></div><label class="sw"><input type="checkbox" id="ramp" checked><i></i></label></div>
+  <div class="tog"><div>자동 보온<small>기기가 충분히 달궈져 성능이 떨어지면 부하를 낮춰 그 온도를 유지해요</small></div><label class="sw"><input type="checkbox" id="auto" checked><i></i></label></div>
+  <div class="tog"><div>GPU도 같이 사용<small>더 빨리 따뜻해지지만 배터리를 더 써요</small></div><label class="sw"><input type="checkbox" id="gpu"><i></i></label></div>
+  <div class="tog"><div>끝나면 진동 알림<small>지원하는 기기에서만 동작해요</small></div><label class="sw"><input type="checkbox" id="vib" checked><i></i></label></div>
+ </div>
+
+ <div class="card">
+  <h2>자동 종료 타이머</h2>
+  <div class="seg c4" id="timer">
+   <button data-m="15">15분</button>
+   <button data-m="30" class="sel">30분</button>
+   <button data-m="60">1시간</button>
+   <button data-m="0">무제한</button>
+  </div>
+  <div class="row" style="margin-top:8px"><span>배터리 이하면 정지 (충전 중 아닐 때)</span><b id="bmV">20%</b></div>
+  <input type="range" id="bm" min="5" max="60" step="5" value="20">
+ </div>
+
+ <div class="card">
+  <h2>상태</h2>
+  <div class="row"><span>열 상태 추정</span><span class="badge" id="heatB">대기</span></div>
+  <div class="meter"><i id="heatM"></i></div>
+  <p class="hint" id="heatT">가동하면 연산 속도 변화로 기기가 얼마나 달궈졌는지 추정해요. 실제 온도계가 아니라 대략적인 참고용이에요.</p>
+  <div class="row"><span>가동 시간</span><b id="el">00:00</b></div>
+  <div class="row"><span>현재 부하</span><b id="load">0%</b></div>
+  <div class="row"><span>성능 유지율</span><b id="perf">-</b></div>
+  <div class="row"><span>배터리</span><b id="bat">확인 불가</b></div>
+  <div class="row"><span>화면 켜짐 유지</span><b id="wl">-</b></div>
+ </div>
+
+ <p class="warn">
+  <b>주의</b> · 이불·옷 속에 넣거나 덮어두지 마세요(과열 위험). 손에 쥐거나 밖에 두고 쓰세요.<br>
+  · 배터리가 빨리 닳아요. 충전하면서 쓰면 더 뜨거워질 수 있어요.<br>
+  · 너무 뜨겁다고 느껴지면 바로 정지하세요. 이 페이지가 보이는 상태(앞 화면)여야 계속 동작해요.
+ </p>
+</main>
+<canvas id="gl" width="256" height="256"></canvas>
+
+<script>
+const $=id=>document.getElementById(id);
+const cores=Math.min(navigator.hardwareConcurrency||4,8);
+const S={duty:.55,threads:Math.max(1,Math.floor(cores/2)),limit:30,ramp:true,auto:true,vib:true,batMin:20};
+let running=false,t0=0,tick=null,workers=[],fbTimer=null,wake=null,batt=null,glRaf=0,glOn=false;
+let effDuty=0,hold=false,rates=[],baseline=0,smooth=0,perf=1;
+
+/* ---- 설정 저장/복원 ---- */
+try{Object.assign(S,JSON.parse(localStorage.getItem('hotpack')||'{}'))}catch(e){}
+const save=()=>{try{localStorage.setItem('hotpack',JSON.stringify(S))}catch(e){}};
+S.threads=Math.min(S.threads,cores);
+$('th').max=cores;$('th').value=S.threads;$('thV').textContent=S.threads+' / '+cores;
+$('ramp').checked=S.ramp;$('auto').checked=S.auto;$('vib').checked=S.vib;$('bm').value=S.batMin;$('bmV').textContent=S.batMin+'%';
+function pick(id,attr,val){[...$(id).children].forEach(b=>b.classList.toggle('sel',+b.dataset[attr]===val))}
+pick('level','v',S.duty);pick('timer','m',S.limit);
+if(![...$('level').children].some(b=>+b.dataset.v===S.duty)){S.duty=.55;pick('level','v',.55)}
+
+function sel(id,fn){$(id).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;[...$(id).children].forEach(x=>x.classList.remove('sel'));b.classList.add('sel');fn(b);save()})}
+sel('level',b=>{S.duty=+b.dataset.v});
+sel('timer',b=>{S.limit=+b.dataset.m});
+$('th').oninput=e=>{S.threads=+e.target.value;$('thV').textContent=S.threads+' / '+cores;save();if(running)startWorkers()};
+$('bm').oninput=e=>{S.batMin=+e.target.value;$('bmV').textContent=S.batMin+'%';save()};
+['ramp','auto','vib'].forEach(k=>$(k).onchange=e=>{S[k]=e.target.checked;save()});
+$('gpu').onchange=e=>{if(running)e.target.checked?startGL():stopGL()};
+
+/* ---- CPU 워커 ---- */
+const workerSrc=`let duty=.5,on=true,x=1.234,P=100,cnt=0,busy=0,last=performance.now();
+function loop(){if(!on)return;const s=performance.now(),end=s+duty*P;let n=0;
+while(performance.now()<end){for(let i=0;i<5000;i++){x=Math.sin(x)*Math.cos(x)+Math.sqrt(x*x+1.5)+Math.tan(x*.001)}n++}
+const e=performance.now();cnt+=n;busy+=e-s;
+if(e-last>=1000){postMessage({rate:cnt/busy});cnt=0;busy=0;last=e}
+setTimeout(loop,Math.max(1,(1-duty)*P))}
+onmessage=e=>{if(e.data.duty!==undefined)duty=e.data.duty;if(e.data.stop){on=false;close()}};loop();`;
+let wUrl=null;
+function stopWorkers(){workers.forEach(w=>{try{w.postMessage({stop:1});w.terminate()}catch(e){}});workers=[];clearInterval(fbTimer);fbTimer=null}
+function startWorkers(){
+  stopWorkers();
+  try{
+    wUrl=wUrl||URL.createObjectURL(new Blob([workerSrc],{type:'text/javascript'}));
+    for(let i=0;i<S.threads;i++){const w=new Worker(wUrl);w.onmessage=e=>{rates.push(e.data.rate)};w.postMessage({duty:effDuty});workers.push(w)}
+  }catch(e){ // 워커를 못 쓰는 환경 → 메인 스레드로 대체
+    let x=1.2;fbTimer=setInterval(()=>{const end=performance.now()+effDuty*80;while(performance.now()<end){for(let i=0;i<4000;i++)x=Math.sin(x)*Math.cos(x)+Math.sqrt(x*x+1.5)}},100);
+  }
+}
+function pushDuty(){workers.forEach(w=>w.postMessage({duty:effDuty}));$('load').textContent=running?Math.round(effDuty*100*S.threads/cores)+'%':'0%'}
+
+/* ---- GPU ---- */
+let gl,uT,uI;
+function initGL(){
+  gl=$('gl').getContext('webgl');if(!gl)return false;
+  const vs='attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+  const fs=`precision highp float;uniform float t;uniform float n;
+  void main(){vec2 z=gl_FragCoord.xy/256.;float a=0.;
+  for(int i=0;i<400;i++){if(float(i)>n)break;z=vec2(sin(z.x*3.1+t)+cos(z.y*2.3),cos(z.x*1.7-t)+sin(z.y*3.9));a+=length(z)*.001;}
+  gl_FragColor=vec4(fract(a),fract(a*2.),fract(a*3.),1.);}`;
+  const mk=(t,s)=>{const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o};
+  const pr=gl.createProgram();gl.attachShader(pr,mk(gl.VERTEX_SHADER,vs));gl.attachShader(pr,mk(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);gl.useProgram(pr);
+  const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  const l=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(l);gl.vertexAttribPointer(l,2,gl.FLOAT,false,0,0);
+  uT=gl.getUniformLocation(pr,'t');uI=gl.getUniformLocation(pr,'n');return true;
+}
+function startGL(){
+  if(glOn)return;if(!gl&&!initGL()){$('gpu').checked=false;return}
+  glOn=true;let last=0;
+  const f=ts=>{if(!glOn)return;
+    if(ts-last>=16){last=ts;if(Math.random()<effDuty){gl.uniform1f(uT,ts/1000);gl.uniform1f(uI,100+effDuty*300);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);gl.finish()}}
+    glRaf=requestAnimationFrame(f)};
+  glRaf=requestAnimationFrame(f);
+}
+function stopGL(){glOn=false;cancelAnimationFrame(glRaf)}
+
+/* ---- 화면 유지 / 배터리 ---- */
+async function lockScreen(){try{wake=await navigator.wakeLock.request('screen');$('wl').textContent='켜짐';wake.addEventListener('release',()=>{if(running)$('wl').textContent='해제됨'})}catch(e){$('wl').textContent='지원 안 됨'}}
+function unlockScreen(){try{wake&&wake.release()}catch(e){}wake=null;$('wl').textContent='-'}
+document.addEventListener('visibilitychange',()=>{if(running&&document.visibilityState==='visible')lockScreen()});
+(async()=>{try{batt=await navigator.getBattery();const u=()=>{$('bat').textContent=Math.round(batt.level*100)+'%'+(batt.charging?' (충전 중)':'')};u();batt.onlevelchange=u;batt.onchargingchange=u}catch(e){}})();
+
+/* ---- 열 상태 추정: 연산 속도가 기준보다 떨어질수록 '달궈진 것' ---- */
+function evalHeat(s){
+  if(!rates.length)return;
+  const r=rates.splice(0);const avg=r.reduce((a,b)=>a+b,0)/r.length; // 워커별 연산 속도의 평균
+  smooth=smooth?smooth*.7+avg*.3:avg;
+  if(s<20)baseline=Math.max(baseline,smooth);else baseline=Math.max(baseline*.9995,smooth*.98);
+  perf=baseline?Math.min(1,smooth/baseline):1;
+}
+function setHeatUI(s){
+  // 가열 시간(60%)과 성능 하락(40%)을 섞어 0~1 추정값 계산
+  const timeHeat=Math.min(1,s/(10*60))*(effDuty*Math.min(1.2,S.threads/Math.max(1,cores/2)));
+  const dropHeat=Math.min(1,Math.max(0,(1-perf)/.35));
+  const heat=Math.min(1,timeHeat*.6+dropHeat*.4+(hold?.15:0));
+  document.documentElement.style.setProperty('--heat',heat.toFixed(2));
+  $('heatM').style.width=Math.round(heat*100)+'%';
+  const b=$('heatB'),t=$('heatT');
+  let lab,cls='badge',txt;
+  if(heat<.25){lab='데우는 중';txt='아직 미지근해요. 조금만 기다려 보세요.'}
+  else if(heat<.55){lab='따뜻해짐';txt='손에 쥐면 온기가 느껴지기 시작할 거예요.'}
+  else if(heat<.8){lab='따뜻함';cls+=' hot';txt='핫팩처럼 따뜻해졌어요.'}
+  else{lab='뜨거움';cls+=' hot';txt='충분히 달궈졌어요. 너무 뜨거우면 세기를 낮추거나 정지하세요.'}
+  if(hold){lab='보온 중';cls='badge hot';txt='성능 제한이 걸릴 만큼 달궈져서, 부하를 낮춰 온도를 유지하고 있어요.'}
+  b.textContent=lab;b.className=cls;t.textContent=txt;
+  $('perf').textContent=running&&baseline?Math.round(perf*100)+'%':'-';
+}
+
+/* ---- 시작 / 정지 ---- */
+const fmt=s=>{s=Math.max(0,Math.floor(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+const RING=691;
+function start(){
+  running=true;hold=false;t0=Date.now();rates=[];baseline=0;smooth=0;perf=1;
+  effDuty=S.ramp?Math.min(.2,S.duty):S.duty;
+  $('orb').classList.add('on');startWorkers();if($('gpu').checked)startGL();lockScreen();pushDuty();
+  tick=setInterval(step,1000);step();
+}
+function step(){
+  const s=(Date.now()-t0)/1000;
+  // 점진 가열: 3분에 걸쳐 목표 세기까지
+  let target=S.duty;
+  if(S.ramp&&s<180)target=.2+(S.duty-.2)*(s/180);
+  if(target<.2)target=Math.min(.2,S.duty);
+  evalHeat(s);
+  // 자동 보온 (히스테리시스)
+  if(S.auto&&s>30){if(!hold&&perf<.8)hold=true;else if(hold&&perf>.95)hold=false}
+  if(!S.auto)hold=false;
+  const want=hold?Math.min(target,.4):target;
+  if(Math.abs(want-effDuty)>.005){effDuty=want;pushDuty()}else pushDuty();
+  // UI
+  $('el').textContent=fmt(s);
+  $('orb').classList.toggle('hold',hold);
+  $('orbBig').textContent=S.limit?fmt(S.limit*60-s):fmt(s);
+  $('orbMid').textContent=hold?'보온 중':'가열 중';
+  $('orbSm').textContent=S.limit?'탭해서 정지':'경과 시간 · 탭해서 정지';
+  $('ring').style.strokeDashoffset=S.limit?RING*(1-Math.min(1,s/(S.limit*60))):0;
+  setHeatUI(s);
+  if(S.limit&&s>=S.limit*60)return stop('완료!',true);
+  if(batt&&!batt.charging&&batt.level*100<S.batMin)stop('배터리 부족');
+}
+function stop(reason,done){
+  if(running&&done&&S.vib){try{navigator.vibrate&&navigator.vibrate([250,120,250])}catch(e){}}
+  running=false;hold=false;clearInterval(tick);stopWorkers();stopGL();unlockScreen();
+  $('orb').classList.remove('on','hold');
+  $('orbBig').textContent=reason||'시작';$('orbMid').textContent=reason?'탭해서 다시 시작':'탭해서 켜기';$('orbSm').textContent='';
+  $('load').textContent='0%';$('ring').style.strokeDashoffset=RING;
+  document.documentElement.style.setProperty('--heat','0');
+  $('heatB').textContent='대기';$('heatB').className='badge';$('heatM').style.width='0';$('perf').textContent='-';
+}
+$('orb').onclick=()=>running?stop():start();
+</script>
+</body>
+</html>
