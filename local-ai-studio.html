@@ -206,7 +206,7 @@ const MODELS=[
 {id:'qwen25-05',kind:'chat',name:'Qwen2.5 0.5B Instruct',repo:'onnx-community/Qwen2.5-0.5B-Instruct',dtype:'q4f16',gb:0.4,minBuf:1,lang:'다국어(한국어 약함)',desc:'가볍고 빠름. 저사양·모바일용',pri:2},
 {id:'qwen3-06',kind:'chat',name:'Qwen3 0.6B',repo:'onnx-community/Qwen3-0.6B-ONNX',dtype:'q4f16',gb:0.5,minBuf:1,lang:'다국어(한국어 보통)',desc:'최신 소형 모델 (사고 모드 끔)',noThink:true,pri:3},
 {id:'tinyllama',kind:'chat',name:'TinyLlama 1.1B Chat',repo:'onnx-community/TinyLlama-1.1B-Chat-v1.0-ONNX',dtype:'q4f16',gb:0.7,minBuf:1,lang:'영어 중심',desc:'가벼운 영어 대화용',pri:4},
-{id:'gemma3-1',kind:'chat',name:'Gemma 3 1B IT',repo:'onnx-community/gemma-3-1b-it-ONNX',dtype:'q4',gb:0.8,minBuf:1,lang:'다국어(한국어 양호)',desc:'구글 소형 모델, 소형 중 다국어 강점',pri:5},
+{id:'gemma3-1',kind:'chat',name:'Gemma 3 1B IT',repo:'onnx-community/gemma-3-1b-it-ONNX-GQA',dtype:'q4f16',gb:0.8,minBuf:1,lang:'다국어(한국어 양호)',desc:'구글 소형 모델, 소형 중 다국어 강점',pri:5},
 {id:'llama32-1',kind:'chat',name:'Llama 3.2 1B Instruct',repo:'onnx-community/Llama-3.2-1B-Instruct-q4f16',dtype:'q4f16',gb:0.95,minBuf:2,lang:'영어 중심, 일부 다국어',desc:'균형형 소형 모델',pri:6},
 {id:'smollm2-17',kind:'chat',name:'SmolLM2 1.7B Instruct',repo:'HuggingFaceTB/SmolLM2-1.7B-Instruct',dtype:'q4f16',gb:1.1,minBuf:2,lang:'영어 중심',desc:'영어 위주 작업에 적합',pri:7},
 {id:'qwen25-15',kind:'chat',name:'Qwen2.5 1.5B Instruct',repo:'onnx-community/Qwen2.5-1.5B-Instruct',dtype:'q4f16',gb:1.2,minBuf:2,lang:'다국어(한국어 보통)',desc:'소형 중 답변 품질이 좋은 편',pri:8},
@@ -310,7 +310,8 @@ st.model=m;st.files={};st.rows={};killWorker();
 app.innerHTML=`<div class="top"><h2>${m.name} 준비 중</h2></div><div class="card"><div id="ph">${c?'저장된 모델을 불러오는 중…':'다운로드 중…'}</div>
 <div class="bar" id="br"><i></i></div><div class="sub" id="pf">연결 중…</div><div class="fl" id="fl"></div><div class="row" style="margin-top:12px"><button class="btn ghost" id="cn">취소</button></div></div>`;
 $('#cn').onclick=()=>pick(m.kind);
-const w=st.worker=spawn();
+let tried=0;const alt=m.kind==='chat'&&m.dtype==='q4f16'?'q4':null; // q4f16 로딩 실패 시 q4로 한 번 재시도
+const go=dt=>{const w=st.worker=spawn();
 w.onerror=e=>fail('Worker 오류: '+(e.message||'불러오기 실패'));
 w.onmessage=({data:d})=>{
 if(d.type==='prog'){const p=d.p;frow(p);
@@ -320,10 +321,11 @@ $('#br').classList.remove('ind');$('#br i').style.width=(l/t*100)+'%';
 $('#pf').textContent=`${p.file.split('/').pop()} · 전체 ${(l/2**20).toFixed(0)} / ${(t/2**20).toFixed(0)}MB`}
 else if(p.status==='ready'||p.status==='done'){}}
 else if(d.type==='ready')m.kind==='chat'?chat():m.kind==='tool'?toolView():imgView();
-else if(d.type==='err')fail(d.msg);
+else if(d.type==='err'){if(alt&&!tried){tried=1;w.terminate();st.files={};st.rows={};$('#fl').innerHTML='';$('#br i').style.width='0';$('#br').classList.add('ind');$('#ph').textContent='다른 방식(q4)으로 다시 시도하는 중…';go(alt)}else fail(d.msg)}
 };
-w.postMessage({type:'load',eng:m.engine||m.kind,repo:m.repo,dtype:m.dtype});
-$('#br').classList.add('ind');setTimeout(()=>{if(st.worker===w&&!Object.keys(st.files).length)$('#ph').textContent+=' (GPU 초기화 중일 수 있음)'},8000);
+w.postMessage({type:'load',eng:m.engine||m.kind,repo:m.repo,dtype:dt});
+setTimeout(()=>{if(st.worker===w&&!Object.keys(st.files).length)$('#ph').textContent+=' (GPU 초기화 중일 수 있음)'},8000)};
+go(m.dtype);$('#br').classList.add('ind');
 }
 function frow(p){const f=p.file;if(!f)return;let r=st.rows[f];
 if(!r){r=st.rows[f]=document.createElement('div');r.className='fr';r.title=f;
