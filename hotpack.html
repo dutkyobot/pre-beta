@@ -268,13 +268,13 @@ body.run .z-ap{animation:zp 2.4s ease-in-out infinite}
   <label class="tog"><div>자동 보온<small>기기가 충분히 달궈져 성능이 떨어지면 부하를 낮춰 그 온도를 유지해요</small></div><span class="sw"><input type="checkbox" id="auto" checked><i></i></span></label>
   <label class="tog"><div>GPU도 같이 사용<small>더 빨리 따뜻해지지만 배터리를 더 써요</small></div><span class="sw"><input type="checkbox" id="gpu"><i></i></span></label>
   <label class="tog"><div>끝나면 진동 알림<small>지원하는 기기에서만 동작해요</small></div><span class="sw"><input type="checkbox" id="vib" checked><i></i></span></label>
-  <div class="row" style="margin-top:6px"><span>배터리 이하면 정지 (충전 중 아닐 때)</span><b id="bmV">20%</b></div>
+  <div class="row" style="margin-top:6px"><span>배터리 이하면 정지</span><b id="bmV">20%</b></div>
   <input type="range" id="bm" min="5" max="60" step="5" value="20" aria-label="배터리 정지 기준">
  </details>
 
  <p class="warn">
   <b>주의</b> · 이불·옷 속에 넣거나 덮어두지 마세요(과열 위험). 손에 쥐거나 밖에 두고 쓰세요.<br>
-  · 배터리가 빨리 닳아요. 충전하면서 쓰면 더 뜨거워질 수 있어요.<br>
+  · 배터리가 빨리 닳아요. 충전 중에는 사용할 수 없어요(충전기를 연결하면 자동으로 멈춰요).<br>
   · 너무 뜨겁다고 느껴지면 바로 정지하세요. 이 페이지가 보이는 상태(앞 화면)여야 계속 동작해요.
  </p>
 </main>
@@ -294,7 +294,7 @@ const buzz=p=>{if(!S.vib)return;try{navigator.vibrate&&navigator.vibrate(p)}catc
 const cores=Math.min(navigator.hardwareConcurrency||4,8);
 const S={duty:.55,threads:Math.max(1,Math.floor(cores/2)),limit:30,ramp:true,auto:true,vib:true,batMin:20};
 let running=false,t0=0,tick=null,workers=[],fbTimer=null,wake=null,batt=null,glRaf=0,glOn=false;
-let effDuty=0,hold=false,rates=[],baseline=0,smooth=0,perf=1,extra=0,lastStop=0,hiddenRun=false,wlWarned=false,lastDim=0;
+let effDuty=0,hold=false,rates=[],baseline=0,smooth=0,perf=1,extra=0,lastStop=0,hiddenRun=false,wlWarned=false,lastDim=0,autoDim=false;
 
 /* ---- 설정 저장/복원 ---- */
 try{Object.assign(S,JSON.parse(localStorage.getItem('hotpack')||'{}'))}catch(e){}
@@ -369,7 +369,7 @@ function stopGL(){glOn=false;cancelAnimationFrame(glRaf)}
 async function lockScreen(){try{wake=await navigator.wakeLock.request('screen');$('wl').textContent='켜짐';wake.addEventListener('release',()=>{if(running)$('wl').textContent='해제됨'})}catch(e){$('wl').textContent='지원 안 됨';if(!wlWarned){wlWarned=true;toast('화면 자동 유지를 못 써요. 설정에서 화면 꺼짐 시간을 늘려 주세요')}}}
 function unlockScreen(){try{wake&&wake.release()}catch(e){}wake=null;$('wl').textContent='-'}
 document.addEventListener('visibilitychange',()=>{if(!running)return;if(document.visibilityState==='hidden')hiddenRun=true;else{lockScreen();if(hiddenRun){hiddenRun=false;toast('다른 화면에 있는 동안 가열이 약해졌어요. 이 화면을 켜 둬야 계속 따뜻해져요')}}});
-(async()=>{try{batt=await navigator.getBattery();const u=()=>{$('bat').textContent=Math.round(batt.level*100)+'%'+(batt.charging?' (충전 중)':'')};u();batt.onlevelchange=u;batt.onchargingchange=u}catch(e){}})();
+(async()=>{try{batt=await navigator.getBattery();const u=()=>{$('bat').textContent=Math.round(batt.level*100)+'%'+(batt.charging?' (충전 중)':'')};u();batt.onlevelchange=u;batt.onchargingchange=()=>{u();if(running&&batt.charging)stop('충전 연결')}}catch(e){}})();
 
 /* ---- 열 상태 추정: 연산 속도가 기준보다 떨어질수록 '달궈진 것' ---- */
 function evalHeat(s){
@@ -408,15 +408,17 @@ const RING=691;
 (()=>{const e=$('embers');for(let i=0;i<16;i++){const b=document.createElement('i');
  b.style.cssText=`left:${(Math.random()*100).toFixed(1)}%;--s:${(3+Math.random()*5).toFixed(1)}px;--d:${(5+Math.random()*6).toFixed(1)}s;--l:-${(Math.random()*8).toFixed(1)}s;--x:${((Math.random()-.5)*80).toFixed(0)}px`;e.appendChild(b)}})();
 function start(){
+  if(batt&&batt.charging){toast('충전 중에는 사용할 수 없어요. 충전기를 뽑고 다시 시작해 주세요');return}
   if(batt&&!batt.charging&&batt.level*100<S.batMin){toast('배터리가 '+Math.round(batt.level*100)+'%예요. 충전하거나 세부 설정에서 정지 기준을 낮춰 주세요');return}
-  if(batt&&batt.charging&&S.duty>=.97)toast('충전하면서 최대 세기는 많이 뜨거워질 수 있어요. 주의하세요');
-  running=true;document.body.classList.add('run');extra=0;lastStop=0;hiddenRun=false;hold=false;t0=Date.now();rates=[];baseline=0;smooth=0;perf=1;
+  running=true;document.body.classList.add('run');extra=0;autoDim=false;lastStop=0;hiddenRun=false;hold=false;t0=Date.now();rates=[];baseline=0;smooth=0;perf=1;
   effDuty=S.ramp?Math.min(.2,S.duty):S.duty;
   $('orb').classList.add('on');startWorkers();if($('gpu').checked)startGL();lockScreen();pushDuty();
   tick=setInterval(step,1000);step();buzz(30);
 }
 function step(){
   const s=(Date.now()-t0)/1000;const L=S.limit?S.limit*60+extra:0;
+  if(batt&&batt.charging)return stop('충전 연결');
+  if(s>=300&&!autoDim){autoDim=true;document.body.classList.add('dim');lastDim=0}
   // 점진 가열: 3분에 걸쳐 목표 세기까지
   let target=S.duty;
   if(S.ramp&&s<180)target=.2+(S.duty-.2)*(s/180);
