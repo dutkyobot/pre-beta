@@ -55,12 +55,49 @@ input[type=range]{width:100%;accent-color:var(--hot);margin-top:4px}
 .warn{font-size:12px;color:var(--mut);line-height:1.65;padding:0 4px}
 .warn b{color:var(--hot2)}
 canvas{position:fixed;width:1px;height:1px;opacity:0;pointer-events:none}
+
+/* ---- 핫팩 꾸미기: 가열 상태(--heat)에 반응하는 장식 ---- */
+main{position:relative;z-index:1}
+h1{background:linear-gradient(90deg,var(--hot2),var(--hot));-webkit-background-clip:text;background-clip:text;color:transparent}
+.flame{display:inline-block;-webkit-text-fill-color:initial;transform-origin:50% 90%;animation:flick 1.6s ease-in-out infinite}
+@keyframes flick{0%,100%{transform:scale(1) rotate(-3deg)}35%{transform:scale(1.12,1.2) rotate(3deg)}65%{transform:scale(.96,1.08) rotate(-2deg)}}
+/* 바닥에서 올라오는 열기 */
+body::after{content:"";position:fixed;left:0;right:0;bottom:0;height:34vh;z-index:-1;pointer-events:none;opacity:0;transition:opacity 1.5s;
+ background:linear-gradient(to top,rgba(255,106,43,.35),rgba(255,106,43,0))}
+body.run::after{opacity:calc(.25 + var(--heat)*.75);animation:breathe 3.2s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:translateY(6%)}50%{transform:translateY(0)}}
+/* 불씨 */
+.embers{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:0;transition:opacity 1.2s}
+body.run .embers{opacity:calc(.25 + var(--heat)*.75)}
+.embers i{position:absolute;bottom:-12px;width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,#ffd08a,var(--hot) 60%,transparent 72%);
+ filter:blur(.4px);animation:rise var(--d) linear var(--l) infinite;opacity:0}
+@keyframes rise{0%{transform:translate(0,0) scale(1);opacity:0}12%{opacity:.9}100%{transform:translate(var(--x),-105vh) scale(.3);opacity:0}}
+/* 열기 파동 */
+.ring-wrap::before,.ring-wrap::after{content:"";position:absolute;inset:22px;border-radius:50%;border:2px solid rgba(255,140,60,.5);opacity:0;pointer-events:none}
+body.run .ring-wrap::before{animation:wave 3s ease-out infinite}
+body.run .ring-wrap::after{animation:wave 3s ease-out 1.5s infinite}
+@keyframes wave{0%{transform:scale(1);opacity:.55}100%{transform:scale(1.28);opacity:0}}
+/* 핫팩 천 질감 버튼 */
+.orb>*{position:relative;z-index:1}
+.orb::before{content:"";position:absolute;inset:0;border-radius:50%;pointer-events:none;opacity:.5;
+ background:repeating-linear-gradient(45deg,rgba(255,255,255,.05) 0 2px,transparent 2px 8px),repeating-linear-gradient(-45deg,rgba(0,0,0,.12) 0 2px,transparent 2px 8px)}
+.orb::after{content:"";position:absolute;inset:7px;border-radius:50%;border:1.5px dashed rgba(255,255,255,.22);pointer-events:none}
+.orb.on{box-shadow:0 0 calc(24px + var(--heat)*60px) calc(var(--heat)*12px) rgba(255,106,43,.55),inset 0 -14px 30px rgba(120,20,0,.45)}
+.orb.on .big{text-shadow:0 0 14px rgba(255,220,160,.7)}
+/* 열 게이지 */
+.meter{position:relative;height:10px;border-radius:5px;background:linear-gradient(90deg,rgba(94,200,255,.1),rgba(255,179,71,.1),rgba(255,106,43,.14))}
+.meter i{box-shadow:0 0 calc(var(--heat)*16px) rgba(255,106,43,.85)}
+.meter::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 calc(25% - 1px),rgba(15,11,9,.7) calc(25% - 1px) 25%);border-radius:5px}
+body.run .card{border-color:rgba(255,150,70,.2)}
+body.run .badge.hot{box-shadow:0 0 12px rgba(255,106,43,.35)}
+@media (prefers-reduced-motion:reduce){.flame,.embers i,body.run::after,body.run .ring-wrap::before,body.run .ring-wrap::after,.orb.on{animation:none!important}}
 </style>
 </head>
 <body>
+<div class="embers" id="embers" aria-hidden="true"></div>
 <main>
  <header>
-  <h1>🔥 핫팩 모드</h1>
+  <h1><span class="flame">🔥</span> 핫팩 모드</h1>
   <p class="sub">기기에 적당한 부하를 줘서 따뜻하게 만들어요</p>
  </header>
 
@@ -232,8 +269,10 @@ function setHeatUI(s){
 /* ---- 시작 / 정지 ---- */
 const fmt=s=>{s=Math.max(0,Math.floor(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
 const RING=691;
+(()=>{const e=$('embers');for(let i=0;i<16;i++){const b=document.createElement('i');
+ b.style.cssText=`left:${(Math.random()*100).toFixed(1)}%;--s:${(3+Math.random()*5).toFixed(1)}px;--d:${(5+Math.random()*6).toFixed(1)}s;--l:-${(Math.random()*8).toFixed(1)}s;--x:${((Math.random()-.5)*80).toFixed(0)}px`;e.appendChild(b)}})();
 function start(){
-  running=true;hold=false;t0=Date.now();rates=[];baseline=0;smooth=0;perf=1;
+  running=true;document.body.classList.add('run');hold=false;t0=Date.now();rates=[];baseline=0;smooth=0;perf=1;
   effDuty=S.ramp?Math.min(.2,S.duty):S.duty;
   $('orb').classList.add('on');startWorkers();if($('gpu').checked)startGL();lockScreen();pushDuty();
   tick=setInterval(step,1000);step();
@@ -263,7 +302,7 @@ function step(){
 }
 function stop(reason,done){
   if(running&&done&&S.vib){try{navigator.vibrate&&navigator.vibrate([250,120,250])}catch(e){}}
-  running=false;hold=false;clearInterval(tick);stopWorkers();stopGL();unlockScreen();
+  running=false;document.body.classList.remove('run');hold=false;clearInterval(tick);stopWorkers();stopGL();unlockScreen();
   $('orb').classList.remove('on','hold');
   $('orbBig').textContent=reason||'시작';$('orbMid').textContent=reason?'탭해서 다시 시작':'탭해서 켜기';$('orbSm').textContent='';
   $('load').textContent='0%';$('ring').style.strokeDashoffset=RING;
