@@ -11,12 +11,9 @@
       color-scheme: light;
       --bg: #f6f6f4;
       --surface: #fff;
-      --surface-solid: #fff;
       --text: #202124;
       --muted: #777b80;
       --line: #e7e7e3;
-      --accent: #635bdb;
-      --accent-soft: #eeedff;
       --shadow: 0 10px 34px rgba(31, 35, 65, .055);
       --shadow-hover: 0 18px 42px rgba(31, 35, 65, .105);
     }
@@ -45,8 +42,7 @@
       border-bottom: 1px solid rgba(226, 228, 238, .8);
     }
     .brand { display: inline-flex; align-items: center; gap: 11px; }
-    .brand-mark { display: none; }
-    .brand-name { font-size: 13px; font-weight: 800; letter-spacing: .11em; }
+    .brand-name { font-size: 15px; font-weight: 750; letter-spacing: 0; }
 
     .hero { padding: 43px 0 27px; }
     h1 {
@@ -233,8 +229,6 @@
     }
     .category.device { background: #eaf4ff; color: #3973a9; }
     .category.life { background: #eaf6ef; color: #3e8561; }
-    .category.music { background: #fff1e8; color: #b36c3d; }
-    .card-index { color: #b2b6c1; font-size: 10px; font-weight: 750; letter-spacing: .08em; }
     .card-title {
       margin: 0;
       font-size: 17px;
@@ -293,7 +287,6 @@
       .card-content { padding: 12px 12px 14px; }
       .card-top { margin-bottom: 7px; }
       .category { min-height: 21px; padding: 0 7px; font-size: 9px; }
-      .card-index { font-size: 9px; }
       .card-title { font-size: 14px; }
       .card-description { min-height: 54px; margin-top: 6px; font-size: 11px; line-height: 1.55; }
       .open-mark { width: 27px; height: 27px; right: 9px; bottom: 9px; opacity: 1; transform: none; }
@@ -311,7 +304,7 @@
 <body>
   <header class="shell topbar">
     <a class="brand" href="./" aria-label="서비스 모음 홈">
-      <span class="brand-name">SERVICE HUB</span>
+      <span class="brand-name">서비스</span>
     </a>
   </header>
 
@@ -463,7 +456,7 @@
     </div>
   </main>
 
-  <footer class="shell"><span>© 2026 SERVICE HUB</span></footer>
+  <footer class="shell"><span>© 2026</span></footer>
 
   <script>
     (function () {
