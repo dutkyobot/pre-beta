@@ -138,13 +138,50 @@ body.dim #dim{display:flex}
 body.dim main,body.dim .embers,body.dim .dock{visibility:hidden}
 body.dim::before,body.dim::after{display:none}
 @media (max-height:520px) and (orientation:landscape){.ring-wrap{width:min(200px,60vh);height:min(200px,60vh)}}
+
+/* ---- 레이아웃 정리 + 발열 위치 ---- */
+body{word-break:keep-all;overflow-wrap:break-word}
+h1,.hint,.sub{text-wrap:balance}
+h1{display:flex;justify-content:center;align-items:center;gap:8px;background:none;-webkit-background-clip:initial;background-clip:initial;color:var(--tx)}
+.ttl{background:linear-gradient(90deg,var(--hot2),var(--hot));-webkit-background-clip:text;background-clip:text;color:transparent}
+.ring-bg{stroke:rgba(255,255,255,.14)}
+main{gap:16px}
+.ring-wrap{margin:4px auto 0}
+.top-hint{margin-top:-2px;line-height:1.6}
+/* 카드 순서: 대기 중엔 설정 먼저, 가동 중엔 상태 먼저 */
+.top-hint{order:2}.cfg{order:4}.status{order:5}.adv{order:6}.warn{order:7}
+body.run .status{order:3}
+body.run .cfg{order:4}
+.dock{visibility:hidden;transition:transform .35s,visibility 0s .35s}
+body.run .dock{visibility:visible;transition-delay:0s}
+/* 상태 카드 */
+.heatmap{display:grid;grid-template-columns:92px 1fr;gap:16px;align-items:center}
+.phone{width:92px;height:auto;display:block}
+.hm-info .row{padding:2px 0 4px}
+.hm-info .hint{margin-top:6px}
+.z-ap{opacity:calc(.12 + var(--heat)*.88);transition:opacity 1.5s}
+.z-bat{opacity:calc(var(--heat)*.6);transition:opacity 2s}
+.z-ap,.z-bat{transform-box:fill-box;transform-origin:center}
+body.run .z-ap{animation:zp 2.4s ease-in-out infinite}
+@keyframes zp{0%,100%{transform:scale(.92)}50%{transform:scale(1.06)}}
+.legend{display:flex;flex-direction:column;gap:5px;margin-top:12px;font-size:12.5px;color:var(--mut)}
+.legend .d{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:baseline}
+.legend .ap{background:var(--hot)}.legend .bt{background:var(--hot2);opacity:.8}
+.hint.dev{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.hint.dev b{color:var(--tx);font-weight:600;margin-left:4px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.stat{background:rgba(255,255,255,.045);border-radius:12px;padding:9px 12px;display:flex;flex-direction:column;gap:2px}
+.stat span{font-size:12px;color:var(--mut)}
+.stat b{font-size:16px;font-variant-numeric:tabular-nums;font-weight:600}
+.stat:last-child{grid-column:1/-1}
+@media (max-width:340px){.heatmap{grid-template-columns:1fr}.phone{margin:0 auto}}
 </style>
 </head>
 <body>
 <div class="embers" id="embers" aria-hidden="true"></div>
 <main>
  <header>
-  <h1><span class="flame">🔥</span> 핫팩 모드</h1>
+  <h1><span class="flame">🔥</span><span class="ttl">핫팩 모드</span></h1>
   <p class="sub">기기에 적당한 부하를 줘서 따뜻하게 만들어요</p>
  </header>
 
@@ -158,9 +195,9 @@ body.dim::before,body.dim::after{display:none}
   </button>
  </div>
 
- <p class="hint c">⚠️ 이불·주머니 속에 넣지 마세요 · 이 화면을 켜 둬야 따뜻해져요</p>
+ <p class="hint c top-hint">⚠️ 이불·주머니 속에 넣지 마세요<br>이 화면을 켜 둬야 따뜻해져요</p>
 
- <div class="card">
+ <div class="card cfg">
   <h2>어떻게 쓸까요?</h2>
   <div class="seg c3" id="presets" role="group" aria-label="추천 설정">
    <button data-p="fast"><span class="pi">🧤</span>빨리<small>강하게 · 15분</small></button>
@@ -169,7 +206,7 @@ body.dim::before,body.dim::after{display:none}
   </div>
  </div>
 
- <div class="card">
+ <div class="card cfg">
   <h2>세기</h2>
   <div class="seg c4" id="level" role="group" aria-label="세기">
    <button data-v="0.3">약하게</button>
@@ -179,7 +216,7 @@ body.dim::before,body.dim::after{display:none}
   </div>
  </div>
 
- <div class="card">
+ <div class="card cfg">
   <h2>자동 종료 타이머</h2>
   <div class="seg c4" id="timer" role="group" aria-label="자동 종료 타이머">
    <button data-m="15">15분</button>
@@ -189,16 +226,38 @@ body.dim::before,body.dim::after{display:none}
   </div>
  </div>
 
- <div class="card">
-  <h2>상태</h2>
-  <div class="row"><span>열 상태 추정</span><span class="badge" id="heatB">대기</span></div>
-  <div class="meter"><i id="heatM"></i></div>
-  <p class="hint" id="heatT">가동하면 연산 속도 변화로 기기가 얼마나 달궈졌는지 추정해요. 실제 온도계가 아니라 대략적인 참고용이에요.</p>
-  <div class="row"><span>가동 시간</span><b id="el">00:00</b></div>
-  <div class="row"><span>현재 부하</span><b id="load">0%</b></div>
-  <div class="row"><span>성능 유지율</span><b id="perf">-</b></div>
-  <div class="row"><span>배터리</span><b id="bat">확인 불가</b></div>
-  <div class="row"><span>화면 켜짐 유지</span><b id="wl">-</b></div>
+ <div class="card status" id="statusCard">
+  <h2>따뜻해지는 곳</h2>
+  <div class="heatmap">
+   <svg class="phone" viewBox="0 0 120 250" role="img" aria-label="휴대폰 뒷면에서 따뜻해지는 위치">
+    <defs>
+     <radialGradient id="gAp"><stop offset="0" stop-color="#ff6a2b" stop-opacity=".95"/><stop offset=".55" stop-color="#ff6a2b" stop-opacity=".4"/><stop offset="1" stop-color="#ff6a2b" stop-opacity="0"/></radialGradient>
+     <radialGradient id="gBt"><stop offset="0" stop-color="#ffb347" stop-opacity=".85"/><stop offset=".6" stop-color="#ffb347" stop-opacity=".3"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient>
+    </defs>
+    <rect x="4" y="4" width="112" height="242" rx="20" fill="#1b140f" stroke="rgba(255,255,255,.28)" stroke-width="2"/>
+    <ellipse class="z-bat" cx="60" cy="160" rx="48" ry="62" fill="url(#gBt)"/>
+    <rect x="20" y="114" width="80" height="96" rx="10" fill="none" stroke="rgba(255,255,255,.14)" stroke-dasharray="3 3"/>
+    <ellipse class="z-ap" cx="62" cy="64" rx="46" ry="42" fill="url(#gAp)"/>
+    <rect x="12" y="12" width="28" height="54" rx="12" fill="#0d0907" stroke="rgba(255,255,255,.2)"/>
+    <circle cx="26" cy="25" r="6" fill="#2b221b" stroke="rgba(255,255,255,.25)"/><circle cx="26" cy="39" r="6" fill="#2b221b" stroke="rgba(255,255,255,.25)"/><circle cx="26" cy="53" r="6" fill="#2b221b" stroke="rgba(255,255,255,.25)"/>
+    <text x="76" y="68" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" fill-opacity=".9">AP</text>
+    <text x="60" y="166" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" fill-opacity=".8">배터리</text>
+   </svg>
+   <div class="hm-info">
+    <div class="row"><span>열 상태 추정</span><span class="badge" id="heatB">대기</span></div>
+    <div class="meter"><i id="heatM"></i></div>
+    <p class="hint" id="heatT">가동하면 연산 속도 변화로 기기가 얼마나 달궈졌는지 추정해요. 실제 온도계가 아니라 대략적인 참고용이에요.</p>
+   </div>
+  </div>
+  <div class="legend"><span><i class="d ap"></i>프로세서(AP) 주변 · 가장 먼저 따뜻해져요</span><span><i class="d bt"></i>배터리 주변 · 천천히 따뜻해져요</span></div>
+  <p class="hint dev">내 기기 <b id="devName">확인 중…</b><br>뒷면을 위에서 본 대략적인 위치예요. 갤럭시 S·A 시리즈는 대체로 프로세서가 위쪽, 배터리가 가운데~아래에 있지만 정확한 위치는 기종마다 조금씩 달라요.</p>
+  <div class="stats">
+   <div class="stat"><span>가동 시간</span><b id="el">00:00</b></div>
+   <div class="stat"><span>현재 부하</span><b id="load">0%</b></div>
+   <div class="stat"><span>성능 유지율</span><b id="perf">-</b></div>
+   <div class="stat"><span>배터리</span><b id="bat">확인 불가</b></div>
+   <div class="stat"><span>화면 켜짐 유지</span><b id="wl">-</b></div>
+  </div>
  </div>
 
  <details class="card adv">
@@ -341,6 +400,11 @@ function setHeatUI(s){
 /* ---- 시작 / 정지 ---- */
 const fmt=s=>{s=Math.max(0,Math.floor(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
 const RING=691;
+/* 기기 모델 감지 (Chrome 클라이언트 힌트 → UA 순) */
+(async()=>{let m='';try{const h=navigator.userAgentData&&await navigator.userAgentData.getHighEntropyValues(['model']);m=(h&&h.model)||''}catch(e){}
+ if(!m){const r=/SM-[A-Z]\d{3}[A-Z0-9]*/.exec(navigator.userAgent);m=r?r[0]:''}
+ let ser='';if(/^SM-S\d/.test(m))ser='갤럭시 S 시리즈 · ';else if(/^SM-A\d/.test(m))ser='갤럭시 A 시리즈 · ';
+ $('devName').textContent=m?ser+m:'기기 정보를 읽을 수 없어요'})();
 (()=>{const e=$('embers');for(let i=0;i<16;i++){const b=document.createElement('i');
  b.style.cssText=`left:${(Math.random()*100).toFixed(1)}%;--s:${(3+Math.random()*5).toFixed(1)}px;--d:${(5+Math.random()*6).toFixed(1)}s;--l:-${(Math.random()*8).toFixed(1)}s;--x:${((Math.random()-.5)*80).toFixed(0)}px`;e.appendChild(b)}})();
 function start(){
