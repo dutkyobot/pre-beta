@@ -35,6 +35,7 @@ h1{font-size:22px;margin:8px 0 4px}h2{font-size:18px;margin:0}
 #msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:12px 0}
 .m{max-width:85%;padding:9px 13px;border-radius:12px;white-space:pre-wrap;word-break:break-word}.m.u{align-self:flex-end;background:var(--ac);color:#fff}.m.a{align-self:flex-start;background:var(--card);border:1px solid var(--ln)}
 textarea,input[type=text],input[type=number]{width:100%;background:var(--card);border:1px solid var(--ln);border-radius:8px;padding:9px 12px}
+select{background:var(--card);border:1px solid var(--ln);border-radius:8px;padding:8px 10px}
 textarea{resize:none}
 .top{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
 #set{display:none;margin-bottom:10px}#set.on{display:block}
@@ -69,6 +70,15 @@ input[type=checkbox]{accent-color:var(--ac);margin-right:6px}
 .comp:focus-within{border-color:var(--ac)}
 .comp textarea{border:0;background:none;outline:0;border-radius:0;padding:8px 0;max-height:160px;line-height:1.45}
 .circ{flex:none;width:38px;height:38px;border-radius:50%;border:0;background:var(--ac);color:#fff;font-size:18px;line-height:1;cursor:pointer}
+/* 홈 섹션 */
+.sec{font-size:16px;margin:26px 0 2px}.grid+.sec{border-top:1px solid var(--ln);padding-top:22px}
+/* 자막 추출 */
+.sg{display:grid;grid-template-columns:112px 1fr;gap:10px;padding:8px 6px;border-bottom:1px solid var(--ln);border-radius:8px}.sg:last-child{border-bottom:0}
+.sg.on{background:color-mix(in srgb,var(--ac) 12%,transparent)}
+.sg .tt{background:none;border:0;padding:2px 0;color:var(--ac);font-size:13px;text-align:left;cursor:pointer;font-variant-numeric:tabular-nums}
+.sg textarea{border:0;background:none;padding:0;outline:0;overflow:hidden;border-radius:6px}.sg textarea:focus{background:var(--bg)}
+.pl{width:100%;max-height:300px;border-radius:10px;margin-top:10px;background:#000}audio.pl{background:none}
+@media(max-width:520px){.sg{grid-template-columns:1fr}}
 dialog{border:1px solid var(--ln);border-radius:12px;background:var(--card);color:var(--tx);max-width:420px}
 </style></head><body><div id="app"></div>
 <!-- 모델 실행 Worker (Blob으로 생성). 라이브러리를 프로젝트에 포함하려면 LIB 경로를 로컬 파일로 바꾸면 됨 -->
@@ -172,6 +182,10 @@ m=await T.AutoModel.from_pretrained(d.repo,{progress_callback:pc});
 proc=await T.AutoProcessor.from_pretrained(d.repo,{progress_callback:pc});
 }else if(eng==='sr'){
 pipe=await T.pipeline('image-to-image',d.repo,{progress_callback:pc});
+}else if(eng==='asr'){ // Whisper 음성 인식
+const gpu=d.dev==='webgpu';
+try{pipe=await T.pipeline('automatic-speech-recognition',d.repo,{device:gpu?'webgpu':'wasm',dtype:gpu?{encoder_model:/large/.test(d.repo)?'fp16':'fp32',decoder_model_merged:'q4'}:'q8',progress_callback:pc})}
+catch(e){if(!gpu)throw e;pipe=await T.pipeline('automatic-speech-recognition',d.repo,{device:'wasm',dtype:'q8',progress_callback:pc})}
 }
 postMessage({type:'ready'});
 }else if(d.type==='chat'){
@@ -193,6 +207,16 @@ const n=proc.num_image_tokens;
 const out=await m.generate_images({...inp,min_new_tokens:n,max_new_tokens:n,do_sample:true});
 postMessage({type:'img',blob:await out[0].toBlob()});
 }
+}else if(d.type==='asr'){ // 30초 단위로 나눠 인식하며 구간마다 결과 전달
+const a=new Float32Array(d.audio),WIN=480000,n=Math.ceil(a.length/WIN);
+for(let i=0;i<n;i++){
+const ch=a.subarray(i*WIN,Math.min((i+1)*WIN,a.length));
+if(ch.length<8000){postMessage({type:'aseg',i,n,off:i*30,chunks:[]});continue}
+const o={return_timestamps:true,task:'transcribe'};if(d.lang)o.language=d.lang;
+const r=await pipe(ch,o);
+postMessage({type:'aseg',i,n,off:i*30,chunks:(r.chunks||[]).map(c=>({s:c.timestamp[0],e:c.timestamp[1],t:c.text}))});
+}
+postMessage({type:'adone'});
 }else if(d.type==='tool'){
 const im=new T.RawImage(new Uint8ClampedArray(d.px),d.w,d.h,4).rgb();
 if(eng==='sr'){
@@ -210,8 +234,8 @@ postMessage({type:'tres',mask:mk.data,w:mk.dims.at(-1),h:mk.dims.at(-2)});
 </script>
 <script>
 // ===== 모델 레지스트리: 새 모델은 여기에 항목만 추가 =====
-// kind: chat(대화) / image(텍스트→이미지) / tool(이미지 처리)
-// engine: Worker가 모델을 돌리는 방식 (chat, janus, sd, bg, modnet, sr). 생략하면 kind와 같음
+// kind: chat(대화) / image(텍스트→이미지) / tool(이미지 처리) / sub(자막 추출)
+// engine: Worker가 모델을 돌리는 방식 (chat, janus, sd, bg, modnet, sr, asr). 생략하면 kind와 같음
 // cpu:true = WebGPU 없이 실행 / best:true = 해당 섹션(그룹)의 추천 표시 / grp = 섹션 안 소제목 / maxIn = 처리 모델 입력 긴 변 제한(px)
 const MODELS=[
 {id:'qwen3-06',kind:'chat',name:'Qwen3 0.6B',repo:'onnx-community/Qwen3-0.6B-ONNX',dtype:'q4f16',gb:0.5,minBuf:1,lang:'다국어(한국어 보통)',desc:'저사양·모바일용. 가볍고 빠른 기본 모델 (사고 모드 끔)',noThink:true,pri:1},
@@ -229,13 +253,18 @@ const MODELS=[
 {id:'rmbg',kind:'tool',engine:'bg',grp:'배경 제거',name:'RMBG-1.4',repo:'briaai/RMBG-1.4',cpu:true,gb:0.18,minBuf:0,maxIn:1024,desc:'범용 배경 제거. 사람·물건 모두 가능, 품질 우수',best:true,pri:16},
 {id:'modnet',kind:'tool',engine:'modnet',grp:'배경 제거',name:'MODNet',repo:'Xenova/modnet',cpu:true,gb:0.03,minBuf:0,maxIn:1024,desc:'인물 사진 전용. 가볍고 빠름',pri:17},
 {id:'swin-x2',kind:'tool',engine:'sr',grp:'업스케일',name:'Swin2SR ×2',repo:'Xenova/swin2SR-classical-sr-x2-64',cpu:true,gb:0.05,minBuf:0,maxIn:384,desc:'2배 확대. 처리 속도 때문에 긴 변 384px까지만 입력',best:true,pri:18},
-{id:'swin-x4',kind:'tool',engine:'sr',grp:'업스케일',name:'Swin2SR ×4 (실사)',repo:'Xenova/swin2SR-realworld-sr-x4-64-bsrgan-psnr',cpu:true,gb:0.06,minBuf:0,maxIn:256,desc:'4배 확대, 실사 사진용. 긴 변 256px까지만 입력',pri:19}
+{id:'swin-x4',kind:'tool',engine:'sr',grp:'업스케일',name:'Swin2SR ×4 (실사)',repo:'Xenova/swin2SR-realworld-sr-x4-64-bsrgan-psnr',cpu:true,gb:0.06,minBuf:0,maxIn:256,desc:'4배 확대, 실사 사진용. 긴 변 256px까지만 입력',pri:19},
+// --- 자막 추출 (음성 → 텍스트·타임스탬프) ---
+{id:'whisper-tiny',kind:'sub',engine:'asr',name:'Whisper Tiny',repo:'onnx-community/whisper-tiny',cpu:true,gb:0.04,minBuf:0,lang:'다국어',desc:'가장 빠르지만 정확도는 낮음. 테스트용',pri:20},
+{id:'whisper-base',kind:'sub',engine:'asr',name:'Whisper Base',repo:'onnx-community/whisper-base',cpu:true,gb:0.08,minBuf:0,lang:'다국어',desc:'가볍고 빠름. 또렷한 말소리용',pri:21},
+{id:'whisper-small',kind:'sub',engine:'asr',name:'Whisper Small',repo:'onnx-community/whisper-small',cpu:true,gb:0.25,minBuf:0,lang:'다국어(한국어 양호)',desc:'속도와 정확도의 균형. 한국어는 이 모델부터 권장',best:true,pri:22},
+{id:'whisper-large-v3-turbo',kind:'sub',engine:'asr',name:'Whisper Large v3 Turbo',repo:'onnx-community/whisper-large-v3-turbo',gb:1,minBuf:2,lang:'다국어(한국어 우수)',desc:'가장 정확. WebGPU 필요, 첫 다운로드가 큼',pri:23}
 ];
 const $=(s,r=document)=>r.querySelector(s);const app=$('#app');
 const st={hw:null,kind:null,model:null,worker:null,tw:null,flt:new Set(),files:{},rows:{},hist:[],gal:[],tgal:[],busy:false,sys:'당신은 친절한 한국어 AI 어시스턴트입니다.',max:512};
 const isMobile=/Android|iPhone|iPad|Mobi/i.test(navigator.userAgent)||(navigator.connection&&navigator.connection.type==='cellular');
 const fmt=g=>g<1?Math.round(g*1000)+'MB':g.toFixed(1)+'GB';
-const TITLES={chat:'대화',image:'이미지 생성',tool:'이미지 처리'};
+const TITLES={chat:'대화',image:'이미지 생성',tool:'이미지 처리',sub:'자막 추출'};
 async function detect(){
 const h={ok:false,name:'WebGPU 미지원',buf:0,mem:navigator.deviceMemory||0};
 try{const a=navigator.gpu&&await navigator.gpu.requestAdapter();
@@ -263,9 +292,12 @@ app.innerHTML=`<h1><span style="color:var(--ac)">✳</span> Local AI Studio</h1>
 <div class="card" style="margin-top:16px"><span class="tag ${h.ok?'ok':'bad'}">${h.ok?'WebGPU 사용 가능':'WebGPU 사용 불가'}</span>
 <span class="sub">${h.name}${h.ok?` · 최대 버퍼 ${h.buf.toFixed(1)}GB`:''}${h.mem?` · 메모리 약 ${h.mem}GB`:''}</span>
 ${h.ok?'':'<div class="sub" style="margin-top:6px">최신 Chrome/Edge 데스크톱에서 열어 주세요. (이미지 처리는 WebGPU 없이도 가능)</div>'}</div>
+<h3 class="sec">모델 테스트</h3><div class="sub">모델을 직접 받아 대화·이미지 생성·이미지 처리를 시험해 보세요.</div>
 <div class="grid"><button class="card big" data-k="chat">💬<b>대화</b><span class="sub">로컬 언어 모델과 채팅</span></button>
 <button class="card big" data-k="image">🎨<b>이미지 생성</b><span class="sub">텍스트로 이미지 만들기</span></button>
-<button class="card big" data-k="tool">🪄<b>이미지 처리</b><span class="sub">배경 제거 · 업스케일</span></button></div>`;
+<button class="card big" data-k="tool">🪄<b>이미지 처리</b><span class="sub">배경 제거 · 업스케일</span></button></div>
+<h3 class="sec">로컬 모델 활용 툴</h3><div class="sub">내 컴퓨터의 로컬 모델로 실제 작업을 처리하는 도구예요.</div>
+<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr))"><button class="card big" data-k="sub">📝<b>자막 추출</b><span class="sub">음성·영상에서 타임테이블과 자막 만들기</span></button></div>`;
 app.querySelectorAll('.big').forEach(b=>b.onclick=()=>pick(b.dataset.k));
 }
 async function pick(kind){
@@ -329,10 +361,10 @@ const v=Object.values(st.files),l=v.reduce((a,b)=>a+b.l,0),t=v.reduce((a,b)=>a+b
 $('#br').classList.remove('ind');$('#br i').style.width=(l/t*100)+'%';
 $('#pf').textContent=`${p.file.split('/').pop()} · 전체 ${(l/2**20).toFixed(0)} / ${(t/2**20).toFixed(0)}MB`}
 else if(p.status==='ready'||p.status==='done'){}}
-else if(d.type==='ready')m.kind==='chat'?chat():m.kind==='tool'?toolView():imgView();
+else if(d.type==='ready')m.kind==='chat'?chat():m.kind==='tool'?toolView():m.kind==='sub'?subView():imgView();
 else if(d.type==='err'){if(alt&&!tried){tried=1;w.terminate();st.files={};st.rows={};$('#fl').innerHTML='';$('#br i').style.width='0';$('#br').classList.add('ind');$('#ph').textContent='이전 버전 라이브러리로 다시 시도하는 중…';go(3)}else fail(d.msg)}
 };
-w.postMessage({type:'load',eng:m.engine||m.kind,repo:m.repo,dtype:m.dtype,cls:m.cls,lib});
+w.postMessage({type:'load',eng:m.engine||m.kind,repo:m.repo,dtype:m.dtype,cls:m.cls,lib,dev:st.hw&&st.hw.ok?'webgpu':'wasm'});
 setTimeout(()=>{if(st.worker===w&&!Object.keys(st.files).length)$('#ph').textContent+=' (GPU 초기화 중일 수 있음)'},8000)};
 go(m.kind==='chat'?4:3);$('#br').classList.add('ind');
 }
@@ -417,6 +449,60 @@ st.worker.onmessage=({data:d})=>{
 if(d.type==='img'){const u=URL.createObjectURL(d.blob);st.gal.unshift(u);show(u);gal();$('#tm').textContent='완료';done()}
 else if(d.type==='err'){$('#tm').textContent='오류: '+d.msg;done()}};
 st.worker.postMessage({type:'image',prompt:p})};
+}
+function subView(){
+app.innerHTML=head('자막 추출')+`<div class="card"><b>음성 / 영상 파일</b><div class="sub">mp3 · wav · m4a · mp4 · webm 등. 파일은 이 컴퓨터 밖으로 나가지 않습니다.</div>
+<label class="ph drop" id="dz" for="fi" style="margin-top:8px;aspect-ratio:auto;padding:26px 12px">클릭하거나 파일을 끌어다 놓으세요</label>
+<input type="file" id="fi" accept="audio/*,video/*" hidden><div id="pw"></div>
+<div class="row" style="margin-top:10px;flex-wrap:wrap"><select id="lg"><option value="korean">한국어</option><option value="english">영어</option><option value="japanese">일본어</option><option value="chinese">중국어</option><option value="spanish">스페인어</option><option value="french">프랑스어</option><option value="">자동 감지</option></select>
+<button class="btn" id="go" disabled>자막 추출</button><span class="sub" id="tm"></span></div>
+<div class="bar" id="gb" style="display:none"><i></i></div></div>
+<div class="card" id="rs" style="margin-top:12px;display:none"><div class="row" style="flex-wrap:wrap"><button class="btn ghost" id="d1">SRT 저장</button><button class="btn ghost" id="d2">VTT 저장</button><button class="btn ghost" id="d3">타임테이블(TXT) 저장</button><button class="btn ghost" id="d4">타임테이블 복사</button></div><div id="sl" style="margin-top:8px"></div></div>`;
+$('#bk').onclick=()=>pick('sub');
+let file=null,mel=null,segs=[],name='subtitle';
+const p2=n=>String(n).padStart(2,'0');
+const tcs=(t,sp)=>{t=Math.max(0,t);const h=Math.floor(t/3600),mi=Math.floor(t%3600/60),sc=Math.floor(t%60),ms=Math.min(999,Math.round((t-Math.floor(t))*1000));return p2(h)+':'+p2(mi)+':'+p2(sc)+sp+String(ms).padStart(3,'0')};
+const tsh=t=>{const h=Math.floor(t/3600),mi=Math.floor(t%3600/60),sc=Math.floor(t%60);return h?h+':'+p2(mi)+':'+p2(sc):p2(mi)+':'+p2(sc)};
+const setFile=f=>{if(!f||!(f.type.startsWith('audio/')||f.type.startsWith('video/')))return;
+file=f;name=f.name.replace(/\.[^.]+$/,'')||'subtitle';
+$('#dz').textContent=f.name+' · 클릭해서 다른 파일 선택';
+mel=document.createElement(f.type.startsWith('video/')?'video':'audio');mel.className='pl';mel.controls=true;mel.src=URL.createObjectURL(f);
+mel.ontimeupdate=()=>{const t=mel.currentTime;$('#sl').querySelectorAll('.sg').forEach(r=>{const g=segs[r.dataset.i];r.classList.toggle('on',t>=g.s&&t<g.e)})};
+$('#pw').replaceChildren(mel);$('#go').disabled=false;$('#tm').textContent=''};
+$('#fi').onchange=e=>{setFile(e.target.files[0]);e.target.value=''};
+const dz=$('#dz');dz.ondragover=e=>{e.preventDefault();dz.classList.add('on')};dz.ondragleave=()=>dz.classList.remove('on');
+dz.ondrop=e=>{e.preventDefault();dz.classList.remove('on');setFile(e.dataTransfer.files[0])};
+const dec=async f=>{const buf=await f.arrayBuffer(),ac=new(window.AudioContext||window.webkitAudioContext)();let d;
+try{d=await ac.decodeAudioData(buf)}catch(e){throw new Error('이 파일의 오디오를 읽지 못했어요. mp3/wav/mp4로 시도해 주세요.')}finally{ac.close()}
+const oc=new OfflineAudioContext(1,Math.ceil(d.duration*16000),16000),sr=oc.createBufferSource();sr.buffer=d;sr.connect(oc.destination);sr.start();
+return (await oc.startRendering()).getChannelData(0)};
+const addRow=(g,i)=>{const r=document.createElement('div');r.className='sg';r.dataset.i=i;
+const b=document.createElement('button');b.className='tt';b.textContent=tsh(g.s)+' → '+tsh(g.e);b.onclick=()=>{mel.currentTime=g.s;mel.play()};
+const ta=document.createElement('textarea');ta.rows=1;ta.value=g.t;
+const fit_=()=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px'};ta.oninput=()=>{g.t=ta.value;fit_()};
+r.append(b,ta);$('#sl').append(r);fit_()};
+const ok=()=>segs.filter(g=>g.t.trim());
+const SRT=()=>ok().map((g,i)=>(i+1)+'\n'+tcs(g.s,',')+' --> '+tcs(g.e,',')+'\n'+g.t.trim()+'\n').join('\n');
+const VTT=()=>'WEBVTT\n\n'+ok().map(g=>tcs(g.s,'.')+' --> '+tcs(g.e,'.')+'\n'+g.t.trim()+'\n').join('\n');
+const TBL=()=>ok().map(g=>tsh(g.s)+' '+g.t.trim()).join('\n');
+const dl=(fn,tx,ty)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+tx],{type:ty+';charset=utf-8'}));a.download=fn;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)};
+$('#d1').onclick=()=>dl(name+'.srt',SRT(),'application/x-subrip');
+$('#d2').onclick=()=>dl(name+'.vtt',VTT(),'text/vtt');
+$('#d3').onclick=()=>dl(name+'_timetable.txt',TBL(),'text/plain');
+$('#d4').onclick=async()=>{try{await navigator.clipboard.writeText(TBL());$('#tm').textContent='타임테이블을 복사했어요'}catch(e){$('#tm').textContent='복사에 실패했어요. TXT로 저장해 주세요'}};
+$('#go').onclick=async()=>{if(!file||st.busy)return;st.busy=true;$('#go').disabled=true;$('#gb').style.display='block';$('#gb i').style.width='0';
+segs=[];$('#sl').innerHTML='';$('#rs').style.display='none';
+const done=m=>{st.busy=false;$('#go').disabled=false;$('#gb').style.display='none';$('#tm').textContent=m};
+try{$('#tm').textContent='오디오 읽는 중…';const a=await dec(file),dur=a.length/16000,buf=a.slice().buffer;
+st.worker.onmessage=({data:d})=>{
+if(d.type==='aseg'){$('#gb i').style.width=((d.i+1)/d.n*100)+'%';$('#tm').textContent=`음성 인식 중… ${d.i+1} / ${d.n} 구간`;
+for(const c of d.chunks){const t=(c.t||'').trim();if(!t)continue;const s=d.off+(c.s??0);let e=c.e==null?Math.min(d.off+30,dur):d.off+c.e;if(e<=s)e=s+1;
+const g={s,e,t};segs.push(g);$('#rs').style.display='block';addRow(g,segs.length-1)}}
+else if(d.type==='adone')done(segs.length?`완료 · ${segs.length}줄`:'인식된 음성이 없습니다');
+else if(d.type==='err')done('오류: '+d.msg)};
+$('#tm').textContent='음성 인식 시작…';
+st.worker.postMessage({type:'asr',audio:buf,lang:$('#lg').value},[buf])}
+catch(e){done('오류: '+e.message)}};
 }
 function toolView(){
 const m=st.model,bg=m.engine!=='sr',lab=bg?'배경 제거':'업스케일';
