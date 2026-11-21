@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f0b09">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>핫팩 모드 | Dutkyobot</title>
 <style>
 :root{--bg:#0f0b09;--card:rgba(255,255,255,.045);--line:rgba(255,255,255,.09);--tx:#f6ece2;--mut:#a89684;--hot:#ff6a2b;--hot2:#ffb347;--heat:0}
@@ -91,6 +96,48 @@ body.run .ring-wrap::after{animation:wave 3s ease-out 1.5s infinite}
 body.run .card{border-color:rgba(255,150,70,.2)}
 body.run .badge.hot{box-shadow:0 0 12px rgba(255,106,43,.35)}
 @media (prefers-reduced-motion:reduce){.flame,.embers i,body.run::after,body.run .ring-wrap::before,body.run .ring-wrap::after,.orb.on{animation:none!important}}
+
+/* ---- 사용성 개선 ---- */
+[hidden]{display:none!important}
+body{min-height:100dvh;touch-action:manipulation}
+body.run{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
+.sub{font-size:14px}.hint{font-size:13px}.tog small{font-size:12.5px}.warn{font-size:13px}
+.c{text-align:center}
+.ring-wrap{width:min(250px,72vw);height:min(250px,72vw)}
+.orb{inset:8.8%;-webkit-user-select:none;user-select:none}
+.seg button{min-height:46px}
+.seg button small{display:block;font-size:11px;font-weight:400;opacity:.75;margin-top:2px}
+.pi{display:block;font-size:20px;line-height:1.2}
+.seg button:active,.d-sec:active,.d-stop:active{transform:scale(.97)}
+input[type=range]{height:34px}
+.tog{cursor:pointer;min-height:52px;border-top:1px solid var(--line)}
+.tog:first-of-type{margin-top:8px}
+.adv summary{cursor:pointer;min-height:30px;display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:600;list-style:none}
+.adv summary::-webkit-details-marker{display:none}
+.adv summary::after{content:"▾";color:var(--mut);transition:transform .2s}
+.adv[open] summary::after{transform:rotate(180deg)}
+.adv[open] summary{margin-bottom:8px}
+button:focus-visible,summary:focus-visible,input:focus-visible,.sw input:focus-visible+i{outline:2px solid var(--hot2);outline-offset:2px}
+/* 하단 컨트롤 (엄지 닿는 위치) */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;gap:8px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+ background:linear-gradient(to top,rgba(15,11,9,.96) 60%,rgba(15,11,9,0));transform:translateY(130%);transition:transform .35s;max-width:488px;margin:0 auto}
+body.run .dock{transform:none}
+.dock button{border:1px solid var(--line);border-radius:16px;color:var(--tx);font-size:13px;min-height:56px;cursor:pointer;background:rgba(255,255,255,.08);padding:6px 14px;backdrop-filter:blur(8px)}
+.dock .pi{font-size:18px}
+.d-stop{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--hot2),var(--hot))!important;border-color:transparent!important;color:#fff!important;font-weight:700}
+.d-stop b{font-size:20px;font-variant-numeric:tabular-nums}.d-stop span{font-size:12px;opacity:.9}
+/* 토스트 */
+.toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));z-index:100;transform:translate(-50%,-20px);max-width:min(92vw,440px);padding:11px 16px;border-radius:14px;
+ background:rgba(38,28,22,.97);border:1px solid rgba(255,150,70,.35);font-size:13.5px;line-height:1.5;text-align:center;opacity:0;pointer-events:none;transition:.3s}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+/* 어두운 절전 화면 (OLED 절약) */
+#dim{position:fixed;inset:0;z-index:60;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#6b5646;-webkit-user-select:none;user-select:none}
+#dim b{font-size:58px;font-weight:300;font-variant-numeric:tabular-nums}
+#dim span{font-size:15px}#dim small{font-size:12px;opacity:.6;margin-top:14px}
+body.dim #dim{display:flex}
+body.dim main,body.dim .embers,body.dim .dock{visibility:hidden}
+body.dim::before,body.dim::after{display:none}
+@media (max-height:520px) and (orientation:landscape){.ring-wrap{width:min(200px,60vh);height:min(200px,60vh)}}
 </style>
 </head>
 <body>
@@ -111,36 +158,35 @@ body.run .badge.hot{box-shadow:0 0 12px rgba(255,106,43,.35)}
   </button>
  </div>
 
+ <p class="hint c">⚠️ 이불·주머니 속에 넣지 마세요 · 이 화면을 켜 둬야 따뜻해져요</p>
+
+ <div class="card">
+  <h2>어떻게 쓸까요?</h2>
+  <div class="seg c3" id="presets" role="group" aria-label="추천 설정">
+   <button data-p="fast"><span class="pi">🧤</span>빨리<small>강하게 · 15분</small></button>
+   <button data-p="normal"><span class="pi">🤲</span>보통<small>중간 · 30분</small></button>
+   <button data-p="soft"><span class="pi">🌙</span>은은하게<small>약하게 · 1시간</small></button>
+  </div>
+ </div>
+
  <div class="card">
   <h2>세기</h2>
-  <div class="seg c4" id="level">
+  <div class="seg c4" id="level" role="group" aria-label="세기">
    <button data-v="0.3">약하게</button>
    <button data-v="0.55" class="sel">보통</button>
    <button data-v="0.8">강하게</button>
    <button data-v="0.97">최대</button>
   </div>
-  <div class="row" style="margin-top:8px"><span>CPU 스레드</span><b id="thV">-</b></div>
-  <input type="range" id="th" min="1" max="8" value="2">
- </div>
-
- <div class="card">
-  <h2>가열 방식</h2>
-  <div class="tog"><div>점진 가열<small>세기를 처음 3분 동안 천천히 올려요 (갑자기 뜨거워지지 않음)</small></div><label class="sw"><input type="checkbox" id="ramp" checked><i></i></label></div>
-  <div class="tog"><div>자동 보온<small>기기가 충분히 달궈져 성능이 떨어지면 부하를 낮춰 그 온도를 유지해요</small></div><label class="sw"><input type="checkbox" id="auto" checked><i></i></label></div>
-  <div class="tog"><div>GPU도 같이 사용<small>더 빨리 따뜻해지지만 배터리를 더 써요</small></div><label class="sw"><input type="checkbox" id="gpu"><i></i></label></div>
-  <div class="tog"><div>끝나면 진동 알림<small>지원하는 기기에서만 동작해요</small></div><label class="sw"><input type="checkbox" id="vib" checked><i></i></label></div>
  </div>
 
  <div class="card">
   <h2>자동 종료 타이머</h2>
-  <div class="seg c4" id="timer">
+  <div class="seg c4" id="timer" role="group" aria-label="자동 종료 타이머">
    <button data-m="15">15분</button>
    <button data-m="30" class="sel">30분</button>
    <button data-m="60">1시간</button>
    <button data-m="0">무제한</button>
   </div>
-  <div class="row" style="margin-top:8px"><span>배터리 이하면 정지 (충전 중 아닐 때)</span><b id="bmV">20%</b></div>
-  <input type="range" id="bm" min="5" max="60" step="5" value="20">
  </div>
 
  <div class="card">
@@ -155,20 +201,41 @@ body.run .badge.hot{box-shadow:0 0 12px rgba(255,106,43,.35)}
   <div class="row"><span>화면 켜짐 유지</span><b id="wl">-</b></div>
  </div>
 
+ <details class="card adv">
+  <summary>세부 설정</summary>
+  <div class="row"><span>CPU 스레드</span><b id="thV">-</b></div>
+  <input type="range" id="th" min="1" max="8" value="2" aria-label="CPU 스레드 수">
+  <label class="tog"><div>점진 가열<small>세기를 처음 3분 동안 천천히 올려요 (갑자기 뜨거워지지 않음)</small></div><span class="sw"><input type="checkbox" id="ramp" checked><i></i></span></label>
+  <label class="tog"><div>자동 보온<small>기기가 충분히 달궈져 성능이 떨어지면 부하를 낮춰 그 온도를 유지해요</small></div><span class="sw"><input type="checkbox" id="auto" checked><i></i></span></label>
+  <label class="tog"><div>GPU도 같이 사용<small>더 빨리 따뜻해지지만 배터리를 더 써요</small></div><span class="sw"><input type="checkbox" id="gpu"><i></i></span></label>
+  <label class="tog"><div>끝나면 진동 알림<small>지원하는 기기에서만 동작해요</small></div><span class="sw"><input type="checkbox" id="vib" checked><i></i></span></label>
+  <div class="row" style="margin-top:6px"><span>배터리 이하면 정지 (충전 중 아닐 때)</span><b id="bmV">20%</b></div>
+  <input type="range" id="bm" min="5" max="60" step="5" value="20" aria-label="배터리 정지 기준">
+ </details>
+
  <p class="warn">
   <b>주의</b> · 이불·옷 속에 넣거나 덮어두지 마세요(과열 위험). 손에 쥐거나 밖에 두고 쓰세요.<br>
   · 배터리가 빨리 닳아요. 충전하면서 쓰면 더 뜨거워질 수 있어요.<br>
   · 너무 뜨겁다고 느껴지면 바로 정지하세요. 이 페이지가 보이는 상태(앞 화면)여야 계속 동작해요.
  </p>
 </main>
+<div class="dock" id="dock" role="group" aria-label="가동 제어">
+ <button id="dockDim" class="d-sec" aria-label="화면 어둡게"><span class="pi">🌙</span>어둡게</button>
+ <button id="moreBtn" class="d-sec" aria-label="10분 연장"><span class="pi">＋</span>10분</button>
+ <button id="dockStop" class="d-stop" aria-label="정지"><b id="dockT">00:00</b><span>정지</span></button>
+</div>
+<div id="dim" aria-label="어두운 절전 화면"><b id="dimT">00:00</b><span id="dimS">가열 중</span><small>두 번 탭하면 돌아와요</small></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <canvas id="gl" width="256" height="256"></canvas>
 
 <script>
 const $=id=>document.getElementById(id);
+let toastT;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3000)}
+const buzz=p=>{if(!S.vib)return;try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
 const cores=Math.min(navigator.hardwareConcurrency||4,8);
 const S={duty:.55,threads:Math.max(1,Math.floor(cores/2)),limit:30,ramp:true,auto:true,vib:true,batMin:20};
 let running=false,t0=0,tick=null,workers=[],fbTimer=null,wake=null,batt=null,glRaf=0,glOn=false;
-let effDuty=0,hold=false,rates=[],baseline=0,smooth=0,perf=1;
+let effDuty=0,hold=false,rates=[],baseline=0,smooth=0,perf=1,extra=0,lastStop=0,hiddenRun=false,wlWarned=false,lastDim=0;
 
 /* ---- 설정 저장/복원 ---- */
 try{Object.assign(S,JSON.parse(localStorage.getItem('hotpack')||'{}'))}catch(e){}
@@ -176,16 +243,21 @@ const save=()=>{try{localStorage.setItem('hotpack',JSON.stringify(S))}catch(e){}
 S.threads=Math.min(S.threads,cores);
 $('th').max=cores;$('th').value=S.threads;$('thV').textContent=S.threads+' / '+cores;
 $('ramp').checked=S.ramp;$('auto').checked=S.auto;$('vib').checked=S.vib;$('bm').value=S.batMin;$('bmV').textContent=S.batMin+'%';
-function pick(id,attr,val){[...$(id).children].forEach(b=>b.classList.toggle('sel',+b.dataset[attr]===val))}
+function pick(id,attr,val){[...$(id).children].forEach(b=>{const on=+b.dataset[attr]===val;b.classList.toggle('sel',on);b.setAttribute('aria-pressed',on)})}
 pick('level','v',S.duty);pick('timer','m',S.limit);
 if(![...$('level').children].some(b=>+b.dataset.v===S.duty)){S.duty=.55;pick('level','v',.55)}
+const PRESETS={fast:{duty:.8,limit:15,ramp:false},normal:{duty:.55,limit:30,ramp:true},soft:{duty:.3,limit:60,ramp:true}};
+function applyUI(){pick('level','v',S.duty);pick('timer','m',S.limit);$('ramp').checked=S.ramp;
+ [...$('presets').children].forEach(b=>{const p=PRESETS[b.dataset.p],on=p.duty===S.duty&&p.limit===S.limit&&p.ramp===S.ramp;b.classList.toggle('sel',on);b.setAttribute('aria-pressed',on)})}
+$('presets').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;Object.assign(S,PRESETS[b.dataset.p]);save();applyUI()});
+applyUI();
 
-function sel(id,fn){$(id).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;[...$(id).children].forEach(x=>x.classList.remove('sel'));b.classList.add('sel');fn(b);save()})}
+function sel(id,fn){$(id).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;[...$(id).children].forEach(x=>x.classList.remove('sel'));b.classList.add('sel');fn(b);save();applyUI()})}
 sel('level',b=>{S.duty=+b.dataset.v});
 sel('timer',b=>{S.limit=+b.dataset.m});
 $('th').oninput=e=>{S.threads=+e.target.value;$('thV').textContent=S.threads+' / '+cores;save();if(running)startWorkers()};
 $('bm').oninput=e=>{S.batMin=+e.target.value;$('bmV').textContent=S.batMin+'%';save()};
-['ramp','auto','vib'].forEach(k=>$(k).onchange=e=>{S[k]=e.target.checked;save()});
+['ramp','auto','vib'].forEach(k=>$(k).onchange=e=>{S[k]=e.target.checked;save();applyUI()});
 $('gpu').onchange=e=>{if(running)e.target.checked?startGL():stopGL()};
 
 /* ---- CPU 워커 ---- */
@@ -235,9 +307,9 @@ function startGL(){
 function stopGL(){glOn=false;cancelAnimationFrame(glRaf)}
 
 /* ---- 화면 유지 / 배터리 ---- */
-async function lockScreen(){try{wake=await navigator.wakeLock.request('screen');$('wl').textContent='켜짐';wake.addEventListener('release',()=>{if(running)$('wl').textContent='해제됨'})}catch(e){$('wl').textContent='지원 안 됨'}}
+async function lockScreen(){try{wake=await navigator.wakeLock.request('screen');$('wl').textContent='켜짐';wake.addEventListener('release',()=>{if(running)$('wl').textContent='해제됨'})}catch(e){$('wl').textContent='지원 안 됨';if(!wlWarned){wlWarned=true;toast('화면 자동 유지를 못 써요. 설정에서 화면 꺼짐 시간을 늘려 주세요')}}}
 function unlockScreen(){try{wake&&wake.release()}catch(e){}wake=null;$('wl').textContent='-'}
-document.addEventListener('visibilitychange',()=>{if(running&&document.visibilityState==='visible')lockScreen()});
+document.addEventListener('visibilitychange',()=>{if(!running)return;if(document.visibilityState==='hidden')hiddenRun=true;else{lockScreen();if(hiddenRun){hiddenRun=false;toast('다른 화면에 있는 동안 가열이 약해졌어요. 이 화면을 켜 둬야 계속 따뜻해져요')}}});
 (async()=>{try{batt=await navigator.getBattery();const u=()=>{$('bat').textContent=Math.round(batt.level*100)+'%'+(batt.charging?' (충전 중)':'')};u();batt.onlevelchange=u;batt.onchargingchange=u}catch(e){}})();
 
 /* ---- 열 상태 추정: 연산 속도가 기준보다 떨어질수록 '달궈진 것' ---- */
@@ -272,13 +344,15 @@ const RING=691;
 (()=>{const e=$('embers');for(let i=0;i<16;i++){const b=document.createElement('i');
  b.style.cssText=`left:${(Math.random()*100).toFixed(1)}%;--s:${(3+Math.random()*5).toFixed(1)}px;--d:${(5+Math.random()*6).toFixed(1)}s;--l:-${(Math.random()*8).toFixed(1)}s;--x:${((Math.random()-.5)*80).toFixed(0)}px`;e.appendChild(b)}})();
 function start(){
-  running=true;document.body.classList.add('run');hold=false;t0=Date.now();rates=[];baseline=0;smooth=0;perf=1;
+  if(batt&&!batt.charging&&batt.level*100<S.batMin){toast('배터리가 '+Math.round(batt.level*100)+'%예요. 충전하거나 세부 설정에서 정지 기준을 낮춰 주세요');return}
+  if(batt&&batt.charging&&S.duty>=.97)toast('충전하면서 최대 세기는 많이 뜨거워질 수 있어요. 주의하세요');
+  running=true;document.body.classList.add('run');extra=0;lastStop=0;hiddenRun=false;hold=false;t0=Date.now();rates=[];baseline=0;smooth=0;perf=1;
   effDuty=S.ramp?Math.min(.2,S.duty):S.duty;
   $('orb').classList.add('on');startWorkers();if($('gpu').checked)startGL();lockScreen();pushDuty();
-  tick=setInterval(step,1000);step();
+  tick=setInterval(step,1000);step();buzz(30);
 }
 function step(){
-  const s=(Date.now()-t0)/1000;
+  const s=(Date.now()-t0)/1000;const L=S.limit?S.limit*60+extra:0;
   // 점진 가열: 3분에 걸쳐 목표 세기까지
   let target=S.duty;
   if(S.ramp&&s<180)target=.2+(S.duty-.2)*(s/180);
@@ -292,24 +366,32 @@ function step(){
   // UI
   $('el').textContent=fmt(s);
   $('orb').classList.toggle('hold',hold);
-  $('orbBig').textContent=S.limit?fmt(S.limit*60-s):fmt(s);
+  const lab=L?fmt(L-s):fmt(s);$('orbBig').textContent=lab;$('dockT').textContent=lab;$('dimT').textContent=lab;$('moreBtn').hidden=!L;
   $('orbMid').textContent=hold?'보온 중':'가열 중';
-  $('orbSm').textContent=S.limit?'탭해서 정지':'경과 시간 · 탭해서 정지';
-  $('ring').style.strokeDashoffset=S.limit?RING*(1-Math.min(1,s/(S.limit*60))):0;
-  setHeatUI(s);
-  if(S.limit&&s>=S.limit*60)return stop('완료!',true);
+  $('orbSm').textContent=L?'두 번 탭해서 정지':'경과 시간 · 두 번 탭해서 정지';
+  $('ring').style.strokeDashoffset=L?RING*(1-Math.min(1,s/L)):0;
+  setHeatUI(s);$('dimS').textContent=$('heatB').textContent;
+  if(L&&s>=L)return stop('완료!',true);
   if(batt&&!batt.charging&&batt.level*100<S.batMin)stop('배터리 부족');
 }
 function stop(reason,done){
-  if(running&&done&&S.vib){try{navigator.vibrate&&navigator.vibrate([250,120,250])}catch(e){}}
-  running=false;document.body.classList.remove('run');hold=false;clearInterval(tick);stopWorkers();stopGL();unlockScreen();
+  const was=running,el=fmt((Date.now()-t0)/1000);
+  if(was&&done&&S.vib){try{navigator.vibrate&&navigator.vibrate([250,120,250])}catch(e){}}else if(was&&!done)buzz(30);
+  if(was)toast(done?'완료! '+el+' 동안 따뜻하게 데웠어요 🔥':reason?reason+'(으)로 정지했어요 · '+el+' 가동':'정지했어요 · '+el+' 가동');
+  running=false;document.body.classList.remove('run','dim');hold=false;clearInterval(tick);stopWorkers();stopGL();unlockScreen();
   $('orb').classList.remove('on','hold');
   $('orbBig').textContent=reason||'시작';$('orbMid').textContent=reason?'탭해서 다시 시작':'탭해서 켜기';$('orbSm').textContent='';
   $('load').textContent='0%';$('ring').style.strokeDashoffset=RING;
   document.documentElement.style.setProperty('--heat','0');
   $('heatB').textContent='대기';$('heatB').className='badge';$('heatM').style.width='0';$('perf').textContent='-';
 }
-$('orb').onclick=()=>running?stop():start();
+/* 손에 쥔 채 실수로 눌러 꺼지지 않게: 3초 안에 두 번 탭해야 정지 */
+function reqStop(){const n=Date.now();if(n-lastStop<3000){lastStop=0;stop()}else{lastStop=n;toast('정지하려면 3초 안에 한 번 더 탭하세요')}}
+$('orb').onclick=()=>running?reqStop():start();
+$('dockStop').onclick=reqStop;
+$('dockDim').onclick=()=>{document.body.classList.add('dim');lastDim=0};
+$('moreBtn').onclick=()=>{extra+=600;toast('10분 연장했어요');step()};
+$('dim').addEventListener('click',()=>{const n=Date.now();if(n-lastDim<450){document.body.classList.remove('dim');lastDim=0}else lastDim=n});
 </script>
 </body>
 </html>
