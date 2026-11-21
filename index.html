@@ -3,18 +3,18 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f5f6fa">
-  <meta name="description" content="Dutkyobot의 웹 서비스와 도구를 한곳에서 빠르게 열어보세요.">
-  <title>Service Hub</title>
+  <meta name="theme-color" content="#f6f6f4">
+  <meta name="description" content="자주 사용하는 웹 도구를 한곳에서 찾아 바로 여는 서비스 모음.">
+  <title>서비스 모음</title>
   <style>
     :root {
       color-scheme: light;
-      --bg: #f5f6fa;
-      --surface: rgba(255, 255, 255, .88);
+      --bg: #f6f6f4;
+      --surface: #fff;
       --surface-solid: #fff;
-      --text: #171923;
-      --muted: #777e8e;
-      --line: #e8eaf1;
+      --text: #202124;
+      --muted: #777b80;
+      --line: #e7e7e3;
       --accent: #635bdb;
       --accent-soft: #eeedff;
       --shadow: 0 10px 34px rgba(31, 35, 65, .055);
@@ -28,10 +28,7 @@
       min-height: 100vh;
       margin: 0;
       color: var(--text);
-      background:
-        radial-gradient(ellipse at 12% 0%, rgba(124, 115, 255, .10), transparent 34rem),
-        radial-gradient(ellipse at 100% 14%, rgba(113, 177, 255, .10), transparent 30rem),
-        var(--bg);
+      background: var(--bg);
       font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
       -webkit-font-smoothing: antialiased;
     }
@@ -41,110 +38,73 @@
     .shell { width: min(1160px, calc(100% - 48px)); margin: 0 auto; }
 
     .topbar {
-      height: 82px;
+      height: 72px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       border-bottom: 1px solid rgba(226, 228, 238, .8);
     }
     .brand { display: inline-flex; align-items: center; gap: 11px; }
-    .brand-mark {
-      width: 34px;
-      height: 34px;
-      display: grid;
-      place-items: center;
-      border-radius: 11px;
-      color: #fff;
-      background: linear-gradient(145deg, #8075f3, #5148c8);
-      box-shadow: 0 5px 13px rgba(99, 91, 219, .24);
-      font-size: 17px;
-      font-weight: 850;
-      letter-spacing: -1px;
-    }
-    .brand-name { font-size: 14px; font-weight: 800; letter-spacing: .075em; }
-    .top-note { color: #8a90a0; font-size: 12px; font-weight: 600; letter-spacing: .02em; }
+    .brand-mark { display: none; }
+    .brand-name { font-size: 13px; font-weight: 800; letter-spacing: .11em; }
 
-    .hero { padding: 66px 0 34px; }
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 17px;
-      color: var(--accent);
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: .15em;
-      text-transform: uppercase;
-    }
-    .eyebrow::before {
-      width: 19px;
-      height: 1px;
-      content: "";
-      background: currentColor;
-    }
+    .hero { padding: 43px 0 27px; }
     h1 {
       margin: 0;
-      font-size: clamp(34px, 5vw, 53px);
-      line-height: 1.16;
-      letter-spacing: -.065em;
-      font-weight: 820;
+      font-size: clamp(29px, 3.8vw, 38px);
+      line-height: 1.25;
+      letter-spacing: -.055em;
+      font-weight: 780;
     }
     .hero-bottom {
       display: flex;
-      align-items: end;
+      align-items: center;
       justify-content: space-between;
       gap: 24px;
-      margin-top: 17px;
+      margin-top: 9px;
     }
     .hero-copy {
       max-width: 520px;
       margin: 0;
       color: var(--muted);
-      font-size: 15px;
-      line-height: 1.75;
+      font-size: 14px;
+      line-height: 1.7;
       word-break: keep-all;
     }
     .service-total {
       flex: 0 0 auto;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 14px;
-      border: 1px solid #e7e5fb;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, .72);
-      color: #5e58bd;
+      color: #777b80;
       font-size: 12px;
-      font-weight: 750;
+      font-weight: 600;
     }
-    .service-total strong { font-size: 15px; }
 
     .toolbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      padding: 25px 0 20px;
-      border-top: 1px solid rgba(226, 228, 238, .8);
+      padding: 22px 0 15px;
+      border-top: 1px solid var(--line);
     }
-    .filters { display: flex; flex-wrap: wrap; gap: 7px; }
+    .filters { display: flex; flex-wrap: wrap; gap: 22px; }
     .filter {
-      min-height: 36px;
-      padding: 0 14px;
-      border: 1px solid transparent;
-      border-radius: 999px;
+      min-height: 34px;
+      padding: 0 0 7px;
+      border: 0;
+      border-bottom: 2px solid transparent;
+      border-radius: 0;
       background: transparent;
-      color: #777e8e;
+      color: #85898c;
       cursor: pointer;
       font-size: 12px;
-      font-weight: 700;
-      transition: background .18s ease, color .18s ease, border-color .18s ease;
+      font-weight: 650;
+      transition: color .18s ease, border-color .18s ease;
     }
-    .filter:hover { color: var(--text); background: rgba(255,255,255,.75); }
+    .filter:hover { color: var(--text); background: transparent; }
     .filter[aria-pressed="true"] {
-      color: #fff;
-      background: #252638;
-      border-color: #252638;
+      color: var(--text);
+      background: transparent;
+      border-bottom-color: #45494c;
     }
     .search-wrap {
       position: relative;
@@ -166,30 +126,29 @@
       height: 42px;
       padding: 0 14px 0 40px;
       outline: none;
-      border: 1px solid #e6e8ef;
-      border-radius: 13px;
-      background: rgba(255,255,255,.8);
+      border: 1px solid #e1e2df;
+      border-radius: 10px;
+      background: #fff;
       color: var(--text);
       font-size: 13px;
       transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
     }
     .search::placeholder { color: #a0a5b2; }
     .search:focus {
-      border-color: #aaa5f2;
+      border-color: #9a9d98;
       background: #fff;
-      box-shadow: 0 0 0 3px rgba(99,91,219,.10);
+      box-shadow: 0 0 0 2px rgba(60,65,60,.07);
     }
 
     .results-line {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: center;
-      margin: 2px 0 15px;
-      color: #969baa;
+      margin: 2px 0 13px;
+      color: #929691;
       font-size: 11px;
-      font-weight: 650;
+      font-weight: 550;
     }
-    .results-line span:last-child { font-weight: 500; }
 
     .grid {
       display: grid;
@@ -351,20 +310,17 @@
 </head>
 <body>
   <header class="shell topbar">
-    <a class="brand" href="./" aria-label="Service Hub 홈">
-      <span class="brand-mark" aria-hidden="true">S</span>
+    <a class="brand" href="./" aria-label="서비스 모음 홈">
       <span class="brand-name">SERVICE HUB</span>
     </a>
-    <span class="top-note">A collection of useful tools</span>
   </header>
 
   <main class="shell">
     <section class="hero" aria-labelledby="page-title">
-      <div class="eyebrow">ALL SERVICES</div>
-      <h1 id="page-title">필요한 도구를<br>한곳에서.</h1>
+      <h1 id="page-title">서비스 모음</h1>
       <div class="hero-bottom">
-        <p class="hero-copy">작업부터 일상까지, 자주 사용하는 웹 서비스들을 모았어요.<br>원하는 서비스를 선택해 바로 시작하세요.</p>
-        <div class="service-total"><strong>08</strong> SERVICES</div>
+        <p class="hero-copy">필요한 도구를 골라 바로 열어보세요.</p>
+        <div class="service-total">8개 서비스</div>
       </div>
     </section>
 
@@ -384,7 +340,6 @@
     </section>
 
     <div class="results-line">
-      <span>EXPLORE</span>
       <span id="result-count" aria-live="polite">8개 서비스</span>
     </div>
 
@@ -396,7 +351,7 @@
             <span class="open-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></span>
           </div>
           <div class="card-content">
-            <div class="card-top"><span class="category">AI</span><span class="card-index">01 / 08</span></div>
+            <div class="card-top"><span class="category">AI</span></div>
             <h2 class="card-title">AI 작곡기</h2>
             <p class="card-description">한 줄 아이디어를 바탕으로 AI 음악을 만들어 보세요.</p>
           </div>
@@ -410,7 +365,7 @@
             <span class="open-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></span>
           </div>
           <div class="card-content">
-            <div class="card-top"><span class="category">AI</span><span class="card-index">02 / 08</span></div>
+            <div class="card-top"><span class="category">AI</span></div>
             <h2 class="card-title">AI 영상 제작기</h2>
             <p class="card-description">AI가 만든 JSON을 미리 보고 영상 파일로 저장해요.</p>
           </div>
@@ -424,7 +379,7 @@
             <span class="open-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></span>
           </div>
           <div class="card-content">
-            <div class="card-top"><span class="category">AI</span><span class="card-index">03 / 08</span></div>
+            <div class="card-top"><span class="category">AI</span></div>
             <h2 class="card-title">Local AI Studio</h2>
             <p class="card-description">내 컴퓨터에서 로컬 AI 모델을 실행하는 작업 공간.</p>
           </div>
@@ -438,7 +393,7 @@
             <span class="open-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></span>
           </div>
           <div class="card-content">
-            <div class="card-top"><span class="category device">기기 도구</span><span class="card-index">04 / 08</span></div>
+            <div class="card-top"><span class="category device">기기 도구</span></div>
             <h2 class="card-title">Device Inspector</h2>
             <p class="card-description">배터리, 저장 공간, 인터넷 연결 등 기기 상태를 확인해요.</p>
           </div>
@@ -452,7 +407,7 @@
             <span class="open-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></span>
           </div>
           <div class="card-content">
-            <div class="card-top"><span class="category device">기기 도구</span><span class="card-index">05 / 08</span></div>
+            <div class="card-top"><span class="category device">기기 도구</span></div>
             <h2 class="card-title">핫팩 모드</h2>
             <p class="card-description">화면 부하를 조절해 기기를 따뜻하게 만드는 실험 도구.</p>
           </div>
@@ -466,7 +421,7 @@
             <span class="open-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></span>
           </div>
           <div class="card-content">
-            <div class="card-top"><span class="category life">라이프</span><span class="card-index">06 / 08</span></div>
+            <div class="card-top"><span class="category life">라이프</span></div>
             <h2 class="card-title">오늘의 조각들</h2>
             <p class="card-description">날씨, 일출·일몰, 미세먼지 정보를 카드로 모아봐요.</p>
           </div>
@@ -480,7 +435,7 @@
             <span class="open-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></span>
           </div>
           <div class="card-content">
-            <div class="card-top"><span class="category life">라이프</span><span class="card-index">07 / 08</span></div>
+            <div class="card-top"><span class="category life">라이프</span></div>
             <h2 class="card-title">Nature Canvas</h2>
             <p class="card-description">자연 풍경을 전체 화면으로 감상하는 힐링 슬라이드쇼.</p>
           </div>
@@ -494,7 +449,7 @@
             <span class="open-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></span>
           </div>
           <div class="card-content">
-            <div class="card-top"><span class="category life">라이프</span><span class="card-index">08 / 08</span></div>
+            <div class="card-top"><span class="category life">라이프</span></div>
             <h2 class="card-title">트랙리스트</h2>
             <p class="card-description">유튜브 영상의 타임테이블을 곡별 재생목록으로 바꿔요.</p>
           </div>
